@@ -34,11 +34,18 @@ const logConsole = document.getElementById('log-console');
 const historyList = document.getElementById('history-list');
 const btnClearHistory = document.getElementById('btn-clear-history');
 
+const playlistEntriesWrapper = document.getElementById('playlist-entries-wrapper');
+const playlistEntriesList = document.getElementById('playlist-entries-list');
+const btnSelectAll = document.getElementById('btn-select-all');
+const btnDeselectAll = document.getElementById('btn-deselect-all');
+
 // App State
 let currentVideoInfo = null;
 let currentDownloadId = null;
 let currentDestPath = localStorage.getItem('yt_dlp_dest_path') || '';
 let history = JSON.parse(localStorage.getItem('yt_dlp_history') || '[]');
+let currentPlaylistIndex = 0;
+let totalPlaylistItems = 0;
 
 // Default qualities
 const videoQualities = [
@@ -56,15 +63,22 @@ const audioQualities = [
 ];
 
 // Initialize
-function init() {
+async function init() {
   // Restore destination path or set default Downloads folder
   if (!currentDestPath) {
-    // Windows default Downloads folder approximation if we can't get it, 
-    // but we can ask the user. We will show 'Chưa chọn thư mục...'
-    destPathDisplay.textContent = 'Chưa chọn thư mục. Vui lòng bấm chọn...';
-  } else {
+    try {
+      currentDestPath = await window.api.getDownloadsPath();
+      localStorage.setItem('yt_dlp_dest_path', currentDestPath);
+    } catch (err) {
+      console.error('Failed to get system downloads path:', err);
+    }
+  }
+
+  if (currentDestPath) {
     destPathDisplay.textContent = currentDestPath;
     destPathDisplay.title = currentDestPath;
+  } else {
+    destPathDisplay.textContent = 'Chưa chọn thư mục. Vui lòng bấm chọn...';
   }
 
   // Populate qualities for default selection (video)
@@ -87,6 +101,9 @@ function init() {
   btnToggleLog.addEventListener('click', toggleConsoleLog);
   btnClearHistory.addEventListener('click', clearAllHistory);
 
+  btnSelectAll.addEventListener('click', () => toggleAllEntries(true));
+  btnDeselectAll.addEventListener('click', () => toggleAllEntries(false));
+
   // Setup IPC Subscriptions
   window.api.onDownloadProgress((data) => {
     if (data.id !== currentDownloadId) return;
@@ -108,6 +125,13 @@ function init() {
       appendLog(data.logLine);
     }
   });
+
+  window.api.onDownloadItemChange((data) => {
+    if (data.id !== currentDownloadId) return;
+    currentPlaylistIndex = data.currentItem;
+    totalPlaylistItems = data.totalItems;
+    downloadingTitle.textContent = `Đang tải (${currentPlaylistIndex}/${totalPlaylistItems}): ${currentVideoInfo.title}`;
+  });
 }
 
 // Populate quality choices
@@ -120,6 +144,52 @@ function populateQualities(type) {
     opt.textContent = q.name;
     selectQuality.appendChild(opt);
   });
+}
+
+// Render playlist items checklist
+function renderPlaylistEntries(entries) {
+  playlistEntriesList.innerHTML = '';
+  if (!entries || entries.length === 0) {
+    playlistEntriesList.innerHTML = '<div class="empty-history">Không có bài hát nào trong playlist này.</div>';
+    return;
+  }
+  
+  entries.forEach((entry, idx) => {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'playlist-entry-item';
+    
+    const durationText = entry.duration ? formatDuration(entry.duration) : '--:--';
+    
+    const thumbHtml = entry.thumbnail 
+      ? `<img src="${entry.thumbnail}" class="playlist-entry-thumb" alt="Thumb" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+      : '';
+      
+    const placeholderHtml = `<div class="playlist-entry-thumb-placeholder" style="${entry.thumbnail ? 'display: none;' : ''}">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+       </div>`;
+
+    itemEl.innerHTML = `
+      <input type="checkbox" class="playlist-entry-checkbox" data-index="${idx}" checked>
+      <span class="playlist-entry-index">${idx + 1}</span>
+      <div class="playlist-entry-thumb-wrapper" style="position: relative; width: 48px; height: 27px; flex-shrink: 0;">
+        ${thumbHtml}
+        ${placeholderHtml}
+      </div>
+      <span class="playlist-entry-title" title="${entry.title}">${entry.title}</span>
+      <span class="playlist-entry-duration">${durationText}</span>
+    `;
+    playlistEntriesList.appendChild(itemEl);
+  });
+}
+
+// Toggle checkboxes helper
+function toggleAllEntries(checked) {
+  const checkboxes = playlistEntriesList.querySelectorAll('.playlist-entry-checkbox');
+  checkboxes.forEach(cb => cb.checked = checked);
 }
 
 // Convert seconds to format HH:MM:SS
@@ -162,12 +232,26 @@ async function analyzeUrl() {
   try {
     const result = await window.api.getVideoInfo(url);
     if (result.success) {
-      currentVideoInfo = result.info;
+      currentVideoInfo = {
+        ...result.info,
+        isPlaylist: result.isPlaylist || false
+      };
       
       // Update UI
       videoThumbnail.src = currentVideoInfo.thumbnail || '';
-      videoDuration.textContent = formatDuration(currentVideoInfo.duration);
-      videoTitle.textContent = currentVideoInfo.title || 'Unknown Title';
+      if (currentVideoInfo.isPlaylist) {
+        videoDuration.textContent = `${currentVideoInfo.entriesCount} bài`;
+        videoTitle.textContent = `[Playlist] ${currentVideoInfo.title || 'Danh sách phát'}`;
+        
+        // Render playlist tracks
+        renderPlaylistEntries(currentVideoInfo.entries);
+        playlistEntriesWrapper.classList.remove('hidden');
+      } else {
+        videoDuration.textContent = formatDuration(currentVideoInfo.duration);
+        videoTitle.textContent = currentVideoInfo.title || 'Unknown Title';
+        playlistEntriesWrapper.classList.add('hidden');
+        playlistEntriesList.innerHTML = '';
+      }
       videoUploader.textContent = currentVideoInfo.uploader || 'Unknown Channel';
       
       previewSection.classList.remove('hidden');
@@ -215,10 +299,33 @@ async function startDownload() {
   const quality = selectQuality.value;
   const url = currentVideoInfo.webpage_url;
 
+  let playlistItemsArg = null;
+  let selectedCount = 0;
+
+  if (currentVideoInfo.isPlaylist) {
+    const checkboxes = playlistEntriesList.querySelectorAll('.playlist-entry-checkbox:checked');
+    if (checkboxes.length === 0) {
+      showError('Vui lòng chọn ít nhất một bài hát để tải xuống.');
+      return;
+    }
+    
+    const selectedIndices = Array.from(checkboxes).map(cb => {
+      const idx = parseInt(cb.getAttribute('data-index'), 10);
+      return idx + 1; // 1-based index for yt-dlp
+    });
+    
+    selectedCount = selectedIndices.length;
+    playlistItemsArg = selectedIndices.join(',');
+  }
+
   currentDownloadId = Date.now().toString();
+  currentPlaylistIndex = 0;
+  totalPlaylistItems = 0;
 
   // Update Progress UI
-  downloadingTitle.textContent = `Đang tải: ${currentVideoInfo.title}`;
+  downloadingTitle.textContent = currentVideoInfo.isPlaylist 
+    ? `Đang tải playlist: ${currentVideoInfo.title}` 
+    : `Đang tải: ${currentVideoInfo.title}`;
   progressFill.style.width = '0%';
   progressPercent.textContent = '0%';
   statSpeed.textContent = 'Tốc độ: Đang kết nối...';
@@ -230,18 +337,26 @@ async function startDownload() {
   previewSection.classList.add('hidden');
   btnAnalyze.disabled = true;
 
-  appendLog(`[Hệ thống] Bắt đầu tải video: ${currentVideoInfo.title}`);
+  appendLog(`[Hệ thống] Bắt đầu tải ${currentVideoInfo.isPlaylist ? 'playlist' : 'video'}: ${currentVideoInfo.title}`);
   appendLog(`[Hệ thống] Định dạng: ${formatType === 'video' ? 'Video (MP4)' : 'Audio (Nhạc)'}`);
   appendLog(`[Hệ thống] Chất lượng chọn: ${quality}`);
   appendLog(`[Hệ thống] Thư mục lưu: ${currentDestPath}`);
 
   try {
+    const embedMetadata = document.getElementById('chk-embed-metadata')?.checked || false;
+    const embedThumbnail = document.getElementById('chk-embed-thumbnail')?.checked || false;
+
     const result = await window.api.downloadVideo({
       id: currentDownloadId,
       url,
       formatType,
       quality,
-      destDir: currentDestPath
+      destDir: currentDestPath,
+      isPlaylist: currentVideoInfo.isPlaylist || false,
+      playlistTitle: currentVideoInfo.title,
+      playlistItems: playlistItemsArg,
+      embedMetadata,
+      embedThumbnail
     });
 
     if (result.success) {
@@ -252,8 +367,10 @@ async function startDownload() {
         id: currentDownloadId,
         title: currentVideoInfo.title,
         type: formatType,
+        isPlaylist: currentVideoInfo.isPlaylist || false,
+        entriesCount: currentVideoInfo.isPlaylist ? selectedCount : 0,
         quality: selectQuality.options[selectQuality.selectedIndex].text,
-        destDir: currentDestPath,
+        destDir: result.destDir || currentDestPath,
         date: new Date().toLocaleString('vi-VN')
       };
       
@@ -335,31 +452,58 @@ function renderHistory() {
     itemEl.className = 'history-item';
     
     const isAudio = item.type === 'audio';
+    const isPlaylist = !!item.isPlaylist;
+
+    let iconHtml = '';
+    let iconClass = '';
+
+    if (isPlaylist) {
+      iconClass = 'playlist';
+      iconHtml = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <circle cx="4" cy="6" r="1" fill="currentColor"></circle>
+          <circle cx="4" cy="12" r="1" fill="currentColor"></circle>
+          <circle cx="4" cy="18" r="1" fill="currentColor"></circle>
+        </svg>
+      `;
+    } else if (isAudio) {
+      iconClass = 'audio';
+      iconHtml = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+      `;
+    } else {
+      iconClass = 'video';
+      iconHtml = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
+      `;
+    }
+
+    const typeLabel = isPlaylist ? `Playlist (${item.entriesCount} bài)` : (isAudio ? 'Audio' : 'Video');
 
     itemEl.innerHTML = `
       <div class="history-item-left">
-        <div class="history-icon-wrapper ${isAudio ? 'audio' : 'video'}">
-          ${isAudio ? 
-            `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18V5l12-2v13"></path>
-              <circle cx="6" cy="18" r="3"></circle>
-              <circle cx="18" cy="16" r="3"></circle>
-            </svg>` : 
-            `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-              <line x1="7" y1="2" x2="7" y2="22"></line>
-              <line x1="17" y1="2" x2="17" y2="22"></line>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <line x1="2" y1="7" x2="7" y2="7"></line>
-              <line x1="2" y1="17" x2="7" y2="17"></line>
-              <line x1="17" y1="17" x2="22" y2="17"></line>
-              <line x1="17" y1="7" x2="22" y2="7"></line>
-            </svg>`
-          }
+        <div class="history-icon-wrapper ${iconClass}">
+          ${iconHtml}
         </div>
         <div class="history-item-details">
           <div class="history-item-title" title="${item.title}">${item.title}</div>
-          <div class="history-item-meta">${item.quality} • Lưu vào: ${item.destDir} • ${item.date}</div>
+          <div class="history-item-meta">${typeLabel} • ${item.quality} • Lưu vào: ${item.destDir} • ${item.date}</div>
         </div>
       </div>
       <div class="history-item-actions">

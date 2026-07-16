@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   downloadVideo: (options) => ipcRenderer.invoke('yt-dlp:download', options),
   cancelDownload: (id) => ipcRenderer.invoke('yt-dlp:cancel', id),
   openFolder: (path) => ipcRenderer.invoke('shell:open-folder', path),
+  getDownloadsPath: () => ipcRenderer.invoke('app:get-downloads-path'),
   
   // Listeners for progress and logs
   onDownloadProgress: (callback) => {
@@ -17,5 +18,10 @@ contextBridge.exposeInMainWorld('api', {
     const subscription = (event, data) => callback(data);
     ipcRenderer.on('download-log', subscription);
     return () => ipcRenderer.removeListener('download-log', subscription);
+  },
+  onDownloadItemChange: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on('download-item-change', subscription);
+    return () => ipcRenderer.removeListener('download-item-change', subscription);
   }
 });

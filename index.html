@@ -101,12 +101,41 @@
               </div>
             </div>
 
+            <div class="config-group">
+              <label>Tùy chọn bổ sung</label>
+              <div class="checkbox-group">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="chk-embed-metadata" checked>
+                  <span class="checkbox-label">Nhúng Metadata đầy đủ (Tên, Tác giả...)</span>
+                </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="chk-embed-thumbnail" checked>
+                  <span class="checkbox-label">Nhúng ảnh Thumbnail vào file</span>
+                </label>
+              </div>
+            </div>
+
             <button id="btn-download" class="btn btn-success btn-full">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
               </svg>
               Tải xuống ngay
             </button>
+          </div>
+        </div>
+
+        <!-- Playlist Entries List (Only shown for playlists) -->
+        <div id="playlist-entries-wrapper" class="playlist-entries-wrapper hidden">
+          <div class="playlist-entries-header">
+            <h3>Danh sách bài hát</h3>
+            <div class="playlist-selection-controls">
+              <button type="button" id="btn-select-all" class="btn-link">Chọn tất cả</button>
+              <span class="separator">|</span>
+              <button type="button" id="btn-deselect-all" class="btn-link">Bỏ chọn tất cả</button>
+            </div>
+          </div>
+          <div id="playlist-entries-list" class="playlist-entries-list">
+            <!-- Dynamically populated entries -->
           </div>
         </div>
       </section>

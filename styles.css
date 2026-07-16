@@ -618,6 +618,10 @@ select:focus {
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
 }
+.history-icon-wrapper.playlist {
+  background: rgba(236, 72, 153, 0.15);
+  color: #ec4899;
+}
 .history-item-details {
   display: flex;
   flex-direction: column;
@@ -655,4 +659,163 @@ select:focus {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Playlist Track Checklist styles */
+.playlist-entries-wrapper {
+  margin-top: 24px;
+  border-top: 1px solid var(--card-border);
+  padding-top: 20px;
+  animation: fadeIn 0.3s ease;
+}
+.playlist-entries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.playlist-entries-header h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.playlist-selection-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.playlist-entries-list {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 6px;
+}
+.playlist-entry-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: var(--transition-smooth);
+}
+.playlist-entry-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.playlist-entry-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+.playlist-entry-checkbox:checked {
+  background: var(--primary-glow);
+  border-color: transparent;
+}
+.playlist-entry-checkbox:checked::before {
+  content: '✓';
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.playlist-entry-index {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.playlist-entry-title {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+.playlist-entry-duration {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.playlist-entry-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.playlist-entry-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+/* Metadata & Thumbnail Checkbox Styling */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: var(--transition-smooth);
+}
+.checkbox-container:hover {
+  color: var(--text-primary);
+}
+.checkbox-container input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+.checkbox-container input[type="checkbox"]:checked {
+  background: var(--primary-glow);
+  border-color: transparent;
+}
+.checkbox-container input[type="checkbox"]:checked::before {
+  content: '✓';
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
 }
