@@ -1,7 +1,7 @@
 {
   "name": "yt-downloader-electron",
-  "version": "1.0.0",
-  "description": "A premium yt-dlp GUI downloader powered by Electron",
+  "version": "1.0.1",
+  "description": "A yt-dlp GUI downloader powered by Electron",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -15,15 +15,15 @@
     "mp3",
     "mp4"
   ],
-  "author": "Antigravity",
+  "author": "Tabby Neko",
   "license": "ISC",
   "devDependencies": {
     "electron": "^31.0.0",
     "electron-builder": "^26.15.3"
   },
   "build": {
-    "appId": "com.antigravity.ytdownloader",
-    "productName": "YT-DLP Premium Downloader",
+    "appId": "com.tabbyneko.ytdownloader",
+    "productName": "YT-DLP Media Downloader",
     "directories": {
       "output": "dist"
     },
