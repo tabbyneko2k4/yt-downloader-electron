@@ -16,12 +16,13 @@ if (app.isPackaged) {
 }
 app.setPath('userData', userDataPath);
 
-// Vô hiệu hóa tăng tốc phần cứng để tránh lỗi GPU trên môi trường VM/Sandbox/Remote
-app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('no-sandbox');
-app.commandLine.appendSwitch('disable-gpu');
-app.commandLine.appendSwitch('disable-software-rasterizer');
-app.commandLine.appendSwitch('disable-gpu-sandbox');
+// Vô hiệu hóa tăng tốc phần cứng nếu cần thiết trên môi trường VM/Sandbox/Remote.
+// Mặc định để Chromium tự động quản lý và fallback để tránh lỗi "Failed to create shared context for virtualization" dẫn đến không lên UI.
+// app.disableHardwareAcceleration();
+// app.commandLine.appendSwitch('no-sandbox');
+// app.commandLine.appendSwitch('disable-gpu');
+// app.commandLine.appendSwitch('disable-software-rasterizer');
+// app.commandLine.appendSwitch('disable-gpu-sandbox');
 
 let mainWindow;
 
