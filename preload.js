@@ -11,6 +11,16 @@ contextBridge.exposeInMainWorld('api', {
   getDownloadsPath: () => ipcRenderer.invoke('app:get-downloads-path'),
   startDrag: (filePath) => ipcRenderer.send('ondragstart', filePath),
   
+  // Setup and updates
+  checkSetupStatus: () => ipcRenderer.invoke('setup:check-status'),
+  startSetup: () => ipcRenderer.invoke('setup:start'),
+  updateBinaries: () => ipcRenderer.invoke('setup:update'),
+  onSetupProgress: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on('setup-progress', subscription);
+    return () => ipcRenderer.removeListener('setup-progress', subscription);
+  },
+
   // Listeners for progress and logs
   onDownloadProgress: (callback) => {
     const subscription = (event, data) => callback(data);
@@ -28,3 +38,4 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('download-item-change', subscription);
   }
 });
+

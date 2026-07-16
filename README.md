@@ -28,11 +28,18 @@ YT-DLP Downloader is a premium cross-platform desktop wrapper for `yt-dlp`, prov
 
 - **Modern & Premium UI**: Built with a sleek dark mode theme, Outfit typography, custom title bar, glassmorphism cards, and interactive hover effects.
 - **Dynamic Link Analysis**: Fetches rich metadata (thumbnail, title, duration, uploader, and all available stream formats) using `yt-dlp --dump-json` before downloading.
+- **Automated Dependency Setup & Updater**: On first startup, the app automatically checks, downloads, and configures local `yt-dlp`, `ffmpeg`, and `ffprobe` binaries. An in-app "Update" button allows upgrading `yt-dlp` to its latest release with a single click.
+- **Full Playlist Support**: Supports downloading entire playlists/sets (especially optimized for SoundCloud playlists using direct API v2 resolution with high-speed chunked fetching). Users can preview playlist items and selectively check/uncheck tracks to download.
 - **Flexible Formats & Quality Presets**:
   - **Video (MP4)**: Support for `Best Quality`, `1080p`, `720p`, and `480p`.
   - **Audio (Music Extraction)**: Convert to high-quality `MP3 (320kbps)`, `MP3 (192kbps)`, lossless `WAV`, or native `M4A`.
+- **Metadata & Thumbnail Embedding**: Option to embed full media metadata (title, artist, album, etc.) and cover artwork (automatically converted to JPG) directly into download files.
 - **Real-Time Progress Tracking**: Displays active progress percentage, current download speed, estimated total file size, and Estimated Time of Arrival (ETA).
 - **Live Logs Console**: Keep track of the actual command-line output from the running `yt-dlp` child process.
+- **Rich Download History & File Operations**: Keep track of downloaded videos and audios. Open files directly or copy their absolute paths to the clipboard with platform-optimized formats.
+- **Drag and Drop Files**: Drag downloaded items directly from the History list into other applications (e.g., file explorer, video editor, chat window) for instant use.
+- **Robust Path Resolution**: Auto-detects final target file paths from logs, with a smart fallback directory scan for recently modified files (last 15 seconds) if log format changes.
+- **Local Application Cache**: Sandboxed `userData` directory configured inside the application folder (`electron_user_data`), preventing folder write permission issues and keeping the application fully portable.
 - **Interactive Download Management**:
   - Choose custom saving directory through native system dialogs.
   - Abort/Cancel active downloads cleanly at any time (sends `SIGTERM` to the process).
@@ -41,19 +48,11 @@ YT-DLP Downloader is a premium cross-platform desktop wrapper for `yt-dlp`, prov
 
 ## 📋 Prerequisites
 
-Before running the application, make sure you have the following installed on your system:
+The application features an **automated setup wizard** that downloads and configures its own local copies of `yt-dlp`, `ffmpeg`, and `ffprobe` on first launch. 
 
-1. **Node.js** (v16.x or newer recommended) and **npm**.
-2. **yt-dlp**: Must be added to your system's `PATH` environment variable.
-   - [Download yt-dlp](https://github.com/yt-dlp/yt-dlp#installation)
-3. **ffmpeg** & **ffprobe**: Required by `yt-dlp` for merging high-quality video/audio streams and extracting audio (e.g., converting to MP3/WAV).
-   - [Download FFmpeg](https://ffmpeg.org/download.html) and add the `bin` directory to your system `PATH`.
-
-> **Verify installations in your terminal:**
-> ```bash
-> yt-dlp --version
-> ffmpeg -version
-> ```
+Therefore, **manual installation is optional**. If you prefer to use system-wide installations, ensure:
+1. **Node.js** (v16.x or newer recommended) and **npm** are installed.
+2. `yt-dlp`, `ffmpeg`, and `ffprobe` are available in your system's `PATH` (optional fallback).
 
 ## 🚀 Getting Started
 
@@ -79,6 +78,13 @@ node install_electron.js
 ```bash
 npm start
 ```
+
+### 4. Package/Build for Production (Optional)
+To package the application into a production-ready Windows installer or a portable executable:
+```bash
+npm run build
+```
+The packaged outputs will be saved in the `dist/` directory.
 
 ---
 
@@ -118,11 +124,18 @@ YT-DLP Downloader là ứng dụng máy tính đa nền tảng, đóng gói bộ
 
 - **Giao diện Cao cấp & Hiện đại**: Sử dụng tông màu tối (dark mode) chủ đạo, font chữ Outfit thời thượng, thanh tiêu đề tùy biến, các thẻ hiệu ứng kính mờ và tương tác di chuột tinh tế.
 - **Phân tích Liên kết Động**: Tự động trích xuất siêu dữ liệu phong phú (ảnh thu nhỏ, tiêu đề, thời lượng, người đăng và danh sách tất cả định dạng luồng có sẵn) thông qua lệnh `yt-dlp --dump-json` trước khi tải.
+- **Tự động cấu hình & Cập nhật phụ thuộc**: Trong lần chạy đầu tiên, ứng dụng tự động kiểm tra, tải xuống và cấu hình các thư viện chạy độc lập gồm `yt-dlp`, `ffmpeg`, và `ffprobe`. Nút "Cập nhật" tích hợp giúp nâng cấp `yt-dlp` lên phiên bản mới nhất chỉ với 1 click.
+- **Hỗ trợ Playlist với bộ chọn bài**: Hỗ trợ tải toàn bộ danh sách phát (tối ưu hóa đặc biệt cho SoundCloud playlist/set thông qua API v2 tìm nạp phân đoạn tốc độ cao). Người dùng có thể xem trước danh sách phát và chọn/bỏ chọn từng bài hát trước khi tải.
 - **Tùy chọn Định dạng & Chất lượng đa dạng**:
   - **Video (MP4)**: Hỗ trợ các độ phân giải `Chất lượng tốt nhất`, `1080p`, `720p`, và `480p`.
   - **Audio (Tách nhạc)**: Chuyển đổi sang `MP3 (320kbps)`, `MP3 (192kbps)`, định dạng không nén `WAV`, hoặc định dạng gốc `M4A`.
+- **Nhúng siêu dữ liệu & ảnh bìa**: Tùy chọn nhúng trực tiếp toàn bộ dữ liệu thẻ mô tả (tiêu đề, tác giả, album...) và ảnh thu nhỏ (tự động chuyển đổi sang JPG) vào tệp tin tải về.
 - **Theo dõi Tiến trình Thời gian thực**: Hiển thị phần trăm tải xuống, tốc độ tải hiện tại, dung lượng tệp dự kiến và thời gian hoàn thành ước tính (ETA).
 - **Hộp thoại Logs trực tiếp**: Hiển thị trực quan đầu ra dòng lệnh (stdout) trực tiếp từ tiến trình con `yt-dlp` đang chạy.
+- **Lịch sử tải xuống & Thao tác tệp nhanh**: Lưu trữ lịch sử tải xuống trực quan. Hỗ trợ mở trực tiếp tệp tin hoặc sao chép nhanh đường dẫn tuyệt đối của tệp vào clipboard theo định dạng tối ưu cho từng hệ điều hành.
+- **Kéo thả tệp tin (Drag and Drop)**: Người dùng có thể nhấn giữ và kéo thả trực tiếp các mục trong phần Lịch sử tải xuống ra ngoài (ví dụ vào thư mục, phần mềm dựng phim, hoặc ứng dụng chat như Zalo/Messenger).
+- **Trích xuất đường dẫn thông minh**: Phân tích logs tiến trình tải để xác định chính xác đường dẫn tệp tin đầu ra, đi kèm cơ chế dự phòng tự động quét các tệp thay đổi gần nhất trong 15 giây nếu định dạng log của yt-dlp thay đổi.
+- **Không gian lưu trữ di động (Portable)**: Thư mục dữ liệu ứng dụng (`userData`) được cấu hình nằm ngay bên trong thư mục gốc của dự án (`electron_user_data`), tránh các lỗi phân quyền ghi ổ đĩa hệ thống và giúp ứng dụng dễ dàng di chuyển.
 - **Quản lý Tải xuống Trực quan**:
   - Chọn thư mục lưu trữ tùy ý thông qua hộp thoại hệ thống gốc.
   - Hủy/Dừng tiến trình tải xuống đang chạy an toàn bất cứ lúc nào (gửi tín hiệu `SIGTERM` tới tiến trình).
@@ -131,19 +144,11 @@ YT-DLP Downloader là ứng dụng máy tính đa nền tảng, đóng gói bộ
 
 ## 📋 Yêu cầu Hệ thống
 
-Trước khi khởi chạy ứng dụng, hãy đảm bảo hệ thống của bạn đã cài đặt các công cụ sau:
+Ứng dụng tích hợp **trình thiết lập tự động** sẽ tự tải và cấu hình các công cụ `yt-dlp`, `ffmpeg` và `ffprobe` trong lần đầu khởi chạy.
 
-1. **Node.js** (Khuyến nghị v16.x trở lên) và **npm**.
-2. **yt-dlp**: Phải được thêm vào biến môi trường `PATH` của hệ thống.
-   - [Tải về yt-dlp](https://github.com/yt-dlp/yt-dlp#installation)
-3. **ffmpeg** & **ffprobe**: Cần thiết để `yt-dlp` ghép nối luồng video & âm thanh chất lượng cao hoặc chuyển đổi tách nhạc (ví dụ sang MP3/WAV).
-   - [Tải về FFmpeg](https://ffmpeg.org/download.html) và thêm thư mục `bin` vào biến môi trường `PATH` của hệ thống.
-
-> **Kiểm tra cài đặt trong Terminal / Command Prompt:**
-> ```bash
-> yt-dlp --version
-> ffmpeg -version
-> ```
+Vì vậy, **việc cài đặt thủ công là không bắt buộc**. Nếu bạn muốn cấu hình thủ công cho toàn hệ thống, hãy đảm bảo:
+1. Máy tính đã cài đặt **Node.js** (Khuyến nghị v16.x trở lên) và **npm**.
+2. Đã thêm `yt-dlp`, `ffmpeg` và `ffprobe` vào biến môi trường `PATH` của hệ thống (tùy chọn dự phòng).
 
 ## 🚀 Hướng dẫn Cài đặt & Khởi chạy
 
@@ -169,6 +174,13 @@ node install_electron.js
 ```bash
 npm start
 ```
+
+### 4. Đóng gói ứng dụng (Tùy chọn)
+Để đóng gói ứng dụng thành bộ cài đặt Windows hoặc tệp tin chạy độc lập di động (portable):
+```bash
+npm run build
+```
+Sản phẩm sau khi đóng gói sẽ nằm trong thư mục `dist/`.
 
 ---
 

@@ -2,10 +2,132 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const https = require('https');
+
+
+function getBinPaths() {
+  const isWin = process.platform === 'win32';
+  return {
+    ytDlp: path.join(binDir, isWin ? 'yt-dlp.exe' : 'yt-dlp'),
+    ffmpeg: path.join(binDir, isWin ? 'ffmpeg.exe' : 'ffmpeg'),
+    ffprobe: path.join(binDir, isWin ? 'ffprobe.exe' : 'ffprobe')
+  };
+}
+
+function checkBinariesExist() {
+  const paths = getBinPaths();
+  return fs.existsSync(paths.ytDlp) && fs.existsSync(paths.ffmpeg) && fs.existsSync(paths.ffprobe);
+}
+
+function getYtDlpCommand() {
+  const paths = getBinPaths();
+  if (fs.existsSync(paths.ytDlp)) {
+    return paths.ytDlp;
+  }
+  return 'yt-dlp';
+}
+
+// Tải file có hiển thị tiến trình
+function downloadFile(url, destPath, onProgress) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(destPath);
+    const request = (targetUrl) => {
+      const parsedUrl = new URL(targetUrl);
+      const options = {
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      };
+
+      https.get(options, (response) => {
+        if (response.statusCode === 301 || response.statusCode === 302) {
+          request(response.headers.location);
+          return;
+        }
+        
+        if (response.statusCode !== 200) {
+          reject(new Error(`Tải file thất bại: ${response.statusCode}`));
+          return;
+        }
+
+        const totalLength = parseInt(response.headers['content-length'], 10);
+        let downloadedLength = 0;
+
+        response.on('data', (chunk) => {
+          downloadedLength += chunk.length;
+          file.write(chunk);
+          if (onProgress && totalLength) {
+            onProgress(downloadedLength, totalLength);
+          }
+        });
+
+        response.on('end', () => {
+          file.end();
+          resolve();
+        });
+      }).on('error', (err) => {
+        file.close();
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+    };
+    request(url);
+  });
+}
+
+function extractZipWindows(zipPath, destDir) {
+  return new Promise((resolve, reject) => {
+    const escapedZipPath = zipPath.replace(/'/g, "''");
+    const escapedDestDir = destDir.replace(/'/g, "''");
+    const ps = spawn('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      `Expand-Archive -Path '${escapedZipPath}' -DestinationPath '${escapedDestDir}' -Force`
+    ]);
+
+    let stderr = '';
+    ps.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    ps.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Giải nén thất bại: ${stderr}`));
+    });
+    ps.on('error', reject);
+  });
+}
+
+function extractZipUnix(zipPath, destDir) {
+  return new Promise((resolve, reject) => {
+    const ps = spawn('unzip', ['-o', zipPath, '-d', destDir]);
+    ps.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`unzip thất bại: code ${code}`));
+    });
+    ps.on('error', reject);
+  });
+}
+
+function extractZip(zipPath, destDir) {
+  if (process.platform === 'win32') {
+    return extractZipWindows(zipPath, destDir);
+  } else {
+    return extractZipUnix(zipPath, destDir);
+  }
+}
+
 
 // Cấu hình thư mục dữ liệu cục bộ để tránh lỗi "Access is denied" khi truy cập cache
 const userDataPath = path.join(__dirname, 'electron_user_data');
 app.setPath('userData', userDataPath);
+
+// Thư mục chứa thư viện local
+const binDir = path.join(app.getPath('userData'), 'bin');
 
 // Vô hiệu hóa tăng tốc phần cứng để tránh lỗi GPU trên môi trường VM/Sandbox/Remote
 app.disableHardwareAcceleration();
@@ -251,21 +373,29 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
   }
 
   return new Promise((resolve, reject) => {
+    const ytDlpCmd = getYtDlpCommand();
+    const pathSeparator = process.platform === 'win32' ? ';' : ':';
+    const env = {
+      ...process.env,
+      PATH: `${binDir}${pathSeparator}${process.env.PATH}`,
+      PYTHONIOENCODING: 'utf-8',
+      LANG: 'en_US.UTF-8'
+    };
     // Run yt-dlp --flat-playlist --dump-single-json to support playlists/sets
-    const process = spawn('yt-dlp', ['--flat-playlist', '--dump-single-json', url]);
+    const child = spawn(ytDlpCmd, ['--flat-playlist', '--dump-single-json', url], { env });
     
     let stdoutData = '';
     let stderrData = '';
 
-    process.stdout.on('data', (data) => {
+    child.stdout.on('data', (data) => {
       stdoutData += data.toString();
     });
 
-    process.stderr.on('data', (data) => {
+    child.stderr.on('data', (data) => {
       stderrData += data.toString();
     });
 
-    process.on('close', (code) => {
+    child.on('close', (code) => {
       if (code === 0) {
         try {
           const info = JSON.parse(stdoutData);
@@ -338,9 +468,9 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
       }
     });
 
-    process.on('error', (err) => {
+    child.on('error', (err) => {
       if (err.code === 'ENOENT') {
-        reject(new Error('Không tìm thấy yt-dlp trên hệ thống. Hãy đảm bảo bạn đã cài đặt yt-dlp và cấu hình biến môi trường PATH.'));
+        reject(new Error('Không tìm thấy yt-dlp trên hệ thống. Hãy đảm bảo bạn đã cài đặt đầy đủ các thư viện.'));
       } else {
         reject(err);
       }
@@ -450,13 +580,16 @@ ipcMain.handle('yt-dlp:download', async (event, { id, url, formatType, quality, 
 
     args.push(url);
 
-    console.log(`Starting download for ${id} with command: yt-dlp ${args.join(' ')}`);
+    const ytDlpCmd = getYtDlpCommand();
+    console.log(`Starting download for ${id} with command: ${ytDlpCmd} ${args.join(' ')}`);
+    const pathSeparator = process.platform === 'win32' ? ';' : ':';
     const env = { 
       ...process.env, 
+      PATH: `${binDir}${pathSeparator}${process.env.PATH}`,
       PYTHONIOENCODING: 'utf-8', 
       LANG: 'en_US.UTF-8' 
     };
-    const downloadProcess = spawn('yt-dlp', args, { env });
+    const downloadProcess = spawn(ytDlpCmd, args, { env });
     activeDownloads.set(id, downloadProcess);
 
     let logs = '';
@@ -668,6 +801,9 @@ ipcMain.handle('clipboard:copy-file', async (event, filePath) => {
 // Tạo icon kéo thả mặc định để tương thích đa nền tảng (đặc biệt là macOS)
 const dragIconPath = path.join(userDataPath, 'drag-icon.png');
 try {
+  if (!fs.existsSync(userDataPath)) {
+    fs.mkdirSync(userDataPath, { recursive: true });
+  }
   if (!fs.existsSync(dragIconPath)) {
     const base64Data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
     fs.writeFileSync(dragIconPath, Buffer.from(base64Data, 'base64'));
@@ -693,4 +829,150 @@ ipcMain.on('ondragstart', (event, filePath) => {
     console.error('Error starting drag:', err);
   }
 });
+
+// IPC Handler: Check Setup Status
+ipcMain.handle('setup:check-status', async () => {
+  console.log("setup:check-status IPC called!");
+  const exists = checkBinariesExist();
+  console.log("checkBinariesExist result:", exists);
+  return { needsSetup: !exists };
+});
+
+// IPC Handler: Start Setup & Download dependencies
+ipcMain.handle('setup:start', async (event) => {
+  try {
+    if (!fs.existsSync(binDir)) {
+      fs.mkdirSync(binDir, { recursive: true });
+    }
+
+    const isWin = process.platform === 'win32';
+    const isMac = process.platform === 'darwin';
+
+    // URLs for downloads
+    let ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+    let ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip';
+    let ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip';
+
+    if (isMac) {
+      ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-osx-64.zip';
+      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-osx-64.zip';
+    } else if (process.platform !== 'win32') {
+      ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
+      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-linux-64.zip';
+      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip';
+    }
+
+    const binPaths = getBinPaths();
+
+    const sendProgress = (step, percent, status, detail) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('setup-progress', { step, percent, status, detail });
+      }
+    };
+
+    // Step 1: Download yt-dlp
+    sendProgress(1, 0, 'Đang tải yt-dlp...', 'Đang khởi tạo kết nối...');
+    const ytDlpTempPath = binPaths.ytDlp + '.tmp';
+    await downloadFile(ytDlpUrl, ytDlpTempPath, (downloaded, total) => {
+      const p = Math.round((downloaded / total) * 100);
+      sendProgress(1, p, 'Đang tải yt-dlp...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
+    });
+
+    if (fs.existsSync(binPaths.ytDlp)) {
+      fs.unlinkSync(binPaths.ytDlp);
+    }
+    fs.renameSync(ytDlpTempPath, binPaths.ytDlp);
+    if (!isWin) {
+      fs.chmodSync(binPaths.ytDlp, '755');
+    }
+
+    // Step 2: Download ffmpeg.zip
+    sendProgress(2, 0, 'Đang tải FFmpeg...', 'Đang khởi tạo kết nối...');
+    const ffmpegZipPath = path.join(binDir, 'ffmpeg.zip');
+    await downloadFile(ffmpegUrl, ffmpegZipPath, (downloaded, total) => {
+      const p = Math.round((downloaded / total) * 100);
+      sendProgress(2, p, 'Đang tải FFmpeg...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
+    });
+
+    sendProgress(2, 95, 'Đang giải nén FFmpeg...', 'Đang bung tệp tin...');
+    await extractZip(ffmpegZipPath, binDir);
+    try {
+      fs.unlinkSync(ffmpegZipPath);
+    } catch (e) {}
+    if (!isWin) {
+      fs.chmodSync(binPaths.ffmpeg, '755');
+    }
+
+    // Step 3: Download ffprobe.zip
+    sendProgress(3, 0, 'Đang tải FFprobe...', 'Đang khởi tạo kết nối...');
+    const ffprobeZipPath = path.join(binDir, 'ffprobe.zip');
+    await downloadFile(ffprobeUrl, ffprobeZipPath, (downloaded, total) => {
+      const p = Math.round((downloaded / total) * 100);
+      sendProgress(3, p, 'Đang tải FFprobe...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
+    });
+
+    sendProgress(3, 95, 'Đang giải nén FFprobe...', 'Đang bung tệp tin...');
+    await extractZip(ffprobeZipPath, binDir);
+    try {
+      fs.unlinkSync(ffprobeZipPath);
+    } catch (e) {}
+    if (!isWin) {
+      fs.chmodSync(binPaths.ffprobe, '755');
+    }
+
+    sendProgress(4, 100, 'Hoàn thành thiết lập!', 'Mọi thứ đã sẵn sàng để sử dụng.');
+    return { success: true };
+  } catch (err) {
+    console.error('Setup failed:', err);
+    throw err;
+  }
+});
+
+// IPC Handler: Update yt-dlp & FFmpeg
+ipcMain.handle('setup:update', async (event) => {
+  return new Promise((resolve, reject) => {
+    const paths = getBinPaths();
+    if (!fs.existsSync(paths.ytDlp)) {
+      reject(new Error('Không tìm thấy tệp yt-dlp.exe cục bộ. Vui lòng thực hiện thiết lập trước.'));
+      return;
+    }
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('download-log', { id: 'update', logLine: 'Bắt đầu kiểm tra bản cập nhật mới cho yt-dlp...' });
+    }
+
+    const child = spawn(paths.ytDlp, ['--update']);
+    let logs = '';
+
+    child.stdout.on('data', (data) => {
+      const line = data.toString();
+      logs += line;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('download-log', { id: 'update', logLine: line.trim() });
+      }
+    });
+
+    child.stderr.on('data', (data) => {
+      const line = data.toString();
+      logs += line;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('download-log', { id: 'update', logLine: `[Lỗi] ${line.trim()}` });
+      }
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, logs });
+      } else {
+        reject(new Error(`Tiến trình kết thúc với mã lỗi ${code}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+  });
+});
+
 

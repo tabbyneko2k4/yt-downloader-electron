@@ -1,3 +1,4 @@
+console.log("Renderer script loaded.");
 // DOM Elements
 const urlInput = document.getElementById('video-url');
 const btnAnalyze = document.getElementById('btn-analyze');
@@ -39,6 +40,16 @@ const playlistEntriesList = document.getElementById('playlist-entries-list');
 const btnSelectAll = document.getElementById('btn-select-all');
 const btnDeselectAll = document.getElementById('btn-deselect-all');
 
+// Setup & Update DOM Elements
+const setupOverlay = document.getElementById('setup-overlay');
+const setupStatus = document.getElementById('setup-status');
+const setupPercent = document.getElementById('setup-percent');
+const setupProgressFill = document.getElementById('setup-progress-fill');
+const setupDetail = document.getElementById('setup-detail');
+const setupLogConsole = document.getElementById('setup-log-console');
+const btnUpdateBinaries = document.getElementById('btn-update-binaries');
+const updateStatusText = document.getElementById('update-status-text');
+
 // App State
 let currentVideoInfo = null;
 let currentDownloadId = null;
@@ -62,8 +73,107 @@ const audioQualities = [
   { name: 'M4A (AAC Audio)', value: 'm4a' }
 ];
 
+// Trình thiết lập tải các file phụ thuộc
+async function runSetupWizard() {
+  setupOverlay.classList.remove('hidden');
+  setupLogConsole.innerHTML = 'Bắt đầu thiết lập môi trường tải xuống...\n';
+
+  const removeListener = window.api.onSetupProgress((data) => {
+    setupStatus.textContent = data.status;
+    setupPercent.textContent = `${data.percent}%`;
+    setupProgressFill.style.width = `${data.percent}%`;
+    setupDetail.textContent = data.detail;
+
+    const logLine = `[Bước ${data.step}/3] ${data.status} - ${data.detail}\n`;
+    setupLogConsole.innerHTML += logLine;
+    setupLogConsole.scrollTop = setupLogConsole.scrollHeight;
+  });
+
+  try {
+    await window.api.startSetup();
+    setupLogConsole.innerHTML += 'Hoàn tất thiết lập thành công!\n';
+    setTimeout(() => {
+      setupOverlay.classList.add('hidden');
+    }, 1500);
+  } catch (err) {
+    setupStatus.textContent = 'Lỗi thiết lập!';
+    setupPercent.textContent = 'LỖI';
+    setupProgressFill.style.background = 'var(--danger-color)';
+    setupDetail.textContent = err.message;
+    setupLogConsole.innerHTML += `[LỖI] Thiết lập thất bại: ${err.message}\n`;
+    alert(`Thiết lập thất bại: ${err.message}. Vui lòng kiểm tra kết nối internet và khởi động lại ứng dụng.`);
+  } finally {
+    removeListener();
+  }
+}
+
+// Cập nhật yt-dlp
+async function updateBinaries() {
+  if (btnUpdateBinaries.classList.contains('spinning')) return;
+
+  btnUpdateBinaries.classList.add('spinning');
+  updateStatusText.textContent = 'Đang kiểm tra...';
+  
+  const originalDownloadId = currentDownloadId;
+  currentDownloadId = 'update';
+  
+  progressSection.classList.remove('hidden');
+  downloadingTitle.textContent = 'Cập nhật các thành phần hệ thống...';
+  statSpeed.textContent = 'Đang cập nhật yt-dlp';
+  statEta.textContent = '--:--';
+  statSize.textContent = '';
+  progressFill.style.width = '50%';
+  progressPercent.textContent = '50%';
+  logConsole.innerHTML = '';
+  logConsole.classList.remove('hidden');
+  logArrow.style.transform = 'rotate(180deg)';
+
+  try {
+    await window.api.updateBinaries();
+    progressFill.style.width = '100%';
+    progressPercent.textContent = '100%';
+    downloadingTitle.textContent = 'Cập nhật hoàn tất!';
+    appendLog('\n[Hệ thống] Cập nhật yt-dlp hoàn thành thành công!');
+    updateStatusText.textContent = 'Đã cập nhật';
+    alert('Cập nhật yt-dlp thành công!');
+  } catch (err) {
+    progressFill.style.width = '100%';
+    progressFill.style.background = 'var(--danger-color)';
+    progressPercent.textContent = 'Lỗi';
+    downloadingTitle.textContent = 'Cập nhật thất bại!';
+    appendLog(`\n[Lỗi] Cập nhật thất bại: ${err.message}`);
+    updateStatusText.textContent = 'Cập nhật';
+    alert(`Cập nhật thất bại: ${err.message}`);
+  } finally {
+    setTimeout(() => {
+      btnUpdateBinaries.classList.remove('spinning');
+      if (currentDownloadId === 'update') {
+        progressSection.classList.add('hidden');
+        progressFill.style.background = 'var(--primary-glow)';
+        currentDownloadId = originalDownloadId;
+      }
+    }, 4000);
+  }
+}
+
 // Initialize
 async function init() {
+  console.log("init() started.");
+  // Kiểm tra trạng thái thiết lập thư viện
+  try {
+    console.log("Invoking checkSetupStatus...");
+    const status = await window.api.checkSetupStatus();
+    console.log("checkSetupStatus result:", status);
+    if (status.needsSetup) {
+      console.log("Needs setup. Starting wizard...");
+      await runSetupWizard();
+    } else {
+      console.log("No setup needed.");
+    }
+  } catch (err) {
+    console.error('Lỗi kiểm tra thiết lập:', err);
+  }
+
   // Restore destination path or set default Downloads folder
   if (!currentDestPath) {
     try {
@@ -97,6 +207,7 @@ async function init() {
   btnBrowse.addEventListener('click', selectDestDirectory);
   btnDownload.addEventListener('click', startDownload);
   btnCancel.addEventListener('click', cancelActiveDownload);
+  btnUpdateBinaries.addEventListener('click', updateBinaries);
 
   btnToggleLog.addEventListener('click', toggleConsoleLog);
   btnClearHistory.addEventListener('click', clearAllHistory);

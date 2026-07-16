@@ -36,7 +36,15 @@
         </svg>
         <h1>YT-DLP <span class="gradient-text">Downloader</span></h1>
       </div>
-      <p class="subtitle">Trình tải đa phương tiện sử dụng yt-dlp</p>
+      <p class="subtitle">
+        Trình tải đa phương tiện sử dụng yt-dlp
+        <button id="btn-update-binaries" class="btn-update-link" title="Kiểm tra & Cập nhật các thư viện">
+          <svg class="icon-refresh" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          <span id="update-status-text">Cập nhật</span>
+        </button>
+      </p>
     </header>
 
     <!-- Main Content -->
@@ -196,6 +204,44 @@
       </section>
     </main>
   </div>
+
+  <!-- Setup Overlay (shown when dependencies are missing) -->
+  <div id="setup-overlay" class="setup-overlay hidden">
+    <div class="setup-card animate-fade-in">
+      <div class="logo-wrapper">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+            fill="url(#setup-logo-grad)" />
+          <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
+          <defs>
+            <linearGradient id="setup-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#ff007f" />
+              <stop offset="1" stop-color="#7928ca" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h2>Thiết lập <span class="gradient-text">Hệ thống</span></h2>
+      </div>
+      <p class="setup-subtitle">Ứng dụng đang chuẩn bị các công cụ hỗ trợ tải xuống (yt-dlp, FFmpeg, ffprobe)...</p>
+      
+      <div class="setup-progress-wrapper">
+        <div class="setup-progress-info">
+          <span id="setup-status">Đang kiểm tra...</span>
+          <span id="setup-percent">0%</span>
+        </div>
+        <div class="setup-progress-bar-container">
+          <div id="setup-progress-fill" class="setup-progress-fill" style="width: 0%;"></div>
+        </div>
+        <span id="setup-detail" class="setup-detail">Vui lòng không đóng ứng dụng lúc này...</span>
+      </div>
+
+      <div class="setup-log-console" id="setup-log-console">
+        <!-- Live setup logs -->
+      </div>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 
