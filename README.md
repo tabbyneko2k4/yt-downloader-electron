@@ -80,11 +80,19 @@ npm start
 ```
 
 ### 4. Package/Build for Production (Optional)
-To package the application into a production-ready Windows installer or a portable executable:
+To package the application into a zip distribution:
 ```bash
 npm run build
 ```
-The packaged outputs will be saved in the `dist/` directory.
+To package the application and build the **custom setup installer** (`YT-DLP Downloader Setup 1.0.1.exe`) with auto-downloads of dependencies:
+```bash
+npm run build:installer
+```
+To run and test the installer in development mode:
+```bash
+npm run start:installer
+```
+The packaged outputs will be saved in `dist/` and `dist-installer/` respectively.
 
 ---
 
@@ -97,7 +105,8 @@ yt-downloader-electron/
 ├── main.js               # Electron Main Process (IPC Handlers, Process Spawning)
 ├── preload.js            # Electron Preload Script (Secure IPC Bridge)
 ├── renderer.js           # Frontend Logic & UI Event Handlers
-├── install_electron.js   # Manual script for offline/cached Electron installation
+├── build-installer.js    # Integrated installer build pipeline script
+├── installer/            # Custom Electron-based installer sub-project
 └── package.json          # Node.js Project Configuration & Dependencies
 ```
 
@@ -176,11 +185,19 @@ npm start
 ```
 
 ### 4. Đóng gói ứng dụng (Tùy chọn)
-Để đóng gói ứng dụng thành bộ cài đặt Windows hoặc tệp tin chạy độc lập di động (portable):
+Để đóng gói ứng dụng thành tệp zip phân phối:
 ```bash
 npm run build
 ```
-Sản phẩm sau khi đóng gói sẽ nằm trong thư mục `dist/`.
+Để đóng gói ứng dụng và tạo **bộ cài đặt setup thông minh** (`YT-DLP Downloader Setup 1.0.1.exe`) tự động tải phụ thuộc (`bin` dependencies):
+```bash
+npm run build:installer
+```
+Để chạy thử trình cài đặt trong môi trường phát triển (development):
+```bash
+npm run start:installer
+```
+Sản phẩm đóng gói sẽ nằm lần lượt trong thư mục `dist/` và `dist-installer/`.
 
 ---
 
@@ -193,7 +210,8 @@ yt-downloader-electron/
 ├── main.js               # Tiến trình Electron Main (Xử lý IPC, spawn tiến trình yt-dlp)
 ├── preload.js            # Cầu nối bảo mật Electron Preload (Secure IPC Bridge)
 ├── renderer.js           # Logic xử lý tại Frontend & bắt sự kiện giao diện
-├── install_electron.js   # Script giải nén cài đặt Electron thủ công khi bị lỗi mạng/cache
+├── build-installer.js    # Script tự động đóng gói tích hợp bộ cài đặt
+├── installer/            # Thư mục mã nguồn của ứng dụng cài đặt (installer)
 └── package.json          # Cấu hình dự án Node.js và các thư viện dependencies
 ```
 
