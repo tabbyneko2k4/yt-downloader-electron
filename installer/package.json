@@ -1,0 +1,37 @@
+{
+  "name": "yt-downloader-installer",
+  "version": "1.0.1",
+  "description": "Installer for YT-DLP Media Downloader",
+  "main": "main.js",
+  "author": "Tabby Neko",
+  "build": {
+    "appId": "com.tabbyneko.ytdownloader.installer",
+    "productName": "YT-DLP Downloader Setup",
+    "electronVersion": "31.7.7",
+    "icon": "icon/icon.png",
+    "directories": {
+      "output": "../dist-installer"
+    },
+    "win": {
+      "icon": "icon/icon.png",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "app.zip",
+      "icon/icon.png"
+    ],
+    "asar": true
+  }
+}

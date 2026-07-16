@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --windows"
+    "build": "electron-builder --windows",
+    "build:installer": "node build-installer.js",
+    "start:installer": "electron ./installer"
   },
   "keywords": [
     "yt-dlp",
@@ -24,10 +26,12 @@
   "build": {
     "appId": "com.tabbyneko.ytdownloader",
     "productName": "YT-DLP Media Downloader",
+    "icon": "icon/icon.png",
     "directories": {
       "output": "dist"
     },
     "win": {
+      "icon": "icon/icon.png",
       "target": [
         {
           "target": "zip",

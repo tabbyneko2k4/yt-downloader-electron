@@ -37,21 +37,10 @@ app.setPath('userData', userDataPath);
 
 // Thư mục chứa thư viện local
 let binDir;
-const appDirBin = path.join(path.dirname(process.execPath), 'bin');
-const devDirBin = path.join(__dirname, 'bin');
-
 if (app.isPackaged) {
-  if (fs.existsSync(appDirBin)) {
-    binDir = appDirBin;
-  } else {
-    binDir = path.join(app.getPath('userData'), 'bin');
-  }
+  binDir = path.join(path.dirname(process.execPath), 'bin');
 } else {
-  if (fs.existsSync(devDirBin)) {
-    binDir = devDirBin;
-  } else {
-    binDir = path.join(app.getPath('userData'), 'bin');
-  }
+  binDir = path.join(__dirname, 'bin');
 }
 
 // Vô hiệu hóa tăng tốc phần cứng để tránh lỗi GPU trên môi trường VM/Sandbox/Remote

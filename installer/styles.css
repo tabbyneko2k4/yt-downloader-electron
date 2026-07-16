@@ -1,0 +1,639 @@
+/* Base Reset & Variables */
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: rgba(15, 23, 42, 0.6);
+  --bg-card: rgba(30, 41, 59, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(99, 102, 241, 0.4);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --color-indigo: #6366f1;
+  --color-violet: #8b5cf6;
+  --color-pink: #ec4899;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  
+  --gradient-primary: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-violet) 100%);
+  --gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  --gradient-hover: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Frameless Window Container */
+.window-container {
+  width: 650px;
+  height: 480px;
+  background-color: #0b0f19;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
+              0 0 30px rgba(99, 102, 241, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative Background Blob */
+.window-container::before {
+  content: '';
+  position: absolute;
+  top: -150px;
+  right: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0) 70%);
+  filter: blur(20px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.window-container::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  left: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
+  filter: blur(20px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Custom Frameless Titlebar */
+.titlebar {
+  height: 36px;
+  background-color: rgba(11, 15, 25, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  -webkit-app-region: drag;
+  z-index: 10;
+}
+
+.titlebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.logo-icon {
+  color: var(--color-indigo);
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.control-btn {
+  background: transparent;
+  border: none;
+  width: 28px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.close-btn:hover {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+/* Main Content Panel */
+.window-content {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Setup Steps (Switchable Sections) */
+.setup-step {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.setup-step.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typography elements */
+h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+}
+
+/* Glass Card Component */
+.glass-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* STEP 1: WELCOME SCREEN */
+.welcome-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.app-branding {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.brand-logo-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--gradient-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.brand-logo {
+  color: white;
+}
+
+.app-branding h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 40%, var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-version {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.welcome-intro {
+  max-width: 520px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.welcome-intro h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-indigo);
+  margin-bottom: 8px;
+}
+
+.welcome-intro p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* STEP 2: INSTALLATION OPTIONS */
+.options-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.install-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.mode-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 14px 16px;
+}
+
+.mode-card:hover {
+  border-color: rgba(99, 102, 241, 0.2);
+  background-color: rgba(30, 41, 59, 0.6);
+}
+
+.mode-card.active {
+  border-color: var(--color-indigo);
+  background-color: rgba(99, 102, 241, 0.05);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.08);
+}
+
+.mode-card input[type="radio"] {
+  accent-color: var(--color-indigo);
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+}
+
+.mode-info {
+  flex: 1;
+}
+
+.mode-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.mode-title-wrapper svg {
+  color: var(--color-indigo);
+}
+
+.mode-title-wrapper h3 {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mode-info p {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* Path Selection Style */
+.path-selection {
+  margin-top: auto;
+  margin-bottom: 12px;
+}
+
+.path-selection label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.path-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.path-input-group input {
+  flex: 1;
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 0 12px;
+  font-size: 12px;
+  height: 36px;
+  font-family: inherit;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.path-input-group input:focus {
+  border-color: var(--color-indigo);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.25);
+}
+
+/* STEP 3: PROGRESS SCREEN */
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.installation-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.status-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.status-icon-wrapper {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pending-dot {
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-indigo);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.check-icon {
+  color: var(--color-success);
+}
+
+.status-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.progress-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.progress-bar-small {
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.progress-fill-small {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+  transition: width 0.1s ease;
+}
+
+.major-progress-container {
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.major-progress-bar {
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+#major-progress-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+  transition: width 0.2s ease;
+}
+
+.major-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+#major-progress-status {
+  font-weight: 500;
+}
+
+#major-progress-percent {
+  font-weight: 600;
+  color: var(--color-indigo);
+}
+
+/* STEP 4: FINISH SCREEN */
+.finish-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.success-header {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.success-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 12px;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+.finish-options-card {
+  max-width: 520px;
+  width: 100%;
+  margin: 10px auto;
+}
+
+.finish-options-card h3 {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.checkbox-label:hover {
+  color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--color-indigo);
+  width: 16px;
+  height: 16px;
+}
+
+.launch-text {
+  font-weight: 500;
+  color: var(--color-indigo);
+}
+
+/* Buttons */
+.btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.btn-primary:hover {
+  background: var(--gradient-hover);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.icon-left {
+  margin-right: -2px;
+}
+
+.icon-right {
+  margin-left: -2px;
+}
+
+/* Page footer containing buttons */
+.step-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+/* Spinner Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Utility classes */
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT-DLP Downloader Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="window-container">
+    <!-- Header bar / Custom Titlebar -->
+    <header class="titlebar">
+      <div class="titlebar-logo">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="logo-icon">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>YT-DLP Downloader Setup</span>
+      </div>
+      <div class="titlebar-controls">
+        <button id="btn-minimize" class="control-btn" title="Thu nhỏ">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <button id="btn-close" class="control-btn close-btn" title="Đóng">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Panel -->
+    <main class="window-content">
+      
+      <!-- STEP 1: WELCOME SCREEN -->
+      <section id="step-welcome" class="setup-step active">
+        <div class="welcome-container">
+          <div class="app-branding">
+            <div class="brand-logo-wrapper">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" class="brand-logo">
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path>
+                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="currentColor"></polygon>
+              </svg>
+            </div>
+            <h1>YT-DLP Downloader</h1>
+            <p class="app-version">Phiên bản 1.0.1</p>
+          </div>
+          
+          <div class="glass-card welcome-intro">
+            <h2>Chào mừng đến với trình cài đặt!</h2>
+            <p>Trình thiết lập này sẽ cài đặt ứng dụng tải nhạc & video chất lượng cao từ YouTube (và hơn 1000+ trang web khác) cùng với các phụ thuộc cần thiết như <strong>yt-dlp</strong>, <strong>ffmpeg</strong> và <strong>ffprobe</strong> để bạn có thể sử dụng ứng dụng ngay lập tức.</p>
+          </div>
+          
+          <div class="step-footer">
+            <div></div>
+            <button id="btn-welcome-next" class="btn btn-primary">
+              Bắt đầu thiết lập
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2: INSTALLATION OPTIONS -->
+      <section id="step-options" class="setup-step">
+        <div class="options-container">
+          <h2>Tùy chọn Cài đặt</h2>
+          <p class="subtitle">Vui lòng chọn loại hình cài đặt và thư mục lưu trữ phù hợp với nhu cầu.</p>
+
+          <div class="install-modes">
+            <!-- Mode 1: Local Install -->
+            <label class="mode-card glass-card active" for="mode-local">
+              <input type="radio" id="mode-local" name="install-mode" value="local" checked>
+              <div class="mode-info">
+                <div class="mode-title-wrapper">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <h3>Cài đặt Hệ thống (Local Install)</h3>
+                </div>
+                <p>Khuyến nghị. Cài ứng dụng vào thư mục hệ thống của bạn, cho phép tạo các lỗi tắt trên màn hình và ghim thanh tác vụ để mở nhanh bất kỳ lúc nào.</p>
+              </div>
+            </label>
+
+            <!-- Mode 2: Portable -->
+            <label class="mode-card glass-card" for="mode-portable">
+              <input type="radio" id="mode-portable" name="install-mode" value="portable">
+              <div class="mode-info">
+                <div class="mode-title-wrapper">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                  </svg>
+                  <h3>Ứng dụng Di động (Portable Mode)</h3>
+                </div>
+                <p>Giải nén toàn bộ ứng dụng và phụ thuộc vào một thư mục do bạn chỉ định. Thuận tiện để chép vào USB mang đi nơi khác chạy ngay không cần cài đặt lại.</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Installation Path Picker -->
+          <div class="path-selection">
+            <label for="install-path-input">Thư mục cài đặt:</label>
+            <div class="path-input-group">
+              <input type="text" id="install-path-input" placeholder="Đang tải đường dẫn mặc định...">
+              <button id="btn-browse-path" class="btn btn-secondary">Duyệt...</button>
+            </div>
+          </div>
+
+          <div class="step-footer">
+            <button id="btn-options-back" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-left">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              Quay lại
+            </button>
+            <button id="btn-options-install" class="btn btn-primary btn-install">
+              Cài đặt & Tải phụ thuộc
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: INSTALL PROGRESS -->
+      <section id="step-progress" class="setup-step">
+        <div class="progress-container">
+          <h2>Đang thiết lập hệ thống</h2>
+          <p class="subtitle" id="progress-subtitle">Vui lòng chờ trong khi trình cài đặt tải xuống các tài nguyên thiết yếu...</p>
+
+          <div class="installation-steps-list">
+            <!-- App Files Extraction Status -->
+            <div class="status-item" id="status-extract">
+              <div class="status-icon-wrapper">
+                <div class="spinner-small"></div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <span class="status-text">Giải nén tệp tin ứng dụng chính...</span>
+            </div>
+
+            <!-- YT-DLP Download Status -->
+            <div class="status-item" id="status-ytdlp">
+              <div class="status-icon-wrapper">
+                <div class="spinner-small hidden"></div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <div class="pending-dot">•</div>
+              </div>
+              <div class="status-content">
+                <span class="status-text">Tải xuống yt-dlp.exe (Trình tải cốt lõi)...</span>
+                <span class="progress-detail" id="ytdlp-detail">Đang chờ...</span>
+                <div class="progress-bar-small hidden" id="ytdlp-bar-container">
+                  <div class="progress-fill-small" id="ytdlp-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- FFMPEG Download Status -->
+            <div class="status-item" id="status-ffmpeg">
+              <div class="status-icon-wrapper">
+                <div class="spinner-small hidden"></div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <div class="pending-dot">•</div>
+              </div>
+              <div class="status-content">
+                <span class="status-text">Tải xuống ffmpeg.exe (Bộ giải mã âm thanh)...</span>
+                <span class="progress-detail" id="ffmpeg-detail">Đang chờ...</span>
+                <div class="progress-bar-small hidden" id="ffmpeg-bar-container">
+                  <div class="progress-fill-small" id="ffmpeg-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- FFPROBE Download Status -->
+            <div class="status-item" id="status-ffprobe">
+              <div class="status-icon-wrapper">
+                <div class="spinner-small hidden"></div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <div class="pending-dot">•</div>
+              </div>
+              <div class="status-content">
+                <span class="status-text">Tải xuống ffprobe.exe (Phân tích phương tiện)...</span>
+                <span class="progress-detail" id="ffprobe-detail">Đang chờ...</span>
+                <div class="progress-bar-small hidden" id="ffprobe-bar-container">
+                  <div class="progress-fill-small" id="ffprobe-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Major Progress Bar -->
+          <div class="major-progress-container">
+            <div class="major-progress-bar">
+              <div id="major-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="major-progress-labels">
+              <span id="major-progress-status">Đang giải nén ứng dụng...</span>
+              <span id="major-progress-percent">0%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: FINISH SCREEN -->
+      <section id="step-finish" class="setup-step">
+        <div class="finish-container">
+          <div class="success-header">
+            <div class="success-icon-wrapper">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <h2>Hoàn tất Cài đặt thành công!</h2>
+            <p class="subtitle">Ứng dụng YT-DLP Downloader đã sẵn sàng để sử dụng.</p>
+          </div>
+
+          <div class="finish-options-card glass-card">
+            <h3>Tùy chọn bổ sung:</h3>
+            <div class="checkbox-group">
+              <label class="checkbox-label" id="label-desktop-shortcut">
+                <input type="checkbox" id="chk-desktop-shortcut" checked>
+                <span>Tạo lối tắt trên Màn hình chính (Desktop Shortcut)</span>
+              </label>
+              <label class="checkbox-label" id="label-start-shortcut">
+                <input type="checkbox" id="chk-start-shortcut" checked>
+                <span>Ghim ứng dụng vào Start Menu</span>
+              </label>
+              <label class="checkbox-label" id="label-taskbar-pin">
+                <input type="checkbox" id="chk-taskbar-pin" checked>
+                <span>Ghim ứng dụng vào Thanh tác vụ (Taskbar)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-launch-app" checked>
+                <span class="launch-text">Khởi chạy YT-DLP Downloader ngay bây giờ</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="step-footer">
+            <div></div>
+            <button id="btn-finish" class="btn btn-primary">
+              Hoàn tất
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>
