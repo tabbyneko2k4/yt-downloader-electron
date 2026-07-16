@@ -1070,3 +1070,33 @@ select:focus {
 .animate-fade-in {
   animation: fadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Setup Wizard Mode Cards Styles */
+.install-mode-card {
+  display: block;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+.install-mode-card input[type="radio"]:checked + .install-card-content {
+  border-color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.08) !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.15);
+}
+.install-mode-card input[type="radio"]:checked + .install-card-content .card-radio-btn {
+  border-color: #8b5cf6 !important;
+}
+.install-mode-card input[type="radio"]:checked + .install-card-content .card-radio-inner {
+  background: #8b5cf6 !important;
+}
+.install-card-content:hover {
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+.welcome-illustration-wrapper {
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}

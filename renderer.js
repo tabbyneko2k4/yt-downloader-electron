@@ -90,38 +90,142 @@ const audioQualities = [
 ];
 
 // Trình thiết lập tải các file phụ thuộc
-async function runSetupWizard() {
-  setupOverlay.classList.remove('hidden');
-  setupLogConsole.innerHTML = 'Bắt đầu thiết lập môi trường tải xuống...\n';
+let setupState = {
+  step: 1,
+  installType: 'installed',
+  destDir: '',
+  pkgManager: 'none',
+  defaultInstallPath: '',
+  currentAppPath: ''
+};
+
+function showSetupStep(stepNum) {
+  setupState.step = stepNum;
+  document.getElementById('setup-step-1').classList.add('hidden');
+  document.getElementById('setup-step-2').classList.add('hidden');
+  document.getElementById('setup-step-3').classList.add('hidden');
+  document.getElementById('setup-step-4').classList.add('hidden');
+  document.getElementById(`setup-step-${stepNum}`).classList.remove('hidden');
+}
+
+function updateStep2UI() {
+  const radioInstalled = document.querySelector('input[name="setup-install-type"][value="installed"]');
+  const radioPortable = document.querySelector('input[name="setup-install-type"][value="portable"]');
+  
+  if (setupState.installType === 'installed') {
+    radioInstalled.checked = true;
+    setupState.destDir = setupState.defaultInstallPath;
+  } else {
+    radioPortable.checked = true;
+    setupState.destDir = setupState.currentAppPath;
+  }
+  
+  const displayEl = document.getElementById('setup-dest-path-display');
+  if (displayEl) {
+    displayEl.textContent = setupState.destDir;
+    displayEl.title = setupState.destDir;
+  }
+}
+
+async function startSetupExecution() {
+  const setupLog = document.getElementById('setup-log-console');
+  setupLog.innerHTML = 'Bắt đầu thiết lập môi trường tải xuống...\n';
 
   const removeListener = window.api.onSetupProgress((data) => {
-    setupStatus.textContent = data.status;
-    setupPercent.textContent = `${data.percent}%`;
-    setupProgressFill.style.width = `${data.percent}%`;
-    setupDetail.textContent = data.detail;
+    document.getElementById('setup-status').textContent = data.status;
+    document.getElementById('setup-percent').textContent = `${data.percent}%`;
+    document.getElementById('setup-progress-fill').style.width = `${data.percent}%`;
+    document.getElementById('setup-detail').textContent = data.detail;
 
-    const logLine = `[Bước ${data.step}/3] ${data.status} - ${data.detail}\n`;
-    setupLogConsole.innerHTML += logLine;
-    setupLogConsole.scrollTop = setupLogConsole.scrollHeight;
+    const logLine = `[Bước ${data.step}/4] ${data.status} - ${data.detail}\n`;
+    setupLog.innerHTML += logLine;
+    setupLog.scrollTop = setupLog.scrollHeight;
   });
 
   try {
-    await window.api.startSetup();
-    setupLogConsole.innerHTML += 'Hoàn tất thiết lập thành công!\n';
+    await window.api.startSetup({
+      installType: setupState.installType,
+      destDir: setupState.destDir,
+      pkgManager: setupState.pkgManager
+    });
+
+    setupLog.innerHTML += '\nHoàn tất thiết lập thành công!\n';
+
     setTimeout(() => {
-      setupOverlay.classList.add('hidden');
+      document.getElementById('finish-mode-text').textContent = 
+        setupState.installType === 'installed' ? 'Cài đặt vào máy (Standard)' : 'Chạy dạng Portable';
+      document.getElementById('finish-path-text').textContent = setupState.destDir;
+      showSetupStep(4);
     }, 1500);
   } catch (err) {
-    setupStatus.textContent = 'Lỗi thiết lập!';
-    setupPercent.textContent = 'LỖI';
-    setupProgressFill.style.background = 'var(--danger-color)';
-    setupDetail.textContent = err.message;
-    setupLogConsole.innerHTML += `[LỖI] Thiết lập thất bại: ${err.message}\n`;
+    document.getElementById('setup-status').textContent = 'Lỗi thiết lập!';
+    document.getElementById('setup-percent').textContent = 'LỖI';
+    document.getElementById('setup-progress-fill').style.background = 'var(--danger-color)';
+    document.getElementById('setup-detail').textContent = err.message;
+    setupLog.innerHTML += `\n[LỖI] Thiết lập thất bại: ${err.message}\n`;
     alert(`Thiết lập thất bại: ${err.message}. Vui lòng kiểm tra kết nối internet và khởi động lại ứng dụng.`);
   } finally {
     removeListener();
   }
 }
+
+async function runSetupWizard() {
+  setupOverlay.classList.remove('hidden');
+  showSetupStep(1);
+
+  const btnNext1 = document.getElementById('btn-setup-next-1');
+  btnNext1.onclick = () => {
+    showSetupStep(2);
+    updateStep2UI();
+  };
+
+  const btnBack2 = document.getElementById('btn-setup-back-2');
+  btnBack2.onclick = () => {
+    showSetupStep(1);
+  };
+
+  const btnBrowseSetup = document.getElementById('btn-setup-browse');
+  btnBrowseSetup.onclick = async () => {
+    const path = await window.api.selectDirectory();
+    if (path) {
+      setupState.destDir = path;
+      const displayEl = document.getElementById('setup-dest-path-display');
+      if (displayEl) {
+        displayEl.textContent = path;
+        displayEl.title = path;
+      }
+    }
+  };
+
+  const radios = document.querySelectorAll('input[name="setup-install-type"]');
+  radios.forEach(r => {
+    r.addEventListener('change', (e) => {
+      setupState.installType = e.target.value;
+      if (setupState.installType === 'installed') {
+        setupState.destDir = setupState.defaultInstallPath;
+      } else {
+        setupState.destDir = setupState.currentAppPath;
+      }
+      const displayEl = document.getElementById('setup-dest-path-display');
+      if (displayEl) {
+        displayEl.textContent = setupState.destDir;
+        displayEl.title = setupState.destDir;
+      }
+    });
+  });
+
+  const btnNext2 = document.getElementById('btn-setup-next-2');
+  btnNext2.onclick = async () => {
+    showSetupStep(3);
+    await startSetupExecution();
+  };
+
+  const btnFinish = document.getElementById('btn-setup-finish');
+  btnFinish.onclick = () => {
+    setupOverlay.classList.add('hidden');
+  };
+}
+
 
 // Cập nhật yt-dlp
 async function updateBinaries() {
@@ -175,11 +279,16 @@ async function updateBinaries() {
 // Initialize
 async function init() {
   console.log("init() started.");
-  // Kiểm tra trạng thái thiết lập thư viện
   try {
     console.log("Invoking checkSetupStatus...");
     const status = await window.api.checkSetupStatus();
     console.log("checkSetupStatus result:", status);
+    
+    setupState.pkgManager = status.pkgManager;
+    setupState.defaultInstallPath = status.defaultInstallPath;
+    setupState.currentAppPath = status.currentAppPath;
+    setupState.destDir = status.defaultInstallPath;
+
     if (status.needsSetup) {
       console.log("Needs setup. Starting wizard...");
       await runSetupWizard();

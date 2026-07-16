@@ -40,9 +40,24 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
+    "extraFiles": [
+      {
+        "from": "electron_user_data/bin",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "files": [
       "index.html",
       "styles.css",

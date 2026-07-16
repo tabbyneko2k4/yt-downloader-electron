@@ -137,7 +137,23 @@ if (app.isPackaged) {
 app.setPath('userData', userDataPath);
 
 // Thư mục chứa thư viện local
-const binDir = path.join(app.getPath('userData'), 'bin');
+let binDir;
+const appDirBin = path.join(path.dirname(process.execPath), 'bin');
+const devDirBin = path.join(__dirname, 'bin');
+
+if (app.isPackaged) {
+  if (fs.existsSync(appDirBin)) {
+    binDir = appDirBin;
+  } else {
+    binDir = path.join(app.getPath('userData'), 'bin');
+  }
+} else {
+  if (fs.existsSync(devDirBin)) {
+    binDir = devDirBin;
+  } else {
+    binDir = path.join(app.getPath('userData'), 'bin');
+  }
+}
 
 // Vô hiệu hóa tăng tốc phần cứng để tránh lỗi GPU trên môi trường VM/Sandbox/Remote
 app.disableHardwareAcceleration();
@@ -840,98 +856,301 @@ ipcMain.on('ondragstart', (event, filePath) => {
   }
 });
 
+function copyDirRecursive(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const files = fs.readdirSync(src);
+  for (const file of files) {
+    const curSource = path.join(src, file);
+    const curDest = path.join(dest, file);
+    if (fs.lstatSync(curSource).isDirectory()) {
+      copyDirRecursive(curSource, curDest);
+    } else {
+      fs.copyFileSync(curSource, curDest);
+    }
+  }
+}
+
+function copyAppFiles(srcDir, destDir) {
+  if (!fs.existsSync(destDir)) {
+    fs.mkdirSync(destDir, { recursive: true });
+  }
+  const items = fs.readdirSync(srcDir);
+  for (const item of items) {
+    if (item === 'electron_user_data' || item === 'dist' || item === 'node_modules' || item === '.git' || item === '.agents') {
+      continue;
+    }
+    const srcPath = path.join(srcDir, item);
+    const destPath = path.join(destDir, item);
+    if (fs.lstatSync(srcPath).isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+function createShortcut(destDir) {
+  const isWin = process.platform === 'win32';
+  if (isWin) {
+    const desktopPath = app.getPath('desktop');
+    const exeName = path.basename(process.execPath);
+    const targetExePath = path.join(destDir, exeName);
+    const shortcutPath = path.join(desktopPath, 'YT-DLP Media Downloader.lnk');
+    const escapedShortcutPath = shortcutPath.replace(/'/g, "''");
+    const escapedTargetExePath = targetExePath.replace(/'/g, "''");
+    const workingDir = destDir.replace(/'/g, "''");
+    
+    const psCommand = `
+      $WshShell = New-Object -ComObject WScript.Shell;
+      $Shortcut = $WshShell.CreateShortcut('${escapedShortcutPath}');
+      $Shortcut.TargetPath = '${escapedTargetExePath}';
+      $Shortcut.WorkingDirectory = '${workingDir}';
+      $Shortcut.Save();
+    `;
+    const { execSync } = require('child_process');
+    try {
+      execSync(`powershell.exe -NoProfile -NonInteractive -Command "${psCommand.trim().replace(/\n/g, ' ')}"`);
+      console.log('Windows shortcut created successfully.');
+      return true;
+    } catch (err) {
+      console.error('Failed to create Windows shortcut:', err);
+      return false;
+    }
+  } else if (process.platform === 'linux') {
+    const homedir = require('os').homedir();
+    const desktopFileDir = path.join(homedir, '.local', 'share', 'applications');
+    if (!fs.existsSync(desktopFileDir)) {
+      fs.mkdirSync(desktopFileDir, { recursive: true });
+    }
+    const desktopFilePath = path.join(desktopFileDir, 'yt-dlp-downloader.desktop');
+    const exeName = path.basename(process.execPath);
+    const targetExePath = path.join(destDir, exeName);
+    const content = `[Desktop Entry]
+Name=YT-DLP Media Downloader
+Exec="${targetExePath}" %U
+Terminal=false
+Type=Application
+Icon=youtube
+Comment=A yt-dlp GUI downloader powered by Electron
+Categories=Network;Utility;
+`;
+    try {
+      fs.writeFileSync(desktopFilePath, content, 'utf8');
+      const userDesktop = path.join(homedir, 'Desktop');
+      if (fs.existsSync(userDesktop)) {
+        fs.writeFileSync(path.join(userDesktop, 'yt-dlp-downloader.desktop'), content, 'utf8');
+        fs.chmodSync(path.join(userDesktop, 'yt-dlp-downloader.desktop'), '755');
+      }
+      return true;
+    } catch (err) {
+      console.error('Failed to create Linux shortcut:', err);
+      return false;
+    }
+  }
+  return false;
+}
+
 // IPC Handler: Check Setup Status
 ipcMain.handle('setup:check-status', async () => {
   console.log("setup:check-status IPC called!");
-  const exists = checkBinariesExist();
-  console.log("checkBinariesExist result:", exists);
-  return { needsSetup: !exists };
+  const configPath = path.join(app.getPath('userData'), 'app_setup_config.json');
+  let configExists = fs.existsSync(configPath);
+  
+  if (!configExists) {
+    if (checkBinariesExist()) {
+      try {
+        const configData = {
+          setupCompleted: true,
+          installType: 'portable',
+          destDir: app.isPackaged ? path.dirname(process.execPath) : __dirname,
+          timestamp: new Date().toISOString()
+        };
+        fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf8');
+        configExists = true;
+      } catch (e) {
+        console.error('Failed to auto-create config file:', e);
+      }
+    }
+  }
+
+  let pkgManager = 'none';
+  if (process.platform === 'win32') {
+    if (await isCommandAvailable('winget', ['--version'])) {
+      pkgManager = 'winget';
+    }
+  } else if (process.platform === 'darwin') {
+    if (await isCommandAvailable('brew', ['--version'])) {
+      pkgManager = 'brew';
+    }
+  } else {
+    if (await isCommandAvailable('apt-get', ['--version'])) {
+      pkgManager = 'apt';
+    }
+  }
+
+  let defaultInstallPath = '';
+  if (process.platform === 'win32') {
+    defaultInstallPath = path.join(app.getPath('appData'), '..', 'Local', 'Programs', 'YT-DLP Media Downloader');
+  } else if (process.platform === 'darwin') {
+    defaultInstallPath = '/Applications';
+  } else {
+    defaultInstallPath = path.join(require('os').homedir(), 'YT-DLP-Media-Downloader');
+  }
+
+  const currentAppPath = app.isPackaged ? path.dirname(process.execPath) : __dirname;
+
+  return {
+    needsSetup: !configExists,
+    pkgManager,
+    defaultInstallPath,
+    currentAppPath,
+    platform: process.platform
+  };
 });
 
 // IPC Handler: Start Setup & Download dependencies
-ipcMain.handle('setup:start', async (event) => {
+ipcMain.handle('setup:start', async (event, { installType, destDir, pkgManager }) => {
+  const sendProgress = (step, percent, status, detail) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('setup-progress', { step, percent, status, detail });
+    }
+  };
+
   try {
-    if (!fs.existsSync(binDir)) {
-      fs.mkdirSync(binDir, { recursive: true });
-    }
-
-    const isWin = process.platform === 'win32';
-    const isMac = process.platform === 'darwin';
-
-    // URLs for downloads
-    let ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
-    let ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip';
-    let ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip';
-
-    if (isMac) {
-      ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
-      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-osx-64.zip';
-      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-osx-64.zip';
-    } else if (process.platform !== 'win32') {
-      ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
-      ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-linux-64.zip';
-      ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip';
-    }
-
-    const binPaths = getBinPaths();
-
-    const sendProgress = (step, percent, status, detail) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('setup-progress', { step, percent, status, detail });
+    // --- Step 1: Install Dependencies ---
+    sendProgress(1, 10, 'Cài đặt thư viện phụ thuộc...', 'Đang khởi chạy tiến trình cài đặt...');
+    
+    let depInstalled = false;
+    if (pkgManager && pkgManager !== 'none') {
+      sendProgress(1, 20, 'Cài đặt thư viện phụ thuộc...', `Đang cài đặt bằng trình quản lý gói: ${pkgManager}...`);
+      
+      let command = '';
+      let args = [];
+      if (pkgManager === 'winget') {
+        command = 'powershell.exe';
+        args = [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          'winget install yt-dlp.yt-dlp --accept-source-agreements --accept-package-agreements; winget install Gyan.FFmpeg --accept-source-agreements --accept-package-agreements'
+        ];
+      } else if (pkgManager === 'brew') {
+        command = 'brew';
+        args = ['install', 'yt-dlp', 'ffmpeg'];
+      } else if (pkgManager === 'apt') {
+        command = 'pkexec';
+        args = ['apt-get', 'install', '-y', 'yt-dlp', 'ffmpeg'];
       }
+
+      if (command) {
+        depInstalled = await new Promise((resolve) => {
+          const child = spawn(command, args, { shell: true });
+          let logOutput = '';
+          child.stdout.on('data', (data) => {
+            logOutput += data.toString();
+            sendProgress(1, 30, 'Cài đặt thư viện phụ thuộc...', data.toString().trim().slice(-60));
+          });
+          child.stderr.on('data', (data) => {
+            logOutput += data.toString();
+          });
+          child.on('close', (code) => {
+            resolve(code === 0);
+          });
+        });
+      }
+    }
+
+    if (!depInstalled) {
+      sendProgress(1, 40, 'Tải thư viện cục bộ (Dự phòng)...', 'Đang tải yt-dlp và FFmpeg cục bộ...');
+      if (!fs.existsSync(binDir)) {
+        fs.mkdirSync(binDir, { recursive: true });
+      }
+      
+      const isWin = process.platform === 'win32';
+      const isMac = process.platform === 'darwin';
+
+      let ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+      let ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip';
+      let ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip';
+
+      if (isMac) {
+        ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+        ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-osx-64.zip';
+        ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-osx-64.zip';
+      } else if (process.platform !== 'win32') {
+        ytDlpUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
+        ffmpegUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-linux-64.zip';
+        ffprobeUrl = 'https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-linux-64.zip';
+      }
+
+      const binPaths = getBinPaths();
+
+      sendProgress(1, 50, 'Tải thư viện cục bộ...', 'Đang tải yt-dlp...');
+      const ytDlpTemp = binPaths.ytDlp + '.tmp';
+      await downloadFile(ytDlpUrl, ytDlpTemp);
+      if (fs.existsSync(binPaths.ytDlp)) fs.unlinkSync(binPaths.ytDlp);
+      fs.renameSync(ytDlpTemp, binPaths.ytDlp);
+      if (!isWin) fs.chmodSync(binPaths.ytDlp, '755');
+
+      sendProgress(1, 65, 'Tải thư viện FFmpeg cục bộ...', 'Đang tải FFmpeg...');
+      const ffmpegZip = path.join(binDir, 'ffmpeg.zip');
+      await downloadFile(ffmpegUrl, ffmpegZip);
+      await extractZip(ffmpegZip, binDir);
+      try { fs.unlinkSync(ffmpegZip); } catch (e) {}
+      if (!isWin) fs.chmodSync(binPaths.ffmpeg, '755');
+
+      sendProgress(1, 80, 'Tải thư viện FFprobe cục bộ...', 'Đang tải FFprobe...');
+      const ffprobeZip = path.join(binDir, 'ffprobe.zip');
+      await downloadFile(ffprobeUrl, ffprobeZip);
+      await extractZip(ffprobeZip, binDir);
+      try { fs.unlinkSync(ffprobeZip); } catch (e) {}
+      if (!isWin) fs.chmodSync(binPaths.ffprobe, '755');
+    }
+
+    // --- Step 2: Copy App Files (if installType is 'installed') ---
+    if (installType === 'installed') {
+      sendProgress(2, 85, 'Sao chép tệp ứng dụng...', `Đang sao chép các tệp đến: ${destDir}...`);
+      if (app.isPackaged) {
+        const appDir = path.dirname(process.execPath);
+        copyAppFiles(appDir, destDir);
+      } else {
+        console.log("Mocking file copy in development mode.");
+        await new Promise(r => setTimeout(r, 1000));
+      }
+
+      // --- Step 3: Create Shortcut ---
+      sendProgress(3, 90, 'Tạo phím tắt...', 'Đang tạo shortcut ngoài màn hình Desktop...');
+      createShortcut(destDir);
+    } else {
+      const currentAppDir = app.isPackaged ? path.dirname(process.execPath) : __dirname;
+      const resolvedCurrent = path.resolve(currentAppDir);
+      const resolvedDest = path.resolve(destDir);
+      
+      if (resolvedCurrent !== resolvedDest) {
+        sendProgress(2, 85, 'Sao chép tệp ứng dụng...', `Đang thiết lập thư mục portable tại: ${destDir}...`);
+        if (app.isPackaged) {
+          copyAppFiles(resolvedCurrent, resolvedDest);
+        } else {
+          console.log("Mocking file copy in development mode.");
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+
+    // --- Step 4: Write configuration and complete ---
+    sendProgress(4, 95, 'Lưu cấu hình thiết lập...', 'Đang hoàn tất các cấu hình...');
+    const configPath = path.join(app.getPath('userData'), 'app_setup_config.json');
+    const configData = {
+      setupCompleted: true,
+      installType,
+      destDir,
+      timestamp: new Date().toISOString()
     };
+    fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf8');
 
-    // Step 1: Download yt-dlp
-    sendProgress(1, 0, 'Đang tải yt-dlp...', 'Đang khởi tạo kết nối...');
-    const ytDlpTempPath = binPaths.ytDlp + '.tmp';
-    await downloadFile(ytDlpUrl, ytDlpTempPath, (downloaded, total) => {
-      const p = Math.round((downloaded / total) * 100);
-      sendProgress(1, p, 'Đang tải yt-dlp...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
-    });
-
-    if (fs.existsSync(binPaths.ytDlp)) {
-      fs.unlinkSync(binPaths.ytDlp);
-    }
-    fs.renameSync(ytDlpTempPath, binPaths.ytDlp);
-    if (!isWin) {
-      fs.chmodSync(binPaths.ytDlp, '755');
-    }
-
-    // Step 2: Download ffmpeg.zip
-    sendProgress(2, 0, 'Đang tải FFmpeg...', 'Đang khởi tạo kết nối...');
-    const ffmpegZipPath = path.join(binDir, 'ffmpeg.zip');
-    await downloadFile(ffmpegUrl, ffmpegZipPath, (downloaded, total) => {
-      const p = Math.round((downloaded / total) * 100);
-      sendProgress(2, p, 'Đang tải FFmpeg...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
-    });
-
-    sendProgress(2, 95, 'Đang giải nén FFmpeg...', 'Đang bung tệp tin...');
-    await extractZip(ffmpegZipPath, binDir);
-    try {
-      fs.unlinkSync(ffmpegZipPath);
-    } catch (e) {}
-    if (!isWin) {
-      fs.chmodSync(binPaths.ffmpeg, '755');
-    }
-
-    // Step 3: Download ffprobe.zip
-    sendProgress(3, 0, 'Đang tải FFprobe...', 'Đang khởi tạo kết nối...');
-    const ffprobeZipPath = path.join(binDir, 'ffprobe.zip');
-    await downloadFile(ffprobeUrl, ffprobeZipPath, (downloaded, total) => {
-      const p = Math.round((downloaded / total) * 100);
-      sendProgress(3, p, 'Đang tải FFprobe...', `Đã tải ${(downloaded / (1024 * 1024)).toFixed(2)} MB / ${(total / (1024 * 1024)).toFixed(2)} MB (${p}%)`);
-    });
-
-    sendProgress(3, 95, 'Đang giải nén FFprobe...', 'Đang bung tệp tin...');
-    await extractZip(ffprobeZipPath, binDir);
-    try {
-      fs.unlinkSync(ffprobeZipPath);
-    } catch (e) {}
-    if (!isWin) {
-      fs.chmodSync(binPaths.ffprobe, '755');
-    }
-
-    sendProgress(4, 100, 'Hoàn thành thiết lập!', 'Mọi thứ đã sẵn sàng để sử dụng.');
+    sendProgress(4, 100, 'Hoàn thành!', 'Ứng dụng đã được thiết lập thành công.');
     return { success: true };
   } catch (err) {
     console.error('Setup failed:', err);

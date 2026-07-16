@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   
   // Setup and updates
   checkSetupStatus: () => ipcRenderer.invoke('setup:check-status'),
-  startSetup: () => ipcRenderer.invoke('setup:start'),
+  startSetup: (options) => ipcRenderer.invoke('setup:start', options),
   updateBinaries: () => ipcRenderer.invoke('setup:update'),
   onSetupProgress: (callback) => {
     const subscription = (event, data) => callback(data);
