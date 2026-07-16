@@ -361,6 +361,11 @@ async function startDownload() {
 
     if (result.success) {
       appendLog('[Hệ thống] Tải xuống hoàn tất thành công!');
+      if (result.files && result.files.length > 0) {
+        appendLog(`[Hệ thống] Tìm thấy tệp tin: ${result.files.join(', ')}`);
+      } else {
+        appendLog('[Hệ thống] Cảnh báo: Không phát hiện được đường dẫn tệp tin trong nhật ký.');
+      }
       
       // Save item to history
       const historyItem = {
@@ -371,7 +376,7 @@ async function startDownload() {
         entriesCount: currentVideoInfo.isPlaylist ? selectedCount : 0,
         quality: selectQuality.options[selectQuality.selectedIndex].text,
         destDir: result.destDir || currentDestPath,
-        filePath: result.files && result.files.length > 0 ? result.files[0] : null,
+        filePath: result.files && result.files.length > 0 ? result.files[result.files.length - 1] : null,
         date: new Date().toLocaleString('vi-VN')
       };
       
@@ -497,6 +502,20 @@ function renderHistory() {
 
     const typeLabel = isPlaylist ? `Playlist (${item.entriesCount} bài)` : (isAudio ? 'Audio' : 'Video');
     const hasFile = !isPlaylist && item.filePath;
+    const isDraggable = !!(hasFile || item.destDir);
+
+    const dragHandleHtml = isDraggable ? `
+      <div class="drag-handle" title="Kéo thả để sao chép hoặc di chuyển tệp tin/thư mục này">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="5" r="1.5" fill="currentColor"></circle>
+          <circle cx="9" cy="12" r="1.5" fill="currentColor"></circle>
+          <circle cx="9" cy="19" r="1.5" fill="currentColor"></circle>
+          <circle cx="15" cy="5" r="1.5" fill="currentColor"></circle>
+          <circle cx="15" cy="12" r="1.5" fill="currentColor"></circle>
+          <circle cx="15" cy="19" r="1.5" fill="currentColor"></circle>
+        </svg>
+      </div>
+    ` : '';
 
     const fileActionsHtml = hasFile ? `
       <button class="btn btn-secondary btn-action-icon btn-open-file" title="Mở tệp tin" data-file="${item.filePath}">
@@ -515,6 +534,7 @@ function renderHistory() {
 
     itemEl.innerHTML = `
       <div class="history-item-left">
+        ${dragHandleHtml}
         <div class="history-icon-wrapper ${iconClass}">
           ${iconHtml}
         </div>
@@ -538,6 +558,22 @@ function renderHistory() {
         </button>
       </div>
     `;
+
+    // Bind drag events
+    if (isDraggable) {
+      const historyLeft = itemEl.querySelector('.history-item-left');
+      if (historyLeft) {
+        historyLeft.setAttribute('draggable', 'true');
+        historyLeft.classList.add('draggable');
+        historyLeft.addEventListener('dragstart', (event) => {
+          event.preventDefault();
+          const dragPath = item.filePath || item.destDir;
+          if (dragPath) {
+            window.api.startDrag(dragPath);
+          }
+        });
+      }
+    }
 
     // Bind item actions
     if (hasFile) {

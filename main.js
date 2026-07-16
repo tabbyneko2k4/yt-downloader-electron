@@ -3,6 +3,9 @@ const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 
+// Cấu hình thư mục dữ liệu cục bộ để tránh lỗi "Access is denied" khi truy cập cache
+const userDataPath = path.join(__dirname, 'electron_user_data');
+app.setPath('userData', userDataPath);
 
 // Vô hiệu hóa tăng tốc phần cứng để tránh lỗi GPU trên môi trường VM/Sandbox/Remote
 app.disableHardwareAcceleration();
@@ -448,7 +451,12 @@ ipcMain.handle('yt-dlp:download', async (event, { id, url, formatType, quality, 
     args.push(url);
 
     console.log(`Starting download for ${id} with command: yt-dlp ${args.join(' ')}`);
-    const downloadProcess = spawn('yt-dlp', args);
+    const env = { 
+      ...process.env, 
+      PYTHONIOENCODING: 'utf-8', 
+      LANG: 'en_US.UTF-8' 
+    };
+    const downloadProcess = spawn('yt-dlp', args, { env });
     activeDownloads.set(id, downloadProcess);
 
     let logs = '';
@@ -493,30 +501,71 @@ ipcMain.handle('yt-dlp:download', async (event, { id, url, formatType, quality, 
         // Parse destination files from logs
         const destinationPaths = [];
         const lines = logs.split(/[\r\n]+/);
+        
+        // Comprehensive patterns to extract file paths
+        const patterns = [
+          /(?:[Dd]estination:\s+)(.+)$/,
+          /(?:[Mm]erging\s+formats\s+into\s+)(.+)$/,
+          /(?:[Aa]dding\s+metadata\s+to\s+)(.+)$/,
+          /(?:[Aa]dding\s+thumbnail\s+to\s+)(.+)$/,
+          /(?:[Cc]orrecting\s+container\s+of\s+)(.+)$/,
+          /(?:[Ff]ixup[Mm]4a\]\s+Correcting\s+container\s+of\s+)(.+)$/
+        ];
+
         for (const line of lines) {
           const cleanLine = stripAnsi(line);
-          const match = cleanLine.match(/(?:[Dd]estination:\s+)(.+)$/);
-          if (match) {
-            let filePath = match[1].trim();
-            if (filePath.startsWith('"') && filePath.endsWith('"')) {
-              filePath = filePath.slice(1, -1);
-            }
-            filePath = filePath.replace(/[\r\n]/g, '').trim();
-            const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
-            if (!destinationPaths.includes(absolutePath)) {
-              destinationPaths.push(absolutePath);
+          for (const pattern of patterns) {
+            const match = cleanLine.match(pattern);
+            if (match) {
+              let filePath = match[1].trim();
+              if (filePath.startsWith('"') && filePath.endsWith('"')) {
+                filePath = filePath.slice(1, -1);
+              }
+              if (filePath.startsWith("'") && filePath.endsWith("'")) {
+                filePath = filePath.slice(1, -1);
+              }
+              filePath = filePath.replace(/[\r\n]/g, '').trim();
+              const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
+              if (!destinationPaths.includes(absolutePath)) {
+                destinationPaths.push(absolutePath);
+              }
             }
           }
         }
         
         // Filter only existing files to be safe
-        const existingFiles = destinationPaths.filter(fp => {
+        let existingFiles = destinationPaths.filter(fp => {
           try {
             return fs.existsSync(fp) && fs.statSync(fp).isFile();
           } catch (e) {
             return false;
           }
         });
+
+        // Fallback: If no files were parsed from logs (due to encoding or other issues),
+        // scan finalDestDir for files modified within the last 15 seconds
+        if (existingFiles.length === 0) {
+          try {
+            const filesInDir = fs.readdirSync(finalDestDir);
+            const now = Date.now();
+            const recentFiles = [];
+            for (const file of filesInDir) {
+              const fullPath = path.join(finalDestDir, file);
+              const stat = fs.statSync(fullPath);
+              if (stat.isFile() && (now - stat.mtimeMs) < 15000) { // 15 seconds
+                recentFiles.push({ path: fullPath, mtime: stat.mtimeMs });
+              }
+            }
+            // Sort by mtime descending (most recent first)
+            recentFiles.sort((a, b) => b.mtime - a.mtime);
+            if (recentFiles.length > 0) {
+              existingFiles = [recentFiles[0].path];
+              console.log('Fallback scan matched recent file:', recentFiles[0].path);
+            }
+          } catch (e) {
+            console.error('Fallback scan failed:', e);
+          }
+        }
 
         resolve({ success: true, destDir: finalDestDir, files: existingFiles, logs });
       } else {
@@ -615,3 +664,33 @@ ipcMain.handle('clipboard:copy-file', async (event, filePath) => {
     return false;
   }
 });
+
+// Tạo icon kéo thả mặc định để tương thích đa nền tảng (đặc biệt là macOS)
+const dragIconPath = path.join(userDataPath, 'drag-icon.png');
+try {
+  if (!fs.existsSync(dragIconPath)) {
+    const base64Data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+    fs.writeFileSync(dragIconPath, Buffer.from(base64Data, 'base64'));
+  }
+} catch (e) {
+  console.error('Failed to create drag icon:', e);
+}
+
+// Xử lý sự kiện kéo thả tệp tin từ ứng dụng ra hệ thống
+ipcMain.on('ondragstart', (event, filePath) => {
+  if (!filePath) return;
+  try {
+    const resolvedPath = path.resolve(filePath);
+    if (fs.existsSync(resolvedPath)) {
+      event.sender.startDrag({
+        file: resolvedPath,
+        icon: dragIconPath
+      });
+    } else {
+      console.warn(`File/Folder does not exist for drag start: ${resolvedPath}`);
+    }
+  } catch (err) {
+    console.error('Error starting drag:', err);
+  }
+});
+

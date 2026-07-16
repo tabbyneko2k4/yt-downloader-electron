@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('api', {
   openFile: (path) => ipcRenderer.invoke('shell:open-file', path),
   copyFile: (path) => ipcRenderer.invoke('clipboard:copy-file', path),
   getDownloadsPath: () => ipcRenderer.invoke('app:get-downloads-path'),
+  startDrag: (filePath) => ipcRenderer.send('ondragstart', filePath),
   
   // Listeners for progress and logs
   onDownloadProgress: (callback) => {

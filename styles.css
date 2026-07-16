@@ -596,12 +596,36 @@ select:focus {
   background: rgba(255,255,255,0.04);
   border-color: rgba(255,255,255,0.08);
 }
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 4px;
+  border-radius: 4px;
+  transition: var(--transition-smooth);
+  margin-right: -4px;
+}
+.drag-handle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+.drag-handle svg {
+  pointer-events: none;
+}
 .history-item-left {
   display: flex;
   align-items: center;
   gap: 12px;
   flex: 1;
   min-width: 0;
+}
+.history-item-left.draggable {
+  cursor: grab;
+}
+.history-item-left.draggable:active {
+  cursor: grabbing;
 }
 .history-icon-wrapper {
   width: 38px;
