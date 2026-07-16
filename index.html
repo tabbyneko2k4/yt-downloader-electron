@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <!-- Drag area for window -->
   <div class="window-titlebar">
@@ -21,18 +23,20 @@
     <header class="app-header">
       <div class="logo-wrapper">
         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" fill="url(#logo-grad)"/>
-          <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff"/>
+          <path
+            d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+            fill="url(#logo-grad)" />
+          <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
           <defs>
             <linearGradient id="logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#ff007f"/>
-              <stop offset="1" stop-color="#7928ca"/>
+              <stop stop-color="#ff007f" />
+              <stop offset="1" stop-color="#7928ca" />
             </linearGradient>
           </defs>
         </svg>
         <h1>YT-DLP <span class="gradient-text">Downloader</span></h1>
       </div>
-      <p class="subtitle">Trình tải đa phương tiện cao cấp sử dụng yt-dlp</p>
+      <p class="subtitle">Trình tải đa phương tiện sử dụng yt-dlp</p>
     </header>
 
     <!-- Main Content -->
@@ -40,12 +44,15 @@
       <!-- Input Section -->
       <section class="card input-section">
         <div class="input-group">
-          <input type="text" id="video-url" placeholder="Dán link YouTube (hoặc web khác) vào đây..." autocomplete="off">
+          <input type="text" id="video-url" placeholder="Dán link YouTube (hoặc web khác) vào đây..."
+            autocomplete="off">
           <button id="btn-analyze" class="btn btn-primary">
             <span class="btn-text">Phân tích</span>
             <svg class="spinner hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="30 30" opacity="0.3"></circle>
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="30 150" class="spinner-path"></circle>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                stroke-dasharray="30 30" opacity="0.3"></circle>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                stroke-dasharray="30 150" class="spinner-path"></circle>
             </svg>
           </button>
         </div>
@@ -70,13 +77,13 @@
           <!-- Configuration -->
           <div class="preview-config-col">
             <h3>Cấu hình tải xuống</h3>
-            
+
             <div class="config-group">
               <label>Định dạng tệp</label>
               <div class="radio-toggle-group">
                 <input type="radio" id="type-video" name="format-type" value="video" checked>
                 <label for="type-video">Video (MP4)</label>
-                
+
                 <input type="radio" id="type-audio" name="format-type" value="audio">
                 <label for="type-audio">Audio (Nhạc)</label>
               </div>
@@ -116,8 +123,9 @@
             </div>
 
             <button id="btn-download" class="btn btn-success btn-full">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                style="margin-right: 8px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
               </svg>
               Tải xuống ngay
             </button>
@@ -165,7 +173,8 @@
         <div class="log-section">
           <button id="btn-toggle-log" class="btn-toggle-log">
             <span>Chi tiết tiến trình (Terminal Log)</span>
-            <svg id="log-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <svg id="log-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+              stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
@@ -189,4 +198,5 @@
   </div>
   <script src="renderer.js"></script>
 </body>
+
 </html>
