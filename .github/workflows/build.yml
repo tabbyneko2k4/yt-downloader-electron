@@ -25,6 +25,18 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Pre-download Windows binaries
+        run: |
+          mkdir -p electron_user_data/bin
+          curl -L -o electron_user_data/bin/yt-dlp.exe https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+          curl -L -o electron_user_data/bin/ffmpeg.zip https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip
+          unzip -o electron_user_data/bin/ffmpeg.zip -d electron_user_data/bin
+          rm electron_user_data/bin/ffmpeg.zip
+          curl -L -o electron_user_data/bin/ffprobe.zip https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip
+          unzip -o electron_user_data/bin/ffprobe.zip -d electron_user_data/bin
+          rm electron_user_data/bin/ffprobe.zip
+        shell: bash
+
       - name: Build Electron App
         run: npm run build
         env:
@@ -36,6 +48,7 @@ jobs:
         with:
           files: |
             dist/*.exe
+            dist/*.zip
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
