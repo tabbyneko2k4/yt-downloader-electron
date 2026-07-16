@@ -485,7 +485,30 @@ ipcMain.handle('yt-dlp:download', async (event, { id, url, formatType, quality, 
     downloadProcess.on('close', (code) => {
       activeDownloads.delete(id);
       if (code === 0) {
-        resolve({ success: true, destDir: finalDestDir, logs });
+        // Parse destination files from logs
+        const destinationPaths = [];
+        const lines = logs.split(/[\r\n]+/);
+        for (const line of lines) {
+          const match = line.match(/(?:[Dd]estination:\s+)(.+)$/);
+          if (match) {
+            const filePath = match[1].trim();
+            const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
+            if (!destinationPaths.includes(absolutePath)) {
+              destinationPaths.push(absolutePath);
+            }
+          }
+        }
+        
+        // Filter only existing files to be safe
+        const existingFiles = destinationPaths.filter(fp => {
+          try {
+            return fs.existsSync(fp) && fs.statSync(fp).isFile();
+          } catch (e) {
+            return false;
+          }
+        });
+
+        resolve({ success: true, destDir: finalDestDir, files: existingFiles, logs });
       } else {
         reject(new Error(`Quá trình tải kết thúc với mã lỗi ${code}`));
       }
@@ -535,6 +558,50 @@ ipcMain.handle('shell:open-folder', async (event, dirPath) => {
     return true;
   } catch (e) {
     console.error('Failed to open folder:', e);
+    return false;
+  }
+});
+
+// IPC Handler: Open file
+ipcMain.handle('shell:open-file', async (event, filePath) => {
+  if (!filePath) return false;
+  try {
+    await shell.openPath(filePath);
+    return true;
+  } catch (e) {
+    console.error('Failed to open file:', e);
+    return false;
+  }
+});
+
+// IPC Handler: Copy file to clipboard
+ipcMain.handle('clipboard:copy-file', async (event, filePath) => {
+  if (!filePath) return false;
+  try {
+    if (!fs.existsSync(filePath)) return false;
+    const absolutePath = path.resolve(filePath);
+    
+    if (process.platform === 'win32') {
+      const buffer = Buffer.concat([
+        Buffer.from(absolutePath, 'ucs2'),
+        Buffer.from([0, 0])
+      ]);
+      const { clipboard } = require('electron');
+      clipboard.writeBuffer('FileNameW', buffer);
+    } else if (process.platform === 'darwin') {
+      const { clipboard } = require('electron');
+      const fileUrl = `file://${absolutePath}`;
+      clipboard.write({
+        text: absolutePath,
+        html: `<a href="${fileUrl}">${path.basename(absolutePath)}</a>`
+      });
+    } else {
+      const { clipboard } = require('electron');
+      clipboard.writeText(absolutePath);
+    }
+    return true;
+  } catch (e) {
+    console.error('Failed to copy file to clipboard:', e);
     return false;
   }
 });

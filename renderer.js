@@ -371,6 +371,7 @@ async function startDownload() {
         entriesCount: currentVideoInfo.isPlaylist ? selectedCount : 0,
         quality: selectQuality.options[selectQuality.selectedIndex].text,
         destDir: result.destDir || currentDestPath,
+        filePath: result.files && result.files.length > 0 ? result.files[0] : null,
         date: new Date().toLocaleString('vi-VN')
       };
       
@@ -495,6 +496,22 @@ function renderHistory() {
     }
 
     const typeLabel = isPlaylist ? `Playlist (${item.entriesCount} bài)` : (isAudio ? 'Audio' : 'Video');
+    const hasFile = !isPlaylist && item.filePath;
+
+    const fileActionsHtml = hasFile ? `
+      <button class="btn btn-secondary btn-action-icon btn-open-file" title="Mở tệp tin" data-file="${item.filePath}">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      </button>
+      <button class="btn btn-secondary btn-action-icon btn-copy-file" title="Sao chép tệp tin" data-file="${item.filePath}">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    ` : '';
 
     itemEl.innerHTML = `
       <div class="history-item-left">
@@ -507,12 +524,52 @@ function renderHistory() {
         </div>
       </div>
       <div class="history-item-actions">
-        <button class="btn btn-secondary btn-action-small btn-open-folder" data-dir="${item.destDir}">Mở thư mục</button>
-        <button class="btn btn-danger btn-action-small btn-delete-history" data-id="${item.id}">Xóa</button>
+        ${fileActionsHtml}
+        <button class="btn btn-secondary btn-action-icon btn-open-folder" title="Mở thư mục lưu" data-dir="${item.destDir}">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </button>
+        <button class="btn btn-danger btn-action-icon btn-delete-history" title="Xóa lịch sử" data-id="${item.id}">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
       </div>
     `;
 
     // Bind item actions
+    if (hasFile) {
+      const btnOpenFile = itemEl.querySelector('.btn-open-file');
+      if (btnOpenFile) {
+        btnOpenFile.addEventListener('click', () => {
+          window.api.openFile(item.filePath);
+        });
+      }
+
+      const btnCopyFile = itemEl.querySelector('.btn-copy-file');
+      if (btnCopyFile) {
+        btnCopyFile.addEventListener('click', async () => {
+          const success = await window.api.copyFile(item.filePath);
+          if (success) {
+            // Temporary feedback effect
+            const originalColor = btnCopyFile.style.color;
+            btnCopyFile.style.color = '#10b981'; // Green
+            const originalTitle = btnCopyFile.title;
+            btnCopyFile.title = 'Đã sao chép!';
+            
+            setTimeout(() => {
+              btnCopyFile.style.color = originalColor;
+              btnCopyFile.title = originalTitle;
+            }, 1500);
+          } else {
+            alert('Không thể sao chép tệp tin này (tệp tin có thể không tồn tại hoặc đã bị di chuyển).');
+          }
+        });
+      }
+    }
+
     itemEl.querySelector('.btn-open-folder').addEventListener('click', () => {
       window.api.openFolder(item.destDir);
     });

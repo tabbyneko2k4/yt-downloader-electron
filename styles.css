@@ -650,6 +650,16 @@ select:focus {
   font-size: 0.8rem;
   border-radius: 6px;
 }
+.btn-action-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
 
 /* Animations */
 @keyframes fadeIn {

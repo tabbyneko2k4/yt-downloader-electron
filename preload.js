@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('api', {
   downloadVideo: (options) => ipcRenderer.invoke('yt-dlp:download', options),
   cancelDownload: (id) => ipcRenderer.invoke('yt-dlp:cancel', id),
   openFolder: (path) => ipcRenderer.invoke('shell:open-folder', path),
+  openFile: (path) => ipcRenderer.invoke('shell:open-file', path),
+  copyFile: (path) => ipcRenderer.invoke('clipboard:copy-file', path),
   getDownloadsPath: () => ipcRenderer.invoke('app:get-downloads-path'),
   
   // Listeners for progress and logs
