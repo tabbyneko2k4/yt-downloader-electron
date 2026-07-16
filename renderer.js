@@ -50,6 +50,22 @@ const setupLogConsole = document.getElementById('setup-log-console');
 const btnUpdateBinaries = document.getElementById('btn-update-binaries');
 const updateStatusText = document.getElementById('update-status-text');
 
+// Settings DOM Elements
+const settingsOverlay = document.getElementById('settings-overlay');
+const btnOpenSettings = document.getElementById('btn-open-settings');
+const btnCloseSettings = document.getElementById('btn-close-settings');
+const btnSettingsBrowse = document.getElementById('btn-settings-browse');
+const settingsDestPathDisplay = document.getElementById('settings-dest-path-display');
+const btnCheckLibraries = document.getElementById('btn-check-libraries');
+const librariesStatusList = document.getElementById('libraries-status-list');
+const pkgManagerInstallSection = document.getElementById('pkg-manager-install-section');
+const detectedPkgManager = document.getElementById('detected-pkg-manager');
+const btnInstallLibraries = document.getElementById('btn-install-libraries');
+const btnPkgManagerName = document.getElementById('btn-pkg-manager-name');
+const settingsLogSection = document.getElementById('settings-log-section');
+const settingsLogConsole = document.getElementById('settings-log-console');
+
+
 // App State
 let currentVideoInfo = null;
 let currentDownloadId = null;
@@ -187,6 +203,10 @@ async function init() {
   if (currentDestPath) {
     destPathDisplay.textContent = currentDestPath;
     destPathDisplay.title = currentDestPath;
+    if (settingsDestPathDisplay) {
+      settingsDestPathDisplay.textContent = currentDestPath;
+      settingsDestPathDisplay.title = currentDestPath;
+    }
   } else {
     destPathDisplay.textContent = 'Chưa chọn thư mục. Vui lòng bấm chọn...';
   }
@@ -214,6 +234,13 @@ async function init() {
 
   btnSelectAll.addEventListener('click', () => toggleAllEntries(true));
   btnDeselectAll.addEventListener('click', () => toggleAllEntries(false));
+
+  // Settings Event Listeners
+  if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
+  if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
+  if (btnSettingsBrowse) btnSettingsBrowse.addEventListener('click', selectSettingsDestDirectory);
+  if (btnCheckLibraries) btnCheckLibraries.addEventListener('click', checkLibraries);
+  if (btnInstallLibraries) btnInstallLibraries.addEventListener('click', installLibraries);
 
   // Setup IPC Subscriptions
   window.api.onDownloadProgress((data) => {
@@ -385,9 +412,15 @@ async function selectDestDirectory() {
     const path = await window.api.selectDirectory();
     if (path) {
       currentDestPath = path;
-      destPathDisplay.textContent = path;
-      destPathDisplay.title = path;
       localStorage.setItem('yt_dlp_dest_path', path);
+      if (destPathDisplay) {
+        destPathDisplay.textContent = path;
+        destPathDisplay.title = path;
+      }
+      if (settingsDestPathDisplay) {
+        settingsDestPathDisplay.textContent = path;
+        settingsDestPathDisplay.title = path;
+      }
       showError(null); // Clear errors like "Vui lòng chọn thư mục lưu"
     }
   } catch (err) {
@@ -742,6 +775,154 @@ function clearAllHistory() {
     history = [];
     localStorage.removeItem('yt_dlp_history');
     renderHistory();
+  }
+}
+
+// Settings Functions
+function openSettingsModal() {
+  if (settingsOverlay) {
+    settingsOverlay.classList.remove('hidden');
+    if (settingsDestPathDisplay) {
+      settingsDestPathDisplay.textContent = currentDestPath || 'Chưa chọn thư mục. Vui lòng bấm chọn...';
+      settingsDestPathDisplay.title = currentDestPath || '';
+    }
+    checkLibraries();
+  }
+}
+
+function closeSettingsModal() {
+  if (settingsOverlay) {
+    settingsOverlay.classList.add('hidden');
+  }
+}
+
+async function selectSettingsDestDirectory() {
+  try {
+    const path = await window.api.selectDirectory();
+    if (path) {
+      currentDestPath = path;
+      localStorage.setItem('yt_dlp_dest_path', path);
+      
+      if (destPathDisplay) {
+        destPathDisplay.textContent = path;
+        destPathDisplay.title = path;
+      }
+      if (settingsDestPathDisplay) {
+        settingsDestPathDisplay.textContent = path;
+        settingsDestPathDisplay.title = path;
+      }
+      showError(null);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function checkLibraries() {
+  if (!btnCheckLibraries || !librariesStatusList || !pkgManagerInstallSection) return;
+  
+  btnCheckLibraries.disabled = true;
+  btnCheckLibraries.textContent = 'Đang kiểm tra...';
+  
+  librariesStatusList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; padding: 5px;">Đang quét hệ thống...</div>';
+  pkgManagerInstallSection.classList.add('hidden');
+  
+  try {
+    const data = await window.api.checkSystemLibraries();
+    librariesStatusList.innerHTML = '';
+    
+    let hasMissing = false;
+    
+    const libs = [
+      { name: 'yt-dlp', status: data.results.ytDlp },
+      { name: 'FFmpeg', status: data.results.ffmpeg },
+      { name: 'FFprobe', status: data.results.ffprobe }
+    ];
+    
+    libs.forEach(lib => {
+      let badge = '';
+      if (lib.status.global) {
+        badge = '<span style="color: var(--success-color); font-weight: 500;">Đã cài (Hệ thống)</span>';
+      } else if (lib.status.local) {
+        badge = '<span style="color: #60a5fa; font-weight: 500;">Đã cài (Cục bộ)</span>';
+      } else {
+        badge = '<span style="color: var(--danger-color); font-weight: 500;">Chưa cài đặt</span>';
+        hasMissing = true;
+      }
+      
+      const item = document.createElement('div');
+      item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem;';
+      item.innerHTML = `
+        <span style="font-weight: 500; color: var(--text-primary);">${lib.name}</span>
+        ${badge}
+      `;
+      librariesStatusList.appendChild(item);
+    });
+    
+    if (hasMissing && data.pkgManager !== 'none') {
+      let friendlyName = data.pkgManager;
+      if (data.pkgManager === 'apt') friendlyName = 'APT (apt-get)';
+      else if (data.pkgManager === 'brew') friendlyName = 'Homebrew';
+      
+      if (detectedPkgManager) detectedPkgManager.textContent = friendlyName;
+      if (btnPkgManagerName) btnPkgManagerName.textContent = friendlyName;
+      pkgManagerInstallSection.classList.remove('hidden');
+      pkgManagerInstallSection.setAttribute('data-pkg', data.pkgManager);
+    } else if (hasMissing && data.pkgManager === 'none') {
+      const warningDiv = document.createElement('div');
+      warningDiv.style.cssText = 'font-size: 0.85rem; color: #fca5a5; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; margin-top: 8px; line-height: 1.4;';
+      let systemTips = '';
+      if (data.platform === 'win32') {
+        systemTips = 'Bạn có thể cài đặt winget hoặc tải thủ công các thư viện.';
+      } else if (data.platform === 'darwin') {
+        systemTips = 'Vui lòng cài đặt Homebrew (brew) trước để tự động tải các thư viện này.';
+      } else {
+        systemTips = 'Vui lòng cài đặt apt-get hoặc cài thủ công các thư viện.';
+      }
+      warningDiv.textContent = `Thiếu thư viện nhưng không tìm thấy trình quản lý gói phù hợp. ${systemTips}`;
+      librariesStatusList.appendChild(warningDiv);
+    } else {
+      const successDiv = document.createElement('div');
+      successDiv.style.cssText = 'font-size: 0.85rem; color: #a7f3d0; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 8px; text-align: center; font-weight: 500;';
+      successDiv.textContent = 'Môi trường hệ thống đã sẵn sàng!';
+      librariesStatusList.appendChild(successDiv);
+    }
+  } catch (err) {
+    librariesStatusList.innerHTML = `<div style="color: var(--danger-color); font-size: 0.9rem; padding: 5px;">Lỗi kiểm tra: ${err.message}</div>`;
+  } finally {
+    btnCheckLibraries.disabled = false;
+    btnCheckLibraries.textContent = 'Kiểm tra lại';
+  }
+}
+
+async function installLibraries() {
+  if (!pkgManagerInstallSection || !btnInstallLibraries || !settingsLogSection || !settingsLogConsole) return;
+  
+  const pkg = pkgManagerInstallSection.getAttribute('data-pkg');
+  if (!pkg) return;
+  
+  btnInstallLibraries.disabled = true;
+  btnInstallLibraries.textContent = 'Đang cài đặt...';
+  settingsLogSection.classList.remove('hidden');
+  settingsLogConsole.innerHTML = 'Bắt đầu tiến trình cài đặt thư viện...\n';
+  
+  const removeListener = window.api.onInstallProgress((logLine) => {
+    settingsLogConsole.innerHTML += logLine;
+    settingsLogConsole.scrollTop = settingsLogConsole.scrollHeight;
+  });
+  
+  try {
+    await window.api.installSystemLibraries(pkg);
+    settingsLogConsole.innerHTML += '\n[THÀNH CÔNG] Cài đặt các thư viện hoàn tất!\n';
+    alert('Cài đặt thư viện hệ thống hoàn tất!');
+    await checkLibraries(); // Refresh check
+  } catch (err) {
+    settingsLogConsole.innerHTML += `\n[LỖI] Cài đặt thất bại: ${err.message}\n`;
+    alert(`Cài đặt thất bại: ${err.message}`);
+  } finally {
+    btnInstallLibraries.disabled = false;
+    btnInstallLibraries.textContent = `Cài đặt bằng ${pkg === 'apt' ? 'APT' : (pkg === 'brew' ? 'Homebrew' : 'winget')}`;
+    removeListener();
   }
 }
 

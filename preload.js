@@ -20,6 +20,13 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('setup-progress', subscription);
     return () => ipcRenderer.removeListener('setup-progress', subscription);
   },
+  checkSystemLibraries: () => ipcRenderer.invoke('settings:check-libraries'),
+  installSystemLibraries: (pkg) => ipcRenderer.invoke('settings:install-libraries', { pkgManager: pkg }),
+  onInstallProgress: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on('install-log', subscription);
+    return () => ipcRenderer.removeListener('install-log', subscription);
+  },
 
   // Listeners for progress and logs
   onDownloadProgress: (callback) => {

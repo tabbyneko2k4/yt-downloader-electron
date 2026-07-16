@@ -986,3 +986,140 @@ ipcMain.handle('setup:update', async (event) => {
 });
 
 
+// Helper to check if command exists
+async function isCommandAvailable(cmd, args = ['--version']) {
+  return new Promise((resolve) => {
+    const child = spawn(cmd, args, { shell: true });
+    child.on('error', () => {
+      resolve(false);
+    });
+    child.on('close', (code) => {
+      resolve(code === 0);
+    });
+  });
+}
+
+// IPC Handler: Check System & Local Libraries Status
+ipcMain.handle('settings:check-libraries', async () => {
+  const localPaths = getBinPaths();
+  
+  const results = {
+    ytDlp: {
+      local: fs.existsSync(localPaths.ytDlp),
+      global: await isCommandAvailable('yt-dlp', ['--version'])
+    },
+    ffmpeg: {
+      local: fs.existsSync(localPaths.ffmpeg),
+      global: await isCommandAvailable('ffmpeg', ['-version'])
+    },
+    ffprobe: {
+      local: fs.existsSync(localPaths.ffprobe),
+      global: await isCommandAvailable('ffprobe', ['-version'])
+    }
+  };
+
+  // Detect platform & pkg manager
+  let pkgManager = 'none';
+  if (process.platform === 'win32') {
+    if (await isCommandAvailable('winget', ['--version'])) {
+      pkgManager = 'winget';
+    }
+  } else if (process.platform === 'darwin') {
+    if (await isCommandAvailable('brew', ['--version'])) {
+      pkgManager = 'brew';
+    }
+  } else {
+    // Linux / other
+    if (await isCommandAvailable('apt-get', ['--version'])) {
+      pkgManager = 'apt';
+    }
+  }
+
+  return {
+    results,
+    pkgManager,
+    platform: process.platform
+  };
+});
+
+// IPC Handler: Install Libraries via package manager
+ipcMain.handle('settings:install-libraries', async (event, { pkgManager }) => {
+  return new Promise((resolve, reject) => {
+    let command = '';
+    let args = [];
+
+    const sendLog = (line) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('install-log', line);
+      }
+    };
+
+    if (pkgManager === 'winget') {
+      command = 'powershell.exe';
+      args = [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        'Write-Output "Bắt đầu cài đặt yt-dlp qua winget..."; ' +
+        'winget install yt-dlp.yt-dlp --accept-source-agreements --accept-package-agreements; ' +
+        'Write-Output "`nBắt đầu cài đặt FFmpeg qua winget..."; ' +
+        'winget install Gyan.FFmpeg --accept-source-agreements --accept-package-agreements; ' +
+        'Write-Output "`nHoàn tất các tiến trình cài đặt."'
+      ];
+    } else if (pkgManager === 'brew') {
+      command = 'brew';
+      args = ['install', 'yt-dlp', 'ffmpeg'];
+    } else if (pkgManager === 'apt') {
+      command = 'pkexec';
+      args = ['apt-get', 'install', '-y', 'yt-dlp', 'ffmpeg'];
+    } else {
+      reject(new Error('Không tìm thấy Trình quản lý gói phù hợp trên hệ điều hành này.'));
+      return;
+    }
+
+    sendLog(`Đang khởi chạy tiến trình cài đặt với: ${command} ${args.join(' ')}\n\n`);
+
+    const child = spawn(command, args, { shell: true });
+
+    child.stdout.on('data', (data) => {
+      sendLog(data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      sendLog(data.toString());
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        sendLog('\n[Hệ thống] Tiến trình cài đặt hoàn tất thành công!\n');
+        resolve({ success: true });
+      } else {
+        sendLog(`\n[Hệ thống] Tiến trình kết thúc với mã thoát: ${code}\n`);
+        
+        // Fallback for apt if pkexec fails
+        if (pkgManager === 'apt' && command === 'pkexec') {
+          sendLog('[Hệ thống] Thử lại không cần pkexec...\n');
+          const fallback = spawn('apt-get', ['install', '-y', 'yt-dlp', 'ffmpeg'], { shell: true });
+          fallback.stdout.on('data', (data) => sendLog(data.toString()));
+          fallback.stderr.on('data', (data) => sendLog(data.toString()));
+          fallback.on('close', (fCode) => {
+            if (fCode === 0) {
+              resolve({ success: true });
+            } else {
+              reject(new Error(`Cài đặt thất bại với mã lỗi ${fCode}`));
+            }
+          });
+          return;
+        }
+        reject(new Error(`Tiến trình cài đặt kết thúc với mã lỗi ${code}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      sendLog(`\n[LỖI HỆ THỐNG] Không thể thực thi lệnh: ${err.message}\n`);
+      reject(err);
+    });
+  });
+});
+
+
