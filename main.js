@@ -77,6 +77,11 @@ function sanitizeFolderName(name) {
   return name.replace(/[\\/:*?"<>|]/g, '_').trim();
 }
 
+// Helper: Strip ANSI escape codes
+function stripAnsi(str) {
+  return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+}
+
 // IPC Handler: Choose Destination Folder
 ipcMain.handle('dialog:select-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
@@ -489,9 +494,14 @@ ipcMain.handle('yt-dlp:download', async (event, { id, url, formatType, quality, 
         const destinationPaths = [];
         const lines = logs.split(/[\r\n]+/);
         for (const line of lines) {
-          const match = line.match(/(?:[Dd]estination:\s+)(.+)$/);
+          const cleanLine = stripAnsi(line);
+          const match = cleanLine.match(/(?:[Dd]estination:\s+)(.+)$/);
           if (match) {
-            const filePath = match[1].trim();
+            let filePath = match[1].trim();
+            if (filePath.startsWith('"') && filePath.endsWith('"')) {
+              filePath = filePath.slice(1, -1);
+            }
+            filePath = filePath.replace(/[\r\n]/g, '').trim();
             const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
             if (!destinationPaths.includes(absolutePath)) {
               destinationPaths.push(absolutePath);
