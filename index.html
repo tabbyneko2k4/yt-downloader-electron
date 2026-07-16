@@ -38,13 +38,7 @@
       </div>
       <p class="subtitle">
         Trình tải đa phương tiện sử dụng yt-dlp
-        <button id="btn-update-binaries" class="btn-update-link" title="Kiểm tra & Cập nhật các thư viện">
-          <svg class="icon-refresh" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-          </svg>
-          <span id="update-status-text">Cập nhật</span>
-        </button>
-        <button id="btn-open-settings" class="btn-settings-link" title="Cài đặt hệ thống & thư viện">
+        <button id="btn-open-settings" class="btn-settings-link" title="Cài đặt hệ thống">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -56,6 +50,8 @@
 
     <!-- Main Content -->
     <main class="main-content">
+
+
       <!-- Input Section -->
       <section class="card input-section">
         <div class="input-group">
@@ -213,135 +209,7 @@
   </div>
 
 
-  <!-- Setup Overlay (shown when setup is needed) -->
-  <div id="setup-overlay" class="setup-overlay hidden">
-    <div class="setup-card animate-fade-in">
-      
-      <!-- STEP 1: WELCOME -->
-      <div id="setup-step-1" class="setup-step-content">
-        <div class="logo-wrapper">
-          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" fill="url(#setup-logo-grad1)" />
-            <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
-            <defs>
-              <linearGradient id="setup-logo-grad1" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#ff007f" />
-                <stop offset="1" stop-color="#7928ca" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <h2>Thiết lập <span class="gradient-text">Hệ thống</span></h2>
-        </div>
-        <p class="setup-subtitle">Chào mừng bạn đến với trình cài đặt YT-DLP Downloader. Hãy hoàn thành vài thiết lập đơn giản để bắt đầu sử dụng.</p>
-        
-        <div class="welcome-illustration-wrapper" style="margin: 15px 0;">
-          <div class="welcome-badge" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2); padding: 10px 20px; border-radius: 30px; font-weight: 600; color: #c084fc; display: inline-block;">Phiên bản v1.0.1</div>
-        </div>
 
-        <div class="setup-actions">
-          <button id="btn-setup-next-1" class="btn btn-primary btn-full">Bắt đầu thiết lập</button>
-        </div>
-      </div>
-
-      <!-- STEP 2: CHOOSE INSTALL TYPE & DESTINATION -->
-      <div id="setup-step-2" class="setup-step-content hidden">
-        <h2 style="font-size: 1.45rem; margin-bottom: 5px;">Chọn <span class="gradient-text">Chế độ hoạt động</span></h2>
-        <p class="setup-subtitle" style="font-size: 0.85rem;">Chọn cách thức cài đặt phù hợp với nhu cầu của bạn.</p>
-        
-        <div class="install-mode-options" style="display: flex; flex-direction: column; gap: 12px; margin: 15px 0; text-align: left;">
-          <!-- Card Option 1: Standard Installation -->
-          <label class="install-mode-card" style="display: block; cursor: pointer;">
-            <input type="radio" name="setup-install-type" value="installed" checked style="display: none;">
-            <div class="install-card-content" style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; transition: var(--transition-smooth);">
-              <div class="card-radio-btn" style="width: 18px; height: 18px; border: 2px solid var(--text-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 3px; flex-shrink: 0;">
-                <div class="card-radio-inner" style="width: 10px; height: 10px; border-radius: 50%; background: transparent;"></div>
-              </div>
-              <div class="card-text">
-                <div class="card-title" style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Cài đặt vào máy (Khuyên dùng)</div>
-                <div class="card-desc" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 3px; line-height: 1.3;">Cài ứng dụng vào hệ thống, tạo shortcut trên Desktop để mở nhanh.</div>
-              </div>
-            </div>
-          </label>
-
-          <!-- Card Option 2: Portable -->
-          <label class="install-mode-card" style="display: block; cursor: pointer;">
-            <input type="radio" name="setup-install-type" value="portable" style="display: none;">
-            <div class="install-card-content" style="display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; transition: var(--transition-smooth);">
-              <div class="card-radio-btn" style="width: 18px; height: 18px; border: 2px solid var(--text-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 3px; flex-shrink: 0;">
-                <div class="card-radio-inner" style="width: 10px; height: 10px; border-radius: 50%; background: transparent;"></div>
-              </div>
-              <div class="card-text">
-                <div class="card-title" style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Chạy dạng Portable</div>
-                <div class="card-desc" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 3px; line-height: 1.3;">Không cài đặt, chạy trực tiếp từ thư mục được chọn. Thích hợp cho USB.</div>
-              </div>
-            </div>
-          </label>
-        </div>
-
-        <div class="config-group" style="text-align: left; margin-top: 15px;">
-          <label style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Thư mục cài đặt / lưu trữ</label>
-          <div class="dest-selector" style="margin-top: 6px; display: flex; gap: 8px;">
-            <span id="setup-dest-path-display" class="path-display" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; background: var(--bg-input); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--card-border); display: block; height: 40px; line-height: 20px;">Đang tải đường dẫn...</span>
-            <button id="btn-setup-browse" class="btn btn-secondary btn-icon-only" title="Chọn thư mục" style="padding: 10px; width: 40px; height: 40px; flex-shrink: 0;">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="setup-actions" style="display: flex; gap: 12px; margin-top: 20px;">
-          <button id="btn-setup-back-2" class="btn btn-secondary" style="flex: 1;">Quay lại</button>
-          <button id="btn-setup-next-2" class="btn btn-primary" style="flex: 2;">Bắt đầu thiết lập</button>
-        </div>
-      </div>
-
-      <!-- STEP 3: INSTALLING DEPENDENCIES -->
-      <div id="setup-step-3" class="setup-step-content hidden">
-        <h2 style="font-size: 1.45rem; margin-bottom: 5px;">Đang thiết lập <span class="gradient-text">Hệ thống</span></h2>
-        <p class="setup-subtitle" style="font-size: 0.85rem;">Trình cài đặt đang tải thư viện và cấu hình ứng dụng. Vui lòng không tắt máy.</p>
-
-        <div class="setup-progress-wrapper" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; text-align: left;">
-          <div class="setup-progress-info" style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 500;">
-            <span id="setup-status" style="color: var(--text-primary);">Đang kiểm tra...</span>
-            <span id="setup-percent" style="color: #c084fc; font-weight: 600;">0%</span>
-          </div>
-          <div class="setup-progress-bar-container" style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-            <div id="setup-progress-fill" class="setup-progress-fill" style="width: 0%; height: 100%; background: var(--primary-glow); transition: width 0.3s ease;"></div>
-          </div>
-          <span id="setup-detail" class="setup-detail" style="font-size: 0.75rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Vui lòng chờ trong giây lát...</span>
-        </div>
-
-        <div class="setup-log-console" id="setup-log-console" style="margin-top: 15px; height: 120px; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); font-family: monospace; font-size: 0.75rem; color: #a78bfa; overflow-y: auto; white-space: pre-wrap;">
-          <!-- Live installation logs -->
-        </div>
-      </div>
-
-      <!-- STEP 4: FINISHED -->
-      <div id="setup-step-4" class="setup-step-content hidden">
-        <div class="success-checkmark-wrapper" style="display: flex; justify-content: center; margin: 15px 0;">
-          <div class="checkmark-circle" style="width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--success-color); display: flex; align-items: center; justify-content: center; color: var(--success-color); font-size: 2.2rem; font-weight: bold;">
-            ✓
-          </div>
-        </div>
-        
-        <h2 style="font-size: 1.6rem; margin-top: 15px;">Hoàn tất <span class="gradient-text">Thiết lập!</span></h2>
-        <p class="setup-subtitle" style="font-size: 0.9rem; margin-top: 5px;">Môi trường ứng dụng đã được cấu hình thành công.</p>
-
-        <div class="finish-info-box" style="background: rgba(255,255,255,0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin: 15px 0;">
-          <div style="font-size: 0.85rem; color: var(--text-secondary); text-align: left; display: flex; flex-direction: column; gap: 8px;">
-            <div>• Chế độ hoạt động: <strong id="finish-mode-text" style="color: var(--text-primary);">Cài đặt vào máy</strong></div>
-            <div>• Thư mục lưu trữ: <span id="finish-path-text" style="word-break: break-all; color: #c084fc; font-family: monospace; font-size: 0.75rem;">C:\...</span></div>
-          </div>
-        </div>
-
-        <div class="setup-actions" style="margin-top: 20px;">
-          <button id="btn-setup-finish" class="btn btn-success btn-full" style="width: 100%;">Khởi chạy ứng dụng</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
 
   <!-- Settings Overlay (shown when settings button clicked) -->
   <div id="settings-overlay" class="setup-overlay hidden">
@@ -374,39 +242,6 @@
           </div>
         </div>
 
-        <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 5px 0;">
-
-        <!-- System Libraries Status Check -->
-        <div class="config-group">
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <label style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Kiểm tra thư viện hệ thống</label>
-            <button id="btn-check-libraries" class="btn-update-link" style="margin: 0; padding: 2px 10px;" title="Kiểm tra lại">
-              Kiểm tra lại
-            </button>
-          </div>
-          
-          <div id="libraries-status-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
-            <!-- Dynamic library entries go here -->
-          </div>
-        </div>
-
-        <!-- Package Manager Install Card -->
-        <div id="pkg-manager-install-section" class="hidden" style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
-          <p style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary); margin: 0;">
-            Phát hiện hệ thống thiếu thư viện. Bạn có muốn tự động cài đặt qua trình quản lý gói <strong id="detected-pkg-manager" style="color: #c084fc;">winget</strong>?
-          </p>
-          <button id="btn-install-libraries" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem; width: fit-content; align-self: flex-start; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.25);">
-            Cài đặt bằng <span id="btn-pkg-manager-name">winget</span>
-          </button>
-        </div>
-
-        <!-- Install Log Console -->
-        <div id="settings-log-section" class="log-section hidden">
-          <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Nhật ký cài đặt:</span>
-          <div id="settings-log-console" class="setup-log-console" style="height: 130px; margin-top: 4px;">
-            <!-- Real-time install logs -->
-          </div>
-        </div>
       </div>
 
       <div style="margin-top: 10px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--card-border); padding-top: 15px;">

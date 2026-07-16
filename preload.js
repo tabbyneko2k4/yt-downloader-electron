@@ -11,22 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   getDownloadsPath: () => ipcRenderer.invoke('app:get-downloads-path'),
   startDrag: (filePath) => ipcRenderer.send('ondragstart', filePath),
   
-  // Setup and updates
-  checkSetupStatus: () => ipcRenderer.invoke('setup:check-status'),
-  startSetup: (options) => ipcRenderer.invoke('setup:start', options),
-  updateBinaries: () => ipcRenderer.invoke('setup:update'),
-  onSetupProgress: (callback) => {
-    const subscription = (event, data) => callback(data);
-    ipcRenderer.on('setup-progress', subscription);
-    return () => ipcRenderer.removeListener('setup-progress', subscription);
-  },
-  checkSystemLibraries: () => ipcRenderer.invoke('settings:check-libraries'),
-  installSystemLibraries: (pkg) => ipcRenderer.invoke('settings:install-libraries', { pkgManager: pkg }),
-  onInstallProgress: (callback) => {
-    const subscription = (event, data) => callback(data);
-    ipcRenderer.on('install-log', subscription);
-    return () => ipcRenderer.removeListener('install-log', subscription);
-  },
+
 
   // Listeners for progress and logs
   onDownloadProgress: (callback) => {

@@ -40,30 +40,12 @@ const playlistEntriesList = document.getElementById('playlist-entries-list');
 const btnSelectAll = document.getElementById('btn-select-all');
 const btnDeselectAll = document.getElementById('btn-deselect-all');
 
-// Setup & Update DOM Elements
-const setupOverlay = document.getElementById('setup-overlay');
-const setupStatus = document.getElementById('setup-status');
-const setupPercent = document.getElementById('setup-percent');
-const setupProgressFill = document.getElementById('setup-progress-fill');
-const setupDetail = document.getElementById('setup-detail');
-const setupLogConsole = document.getElementById('setup-log-console');
-const btnUpdateBinaries = document.getElementById('btn-update-binaries');
-const updateStatusText = document.getElementById('update-status-text');
-
 // Settings DOM Elements
 const settingsOverlay = document.getElementById('settings-overlay');
 const btnOpenSettings = document.getElementById('btn-open-settings');
 const btnCloseSettings = document.getElementById('btn-close-settings');
 const btnSettingsBrowse = document.getElementById('btn-settings-browse');
 const settingsDestPathDisplay = document.getElementById('settings-dest-path-display');
-const btnCheckLibraries = document.getElementById('btn-check-libraries');
-const librariesStatusList = document.getElementById('libraries-status-list');
-const pkgManagerInstallSection = document.getElementById('pkg-manager-install-section');
-const detectedPkgManager = document.getElementById('detected-pkg-manager');
-const btnInstallLibraries = document.getElementById('btn-install-libraries');
-const btnPkgManagerName = document.getElementById('btn-pkg-manager-name');
-const settingsLogSection = document.getElementById('settings-log-section');
-const settingsLogConsole = document.getElementById('settings-log-console');
 
 
 // App State
@@ -89,215 +71,14 @@ const audioQualities = [
   { name: 'M4A (AAC Audio)', value: 'm4a' }
 ];
 
-// Trình thiết lập tải các file phụ thuộc
-let setupState = {
-  step: 1,
-  installType: 'installed',
-  destDir: '',
-  pkgManager: 'none',
-  defaultInstallPath: '',
-  currentAppPath: ''
-};
-
-function showSetupStep(stepNum) {
-  setupState.step = stepNum;
-  document.getElementById('setup-step-1').classList.add('hidden');
-  document.getElementById('setup-step-2').classList.add('hidden');
-  document.getElementById('setup-step-3').classList.add('hidden');
-  document.getElementById('setup-step-4').classList.add('hidden');
-  document.getElementById(`setup-step-${stepNum}`).classList.remove('hidden');
-}
-
-function updateStep2UI() {
-  const radioInstalled = document.querySelector('input[name="setup-install-type"][value="installed"]');
-  const radioPortable = document.querySelector('input[name="setup-install-type"][value="portable"]');
-  
-  if (setupState.installType === 'installed') {
-    radioInstalled.checked = true;
-    setupState.destDir = setupState.defaultInstallPath;
-  } else {
-    radioPortable.checked = true;
-    setupState.destDir = setupState.currentAppPath;
-  }
-  
-  const displayEl = document.getElementById('setup-dest-path-display');
-  if (displayEl) {
-    displayEl.textContent = setupState.destDir;
-    displayEl.title = setupState.destDir;
-  }
-}
-
-async function startSetupExecution() {
-  const setupLog = document.getElementById('setup-log-console');
-  setupLog.innerHTML = 'Bắt đầu thiết lập môi trường tải xuống...\n';
-
-  const removeListener = window.api.onSetupProgress((data) => {
-    document.getElementById('setup-status').textContent = data.status;
-    document.getElementById('setup-percent').textContent = `${data.percent}%`;
-    document.getElementById('setup-progress-fill').style.width = `${data.percent}%`;
-    document.getElementById('setup-detail').textContent = data.detail;
-
-    const logLine = `[Bước ${data.step}/4] ${data.status} - ${data.detail}\n`;
-    setupLog.innerHTML += logLine;
-    setupLog.scrollTop = setupLog.scrollHeight;
-  });
-
-  try {
-    await window.api.startSetup({
-      installType: setupState.installType,
-      destDir: setupState.destDir,
-      pkgManager: setupState.pkgManager
-    });
-
-    setupLog.innerHTML += '\nHoàn tất thiết lập thành công!\n';
-
-    setTimeout(() => {
-      document.getElementById('finish-mode-text').textContent = 
-        setupState.installType === 'installed' ? 'Cài đặt vào máy (Standard)' : 'Chạy dạng Portable';
-      document.getElementById('finish-path-text').textContent = setupState.destDir;
-      showSetupStep(4);
-    }, 1500);
-  } catch (err) {
-    document.getElementById('setup-status').textContent = 'Lỗi thiết lập!';
-    document.getElementById('setup-percent').textContent = 'LỖI';
-    document.getElementById('setup-progress-fill').style.background = 'var(--danger-color)';
-    document.getElementById('setup-detail').textContent = err.message;
-    setupLog.innerHTML += `\n[LỖI] Thiết lập thất bại: ${err.message}\n`;
-    alert(`Thiết lập thất bại: ${err.message}. Vui lòng kiểm tra kết nối internet và khởi động lại ứng dụng.`);
-  } finally {
-    removeListener();
-  }
-}
-
-async function runSetupWizard() {
-  setupOverlay.classList.remove('hidden');
-  showSetupStep(1);
-
-  const btnNext1 = document.getElementById('btn-setup-next-1');
-  btnNext1.onclick = () => {
-    showSetupStep(2);
-    updateStep2UI();
-  };
-
-  const btnBack2 = document.getElementById('btn-setup-back-2');
-  btnBack2.onclick = () => {
-    showSetupStep(1);
-  };
-
-  const btnBrowseSetup = document.getElementById('btn-setup-browse');
-  btnBrowseSetup.onclick = async () => {
-    const path = await window.api.selectDirectory();
-    if (path) {
-      setupState.destDir = path;
-      const displayEl = document.getElementById('setup-dest-path-display');
-      if (displayEl) {
-        displayEl.textContent = path;
-        displayEl.title = path;
-      }
-    }
-  };
-
-  const radios = document.querySelectorAll('input[name="setup-install-type"]');
-  radios.forEach(r => {
-    r.addEventListener('change', (e) => {
-      setupState.installType = e.target.value;
-      if (setupState.installType === 'installed') {
-        setupState.destDir = setupState.defaultInstallPath;
-      } else {
-        setupState.destDir = setupState.currentAppPath;
-      }
-      const displayEl = document.getElementById('setup-dest-path-display');
-      if (displayEl) {
-        displayEl.textContent = setupState.destDir;
-        displayEl.title = setupState.destDir;
-      }
-    });
-  });
-
-  const btnNext2 = document.getElementById('btn-setup-next-2');
-  btnNext2.onclick = async () => {
-    showSetupStep(3);
-    await startSetupExecution();
-  };
-
-  const btnFinish = document.getElementById('btn-setup-finish');
-  btnFinish.onclick = () => {
-    setupOverlay.classList.add('hidden');
-  };
-}
 
 
-// Cập nhật yt-dlp
-async function updateBinaries() {
-  if (btnUpdateBinaries.classList.contains('spinning')) return;
 
-  btnUpdateBinaries.classList.add('spinning');
-  updateStatusText.textContent = 'Đang kiểm tra...';
-  
-  const originalDownloadId = currentDownloadId;
-  currentDownloadId = 'update';
-  
-  progressSection.classList.remove('hidden');
-  downloadingTitle.textContent = 'Cập nhật các thành phần hệ thống...';
-  statSpeed.textContent = 'Đang cập nhật yt-dlp';
-  statEta.textContent = '--:--';
-  statSize.textContent = '';
-  progressFill.style.width = '50%';
-  progressPercent.textContent = '50%';
-  logConsole.innerHTML = '';
-  logConsole.classList.remove('hidden');
-  logArrow.style.transform = 'rotate(180deg)';
 
-  try {
-    await window.api.updateBinaries();
-    progressFill.style.width = '100%';
-    progressPercent.textContent = '100%';
-    downloadingTitle.textContent = 'Cập nhật hoàn tất!';
-    appendLog('\n[Hệ thống] Cập nhật yt-dlp hoàn thành thành công!');
-    updateStatusText.textContent = 'Đã cập nhật';
-    alert('Cập nhật yt-dlp thành công!');
-  } catch (err) {
-    progressFill.style.width = '100%';
-    progressFill.style.background = 'var(--danger-color)';
-    progressPercent.textContent = 'Lỗi';
-    downloadingTitle.textContent = 'Cập nhật thất bại!';
-    appendLog(`\n[Lỗi] Cập nhật thất bại: ${err.message}`);
-    updateStatusText.textContent = 'Cập nhật';
-    alert(`Cập nhật thất bại: ${err.message}`);
-  } finally {
-    setTimeout(() => {
-      btnUpdateBinaries.classList.remove('spinning');
-      if (currentDownloadId === 'update') {
-        progressSection.classList.add('hidden');
-        progressFill.style.background = 'var(--primary-glow)';
-        currentDownloadId = originalDownloadId;
-      }
-    }, 4000);
-  }
-}
 
 // Initialize
 async function init() {
   console.log("init() started.");
-  try {
-    console.log("Invoking checkSetupStatus...");
-    const status = await window.api.checkSetupStatus();
-    console.log("checkSetupStatus result:", status);
-    
-    setupState.pkgManager = status.pkgManager;
-    setupState.defaultInstallPath = status.defaultInstallPath;
-    setupState.currentAppPath = status.currentAppPath;
-    setupState.destDir = status.defaultInstallPath;
-
-    if (status.needsSetup) {
-      console.log("Needs setup. Starting wizard...");
-      await runSetupWizard();
-    } else {
-      console.log("No setup needed.");
-    }
-  } catch (err) {
-    console.error('Lỗi kiểm tra thiết lập:', err);
-  }
 
   // Restore destination path or set default Downloads folder
   if (!currentDestPath) {
@@ -336,7 +117,6 @@ async function init() {
   btnBrowse.addEventListener('click', selectDestDirectory);
   btnDownload.addEventListener('click', startDownload);
   btnCancel.addEventListener('click', cancelActiveDownload);
-  btnUpdateBinaries.addEventListener('click', updateBinaries);
 
   btnToggleLog.addEventListener('click', toggleConsoleLog);
   btnClearHistory.addEventListener('click', clearAllHistory);
@@ -348,8 +128,6 @@ async function init() {
   if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
   if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
   if (btnSettingsBrowse) btnSettingsBrowse.addEventListener('click', selectSettingsDestDirectory);
-  if (btnCheckLibraries) btnCheckLibraries.addEventListener('click', checkLibraries);
-  if (btnInstallLibraries) btnInstallLibraries.addEventListener('click', installLibraries);
 
   // Setup IPC Subscriptions
   window.api.onDownloadProgress((data) => {
@@ -895,7 +673,6 @@ function openSettingsModal() {
       settingsDestPathDisplay.textContent = currentDestPath || 'Chưa chọn thư mục. Vui lòng bấm chọn...';
       settingsDestPathDisplay.title = currentDestPath || '';
     }
-    checkLibraries();
   }
 }
 
@@ -924,114 +701,6 @@ async function selectSettingsDestDirectory() {
     }
   } catch (err) {
     console.error(err);
-  }
-}
-
-async function checkLibraries() {
-  if (!btnCheckLibraries || !librariesStatusList || !pkgManagerInstallSection) return;
-  
-  btnCheckLibraries.disabled = true;
-  btnCheckLibraries.textContent = 'Đang kiểm tra...';
-  
-  librariesStatusList.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; padding: 5px;">Đang quét hệ thống...</div>';
-  pkgManagerInstallSection.classList.add('hidden');
-  
-  try {
-    const data = await window.api.checkSystemLibraries();
-    librariesStatusList.innerHTML = '';
-    
-    let hasMissing = false;
-    
-    const libs = [
-      { name: 'yt-dlp', status: data.results.ytDlp },
-      { name: 'FFmpeg', status: data.results.ffmpeg },
-      { name: 'FFprobe', status: data.results.ffprobe }
-    ];
-    
-    libs.forEach(lib => {
-      let badge = '';
-      if (lib.status.global) {
-        badge = '<span style="color: var(--success-color); font-weight: 500;">Đã cài (Hệ thống)</span>';
-      } else if (lib.status.local) {
-        badge = '<span style="color: #60a5fa; font-weight: 500;">Đã cài (Cục bộ)</span>';
-      } else {
-        badge = '<span style="color: var(--danger-color); font-weight: 500;">Chưa cài đặt</span>';
-        hasMissing = true;
-      }
-      
-      const item = document.createElement('div');
-      item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem;';
-      item.innerHTML = `
-        <span style="font-weight: 500; color: var(--text-primary);">${lib.name}</span>
-        ${badge}
-      `;
-      librariesStatusList.appendChild(item);
-    });
-    
-    if (hasMissing && data.pkgManager !== 'none') {
-      let friendlyName = data.pkgManager;
-      if (data.pkgManager === 'apt') friendlyName = 'APT (apt-get)';
-      else if (data.pkgManager === 'brew') friendlyName = 'Homebrew';
-      
-      if (detectedPkgManager) detectedPkgManager.textContent = friendlyName;
-      if (btnPkgManagerName) btnPkgManagerName.textContent = friendlyName;
-      pkgManagerInstallSection.classList.remove('hidden');
-      pkgManagerInstallSection.setAttribute('data-pkg', data.pkgManager);
-    } else if (hasMissing && data.pkgManager === 'none') {
-      const warningDiv = document.createElement('div');
-      warningDiv.style.cssText = 'font-size: 0.85rem; color: #fca5a5; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; margin-top: 8px; line-height: 1.4;';
-      let systemTips = '';
-      if (data.platform === 'win32') {
-        systemTips = 'Bạn có thể cài đặt winget hoặc tải thủ công các thư viện.';
-      } else if (data.platform === 'darwin') {
-        systemTips = 'Vui lòng cài đặt Homebrew (brew) trước để tự động tải các thư viện này.';
-      } else {
-        systemTips = 'Vui lòng cài đặt apt-get hoặc cài thủ công các thư viện.';
-      }
-      warningDiv.textContent = `Thiếu thư viện nhưng không tìm thấy trình quản lý gói phù hợp. ${systemTips}`;
-      librariesStatusList.appendChild(warningDiv);
-    } else {
-      const successDiv = document.createElement('div');
-      successDiv.style.cssText = 'font-size: 0.85rem; color: #a7f3d0; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 8px; margin-top: 8px; text-align: center; font-weight: 500;';
-      successDiv.textContent = 'Môi trường hệ thống đã sẵn sàng!';
-      librariesStatusList.appendChild(successDiv);
-    }
-  } catch (err) {
-    librariesStatusList.innerHTML = `<div style="color: var(--danger-color); font-size: 0.9rem; padding: 5px;">Lỗi kiểm tra: ${err.message}</div>`;
-  } finally {
-    btnCheckLibraries.disabled = false;
-    btnCheckLibraries.textContent = 'Kiểm tra lại';
-  }
-}
-
-async function installLibraries() {
-  if (!pkgManagerInstallSection || !btnInstallLibraries || !settingsLogSection || !settingsLogConsole) return;
-  
-  const pkg = pkgManagerInstallSection.getAttribute('data-pkg');
-  if (!pkg) return;
-  
-  btnInstallLibraries.disabled = true;
-  btnInstallLibraries.textContent = 'Đang cài đặt...';
-  settingsLogSection.classList.remove('hidden');
-  settingsLogConsole.innerHTML = 'Bắt đầu tiến trình cài đặt thư viện...\n';
-  
-  const removeListener = window.api.onInstallProgress((logLine) => {
-    settingsLogConsole.innerHTML += logLine;
-    settingsLogConsole.scrollTop = settingsLogConsole.scrollHeight;
-  });
-  
-  try {
-    await window.api.installSystemLibraries(pkg);
-    settingsLogConsole.innerHTML += '\n[THÀNH CÔNG] Cài đặt các thư viện hoàn tất!\n';
-    alert('Cài đặt thư viện hệ thống hoàn tất!');
-    await checkLibraries(); // Refresh check
-  } catch (err) {
-    settingsLogConsole.innerHTML += `\n[LỖI] Cài đặt thất bại: ${err.message}\n`;
-    alert(`Cài đặt thất bại: ${err.message}`);
-  } finally {
-    btnInstallLibraries.disabled = false;
-    btnInstallLibraries.textContent = `Cài đặt bằng ${pkg === 'apt' ? 'APT' : (pkg === 'brew' ? 'Homebrew' : 'winget')}`;
-    removeListener();
   }
 }
 
