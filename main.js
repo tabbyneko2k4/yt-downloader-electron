@@ -123,7 +123,17 @@ function extractZip(zipPath, destDir) {
 
 
 // Cấu hình thư mục dữ liệu cục bộ để tránh lỗi "Access is denied" khi truy cập cache
-const userDataPath = path.join(__dirname, 'electron_user_data');
+let userDataPath;
+if (app.isPackaged) {
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    userDataPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'electron_user_data');
+  } else {
+    // Sử dụng thư mục mặc định của hệ thống khi được cài đặt qua bộ cài (NSIS)
+    userDataPath = path.join(app.getPath('appData'), app.name || 'YT-DLP Premium Downloader');
+  }
+} else {
+  userDataPath = path.join(__dirname, 'electron_user_data');
+}
 app.setPath('userData', userDataPath);
 
 // Thư mục chứa thư viện local
