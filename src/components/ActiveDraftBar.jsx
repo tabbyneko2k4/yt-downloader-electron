@@ -1,7 +1,9 @@
 import React from 'react';
 import { Film, Download, ArrowRight, X, Sparkles } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function ActiveDraftBar({ mediaDraft, setActiveTab, clearDraft, startDownload, settings, advancedOptions }) {
+  const { t } = useTranslation();
   if (!mediaDraft || !mediaDraft.mediaInfo) return null;
 
   const handleQuickDownload = () => {
@@ -50,7 +52,7 @@ export default function ActiveDraftBar({ mediaDraft, setActiveTab, clearDraft, s
         <div className="draft-info-text">
           <span className="draft-title">{mediaDraft.mediaInfo.info.title}</span>
           <span className="draft-sub">
-            Đang lưu nháp cấu hình • {mediaDraft.formatType.toUpperCase()} ({mediaDraft.formatType === 'video' ? mediaDraft.videoQuality : mediaDraft.formatType === 'audio' ? mediaDraft.audioQuality : 'GIF'})
+            {t('draftSaving')} • {mediaDraft.formatType.toUpperCase()} ({mediaDraft.formatType === 'video' ? mediaDraft.videoQuality : mediaDraft.formatType === 'audio' ? mediaDraft.audioQuality : 'GIF'})
           </span>
         </div>
       </div>
@@ -60,7 +62,7 @@ export default function ActiveDraftBar({ mediaDraft, setActiveTab, clearDraft, s
           className="btn-draft-action btn-draft-return"
           onClick={() => setActiveTab('downloader')}
         >
-          <span>Quay lại trang tải</span>
+          <span>{t('returnToDownloader')}</span>
           <ArrowRight size={14} />
         </button>
 
@@ -69,13 +71,13 @@ export default function ActiveDraftBar({ mediaDraft, setActiveTab, clearDraft, s
           onClick={handleQuickDownload}
         >
           <Download size={14} />
-          <span>Tải nhanh ngay</span>
+          <span>{t('quickDownload')}</span>
         </button>
 
         <button
           className="btn-draft-close"
           onClick={clearDraft}
-          title="Xóa bản nháp này"
+          title={t('clearDraftTitle')}
         >
           <X size={16} />
         </button>

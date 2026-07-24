@@ -1,4 +1,15 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage } = require('electron');
+
+// Vô hiệu hóa GPU acceleration & GPU sub-process để tránh lỗi crash GPU helper (exit_code=-1073741515 / 0xC0000135 DLL Not Found)
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-gpu-compositing');
+app.commandLine.appendSwitch('disable-gpu-rasterization');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
+app.commandLine.appendSwitch('disable-software-rasterizer');
+app.commandLine.appendSwitch('no-sandbox');
+app.commandLine.appendSwitch('in-process-gpu');
+
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -47,7 +58,7 @@ function findBinaryInWinGetPackages(binaryName) {
   if (process.platform !== 'win32') return null;
   const localAppData = process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE || 'C:\\Users\\1', 'AppData', 'Local');
   const packagesDir = path.join(localAppData, 'Microsoft', 'WinGet', 'Packages');
-  
+
   if (!fs.existsSync(packagesDir)) return null;
 
   try {
@@ -76,12 +87,12 @@ function findBinaryInWinGetPackages(binaryName) {
                 const subDirectFile = path.join(subPath, binaryName);
                 if (fs.existsSync(subDirectFile)) return subDirectFile;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
-  } catch (e) {}
+  } catch (e) { }
   return null;
 }
 
@@ -92,7 +103,7 @@ function getExtraBinSearchPaths() {
   const programFiles = process.env['ProgramFiles'] || 'C:\\Program Files';
   const ffmpegWinGet = findBinaryInWinGetPackages('ffmpeg.exe');
   const ytDlpWinGet = findBinaryInWinGetPackages('yt-dlp.exe');
-  
+
   const paths = [
     wingetLinks,
     path.join(localAppData, 'Programs', 'yt-dlp'),
@@ -142,13 +153,7 @@ function getSpawnEnv() {
   };
 }
 
-// Vô hiệu hóa tăng tốc phần cứng nếu cần thiết trên môi trường VM/Sandbox/Remote.
-// Mặc định để Chromium tự động quản lý và fallback để tránh lỗi "Failed to create shared context for virtualization" dẫn đến không lên UI.
-// app.disableHardwareAcceleration();
-// app.commandLine.appendSwitch('no-sandbox');
-// app.commandLine.appendSwitch('disable-gpu');
-// app.commandLine.appendSwitch('disable-software-rasterizer');
-// app.commandLine.appendSwitch('disable-gpu-sandbox');
+
 
 let mainWindow;
 const activeDownloads = new Map();
@@ -159,8 +164,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1050,
     height: 780,
-    minWidth: 850,
-    minHeight: 650,
+    minWidth: 380,
+    minHeight: 500,
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -413,7 +418,7 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
     const ytDlpCmd = getYtDlpCommand();
     const env = getSpawnEnv();
     const child = spawn(ytDlpCmd, ['--flat-playlist', '--dump-single-json', url], { env });
-    
+
     let stdoutData = '';
     let stderrData = '';
 
@@ -425,21 +430,26 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
         try {
           const info = JSON.parse(stdoutData);
           const isPlaylist = info._type === 'playlist';
-          
+
           if (isPlaylist) {
+            const isSearch = !!(info.extractor && info.extractor.includes('search')) || url.startsWith('ytsearch') || url.startsWith('scsearch');
             resolve({
               success: true,
               isPlaylist: true,
+              isSearch: isSearch,
+              searchQuery: isSearch ? url.replace(/^(ytsearch|scsearch)\d*:/, '') : null,
+              searchPlatform: url.startsWith('scsearch') ? 'soundcloud' : (url.startsWith('ytsearch') ? 'youtube' : null),
               info: {
                 title: info.title,
                 uploader: info.uploader || info.channel || 'N/A',
                 webpage_url: info.webpage_url || url,
                 entriesCount: info.entries ? info.entries.length : 0,
-                thumbnail: info.thumbnail || (info.entries && info.entries[0] ? (info.entries[0].thumbnail || (info.entries[0].thumbnails && info.entries[0].thumbnails[0] ? info.entries[0].thumbnails[0].url : '')) : ''),
+                thumbnail: info.thumbnail || (info.entries && info.entries[0] ? (info.entries[0].thumbnail || (info.entries[0].thumbnails && info.entries[0].thumbnails.length > 0 ? info.entries[0].thumbnails[info.entries[0].thumbnails.length - 1].url : '')) : ''),
                 entries: info.entries ? info.entries.map(e => {
                   let title = e.title;
-                  if (!title && e.url) {
-                    const urlParts = e.url.split('/');
+                  if (!title && (e.webpage_url || e.url)) {
+                    const targetUrl = e.webpage_url || e.url;
+                    const urlParts = targetUrl.split('/');
                     const trackSlug = urlParts[urlParts.length - 1];
                     const username = urlParts[urlParts.length - 2];
                     if (trackSlug && username) {
@@ -449,15 +459,16 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
                     } else if (trackSlug) {
                       title = decodeURIComponent(trackSlug).replace(/[-_]/g, ' ');
                     } else {
-                      title = e.url;
+                      title = targetUrl;
                     }
                   }
+                  const thumbUrl = e.thumbnail || (e.thumbnails && e.thumbnails.length > 0 ? (e.thumbnails[e.thumbnails.length - 1].url || e.thumbnails[0].url) : '');
                   return {
                     title: title || 'Bài hát không tên',
                     uploader: e.uploader || e.channel || 'N/A',
                     duration: e.duration,
-                    url: e.url,
-                    thumbnail: e.thumbnail || (e.thumbnails && e.thumbnails[0] ? e.thumbnails[0].url : '')
+                    url: e.webpage_url || e.url,
+                    thumbnail: thumbUrl
                   };
                 }) : []
               }
@@ -529,7 +540,7 @@ function getLogsDir() {
     if (!fs.existsSync(appLogsDir)) {
       fs.mkdirSync(appLogsDir, { recursive: true });
     }
-  } catch (e) {}
+  } catch (e) { }
   return appLogsDir;
 }
 
@@ -588,7 +599,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
 
   return new Promise((resolve, reject) => {
     const args = ['--continue'];
-    
+
     const baseDest = path.join(destDir, 'Media Download');
     try {
       if (!fs.existsSync(baseDest)) {
@@ -736,11 +747,11 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
     const logsDir = getLogsDir();
     const logFileName = `download_${sanitizeFolderName(playlistTitle || options.mediaTitle)}_${id}.log`;
     const logFilePath = path.join(logsDir, logFileName);
-    
+
     const writeLogLine = (text) => {
       try {
         fs.appendFileSync(logFilePath, `${new Date().toISOString()} ${text}\n`);
-      } catch (e) {}
+      } catch (e) { }
     };
 
     writeLogLine(`[START] Command: yt-dlp ${args.join(' ')}`);
@@ -841,7 +852,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         writeLogLine('[STATUS] Download Finished Successfully');
         const destinationPaths = [];
         const lines = logs.split(/[\r\n]+/);
-        
+
         const patterns = [
           /(?:[Dd]estination:\s+)(.+)$/,
           /(?:[Mm]erging\s+formats\s+into\s+)(.+)$/,
@@ -868,7 +879,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
             }
           }
         }
-        
+
         // Scan folder for files if missing or incomplete
         try {
           const filesInDir = fs.readdirSync(finalDestDir);
@@ -878,7 +889,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
           if (allMediaFiles.length > 0) {
             destinationPaths.push(...allMediaFiles);
           }
-        } catch (e) {}
+        } catch (e) { }
 
         const uniqueFiles = Array.from(new Set(destinationPaths)).filter(fp => {
           try { return fs.existsSync(fp) && fs.statSync(fp).isFile(); } catch (e) { return false; }
@@ -982,7 +993,7 @@ ipcMain.handle('yt-dlp:read-log-file', async (event, filePath) => {
       try {
         const data = JSON.parse(jsonMatch[0]);
         return { success: true, data };
-      } catch (e) {}
+      } catch (e) { }
     }
     throw new Error('File .log không chứa thông tin cấu hình task khôi phục.');
   }
@@ -996,14 +1007,14 @@ ipcMain.handle('yt-dlp:pause', async (event, id) => {
       const { exec } = require('child_process');
       exec(`taskkill /pid ${downloadProcess.pid} /T /F`, (err) => {
         if (err) {
-          try { downloadProcess.kill('SIGKILL'); } catch (e) {}
+          try { downloadProcess.kill('SIGKILL'); } catch (e) { }
         }
       });
     } else {
       try {
         downloadProcess.kill('SIGTERM');
       } catch (e) {
-        try { downloadProcess.kill('SIGKILL'); } catch (e2) {}
+        try { downloadProcess.kill('SIGKILL'); } catch (e2) { }
       }
     }
     activeDownloads.delete(id);
@@ -1020,14 +1031,14 @@ ipcMain.handle('yt-dlp:cancel', async (event, id) => {
       const { exec } = require('child_process');
       exec(`taskkill /pid ${downloadProcess.pid} /T /F`, (err) => {
         if (err) {
-          try { downloadProcess.kill('SIGKILL'); } catch (e) {}
+          try { downloadProcess.kill('SIGKILL'); } catch (e) { }
         }
       });
     } else {
       try {
         downloadProcess.kill('SIGTERM');
       } catch (e) {
-        try { downloadProcess.kill('SIGKILL'); } catch (e2) {}
+        try { downloadProcess.kill('SIGKILL'); } catch (e2) { }
       }
     }
     activeDownloads.delete(id);
@@ -1063,7 +1074,7 @@ ipcMain.handle('clipboard:copy-file', async (event, filePath) => {
   try {
     if (!fs.existsSync(filePath)) return false;
     const absolutePath = path.resolve(filePath);
-    
+
     if (process.platform === 'win32') {
       const buffer = Buffer.concat([
         Buffer.from(absolutePath, 'ucs2'),

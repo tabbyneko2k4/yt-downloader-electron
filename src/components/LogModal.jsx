@@ -1,7 +1,9 @@
 import React from 'react';
 import { X, Copy, Terminal, FileText } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function LogModal({ title, logs, logFilePath, onClose }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = () => {
@@ -22,8 +24,8 @@ export default function LogModal({ title, logs, logFilePath, onClose }) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Terminal size={18} color="#c084fc" />
-            <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '500px' }}>
-              Nhật ký CLI: {title || 'Tiến trình Tải'}
+            <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '500px' }}>
+              {t('logModalTitle', { title: title || 'Download Process' })}
             </h3>
           </div>
 
@@ -35,7 +37,7 @@ export default function LogModal({ title, logs, logFilePath, onClose }) {
                 onClick={handleOpenFileLog}
               >
                 <FileText size={13} />
-                <span>Mở tệp .log</span>
+                <span>{t('openLogFile')}</span>
               </button>
             )}
 
@@ -45,7 +47,7 @@ export default function LogModal({ title, logs, logFilePath, onClose }) {
               onClick={handleCopy}
             >
               <Copy size={13} />
-              <span>{copied ? 'Đã chép!' : 'Sao chép'}</span>
+              <span>{copied ? t('copied') : t('copy')}</span>
             </button>
 
             <button
@@ -58,7 +60,7 @@ export default function LogModal({ title, logs, logFilePath, onClose }) {
         </div>
 
         <div className="modal-body">
-          {logs || 'Chưa có dữ liệu log...'}
+          {logs || t('noLogData')}
         </div>
       </div>
     </div>

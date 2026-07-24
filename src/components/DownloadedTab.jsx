@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Search, FolderOpen, Trash2, Copy, FileText, ArrowUpDown, Film, Music, Image as ImageIcon, Play, CheckCircle2, Terminal, AlertCircle, X, ChevronDown, ChevronUp, FolderCheck, RefreshCw, FileCode, GripVertical } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function DownloadedTab({
   downloadsHistory,
@@ -10,6 +11,7 @@ export default function DownloadedTab({
   resumeDownload,
   settings
 }) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all' | 'video' | 'audio' | 'gif' | 'playlist'
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'title-asc' | 'title-desc'
@@ -71,22 +73,22 @@ export default function DownloadedTab({
   const handleCopyFile = (filePath) => {
     if (window.api && window.api.copyFile) {
       window.api.copyFile(filePath);
-      alert('Đã sao chép đường dẫn vào clipboard!');
+      alert(t('copiedPathAlert'));
     }
   };
 
   const handleDeleteIndividualFile = (filePath) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tệp này trên ổ đĩa?')) {
+    if (confirm(t('confirmDeleteFile'))) {
       if (window.api && window.api.deleteFile) {
         window.api.deleteFile(filePath);
-        alert('Đã xóa tệp!');
+        alert(t('deletedFileAlert'));
       }
     }
   };
 
-  // Immediate Native File Drag Handler with e.preventDefault() to hand over to Electron C++ DragSource
+  // Immediate Native File Drag Handler
   const handleDragStart = (e, item) => {
-    e.preventDefault(); // Prevents HTML5 webview internal DOM drag so Windows OS native file drag fires!
+    e.preventDefault();
 
     const targetPath = item.filePath || item.folderPath;
     if (window.api && window.api.startDrag && targetPath) {
@@ -104,8 +106,8 @@ export default function DownloadedTab({
   };
 
   const handleTrackDragStart = (e, trackFilePath, fallbackFolderPath) => {
-    e.stopPropagation(); // Prevents event from bubbling to parent playlist item container
-    e.preventDefault(); // Prevents HTML5 webview internal DOM drag so Windows OS native file drag fires!
+    e.stopPropagation();
+    e.preventDefault();
     const targetPath = trackFilePath || fallbackFolderPath;
     if (window.api && window.api.startDrag && targetPath) {
       window.api.startDrag(targetPath);
@@ -125,18 +127,21 @@ export default function DownloadedTab({
         if (res.data.missingIndexes && res.data.missingIndexes.length > 0) {
           taskData.playlistItems = res.data.missingIndexes.join(',');
         }
-        alert(`Đã khôi phục thành công cấu hình task từ File Log:\n• Tên: ${taskData.mediaTitle || taskData.playlistTitle}\n• Bài chưa tải: ${res.data.missingIndexes ? res.data.missingIndexes.length : 'Đang xử lý'}\n• Đang bắt đầu tải tiếp...`);
+        alert(t('logRestoreSuccess', {
+          title: taskData.mediaTitle || taskData.playlistTitle,
+          count: res.data.missingIndexes ? res.data.missingIndexes.length : '...'
+        }));
         resumeDownload(taskData);
       }
     } catch (err) {
-      alert(`Khôi phục từ File Log thất bại: ${err.message}`);
+      alert(t('logRestoreFailed', { error: err.message }));
     }
   };
 
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    return date.toLocaleString('vi-VN');
+    return date.toLocaleString();
   };
 
   const formatDuration = (seconds) => {
@@ -153,7 +158,7 @@ export default function DownloadedTab({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FolderCheck size={20} color="#10b981" />
             <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#f8fafc' }}>
-              Danh sách Mục đã tải xuống ({filteredHistory.length})
+              {t('downloadedTitle')} ({filteredHistory.length})
             </h2>
           </div>
 
@@ -162,27 +167,31 @@ export default function DownloadedTab({
               className="btn btn-secondary"
               onClick={handleImportLogFileToResume}
               style={{ padding: '6px 12px', fontSize: '12px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
-              title="Mở file Log / Manifest để khôi phục cài đặt và tải tiếp các bài còn thiếu"
+              title={t('importLogBtn')}
             >
               <FileCode size={14} />
-              <span>📂 Nhập File Log để Tải tiếp</span>
+              <span>{t('importLogBtn')}</span>
             </button>
 
             {downloadsHistory.length > 0 && (
               <button
                 className="btn btn-danger"
-                onClick={clearAllHistory}
+                onClick={() => {
+                  if (confirm(t('confirmClearHistory'))) {
+                    clearAllHistory();
+                  }
+                }}
                 style={{ padding: '6px 12px', fontSize: '12px' }}
               >
                 <Trash2 size={14} />
-                <span>Xóa toàn bộ lịch sử</span>
+                <span>{t('clearHistoryBtn')}</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Search, Filter & Sort Controls */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '18px', flexWrap: 'wrap' }}>
+        <div className="downloaded-search-filter-row" style={{ display: 'flex', gap: '12px', marginBottom: '18px', flexWrap: 'wrap' }}>
           {/* Search Bar */}
           <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -190,7 +199,7 @@ export default function DownloadedTab({
               type="text"
               className="text-input"
               style={{ width: '100%', paddingLeft: '36px', padding: '8px 12px 8px 36px', fontSize: '13px' }}
-              placeholder="Tìm kiếm mục đã tải theo tên hoặc đường dẫn..."
+              placeholder={t('searchHistoryPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -199,11 +208,11 @@ export default function DownloadedTab({
           {/* Type Filter Buttons */}
           <div style={{ display: 'flex', gap: '6px' }}>
             {[
-              { id: 'all', label: 'Tất cả' },
-              { id: 'video', label: 'Video' },
-              { id: 'audio', label: 'Audio' },
-              { id: 'gif', label: 'GIF' },
-              { id: 'playlist', label: 'Playlist' }
+              { id: 'all', label: t('filterAll') },
+              { id: 'video', label: t('filterVideo') },
+              { id: 'audio', label: t('filterAudio') },
+              { id: 'gif', label: t('filterGif') },
+              { id: 'playlist', label: t('filterPlaylist') }
             ].map((f) => (
               <button
                 key={f.id}
@@ -234,10 +243,10 @@ export default function DownloadedTab({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              <option value="newest">Mới nhất trước</option>
-              <option value="oldest">Cũ nhất trước</option>
-              <option value="title-asc">Tên A ➔ Z</option>
-              <option value="title-desc">Tên Z ➔ A</option>
+              <option value="newest">{t('sortNewest')}</option>
+              <option value="oldest">{t('sortOldest')}</option>
+              <option value="title-asc">{t('sortTitleAsc')}</option>
+              <option value="title-desc">{t('sortTitleDesc')}</option>
             </select>
           </div>
         </div>
@@ -246,7 +255,7 @@ export default function DownloadedTab({
         {filteredHistory.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
             <FolderOpen size={40} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.5 }} />
-            <p style={{ fontSize: '14px' }}>Chưa có tệp hoặc playlist nào trong lịch sử đã tải.</p>
+            <p style={{ fontSize: '14px' }}>{t('noHistory')}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -267,63 +276,64 @@ export default function DownloadedTab({
                     transition: 'border-color 0.2s ease',
                     cursor: 'grab'
                   }}
-                  title="Kéo thả trực tiếp tệp/thư mục này ra ngoài ứng dụng khác"
+                  title={t('dragHint')}
                 >
-                  <div style={{ display: 'grid', gridTemplateColumns: '24px 80px 1fr 160px', gap: '12px', alignItems: 'center' }}>
-                    {/* Drag Handle Icon */}
-                    <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center' }}>
-                      <GripVertical size={16} />
-                    </div>
+                  <div className="downloaded-item-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                      {/* Drag Handle Icon */}
+                      <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                        <GripVertical size={16} />
+                      </div>
 
-                    {/* Single Cover Image Thumbnail */}
-                    <div style={{ width: '80px', height: '50px', borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative', flexShrink: 0 }}>
-                      <img
-                        src={displayThumb}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                      <span style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.85)', color: '#fff', fontSize: '9px', fontWeight: '700', padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>
-                        {item.isPlaylist ? 'PLAYLIST' : item.formatType}
-                      </span>
-                    </div>
+                      {/* Single Cover Image Thumbnail */}
+                      <div style={{ width: '80px', height: '50px', borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative', flexShrink: 0 }}>
+                        <img
+                          src={displayThumb}
+                          alt=""
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                        <span style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.85)', color: '#fff', fontSize: '9px', fontWeight: '700', padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>
+                          {item.isPlaylist ? 'PLAYLIST' : item.formatType}
+                        </span>
+                      </div>
 
-                    {/* Meta Info */}
-                    <div style={{ overflow: 'hidden' }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {item.title}
-                      </h4>
+                      {/* Meta Info */}
+                      <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.title}
+                        </h4>
 
-                      <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <span>{item.uploader || 'Nguồn web'}</span>
-                        <span>•</span>
-                        <span>{formatDate(item.downloadedAt)}</span>
+                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span>{item.uploader || 'Web Media'}</span>
+                          <span>•</span>
+                          <span>{formatDate(item.downloadedAt)}</span>
 
-                        {item.isPlaylist && (
-                          <span style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
-                            📁 Playlist ({item.entriesCount || item.playlistEntries?.length || 'nhiều'} bài)
-                          </span>
-                        )}
+                          {item.isPlaylist && (
+                            <span style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
+                              📁 Playlist ({t('itemsCount', { count: item.entriesCount || item.playlistEntries?.length || 1 })})
+                            </span>
+                          )}
 
-                        {item.isCancelled && (
-                          <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
-                            ⚠️ Đã hủy dở chừng
-                          </span>
-                        )}
+                          {item.isCancelled && (
+                            <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
+                              {t('cancelledStatus')}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <div className="downloaded-item-actions" style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
                         {item.originalOptions && (
                           <button
                             className="btn btn-primary"
                             style={{ padding: '5px 8px', fontSize: '11px' }}
                             onClick={() => resumeDownload(item.originalOptions)}
-                            title="Tải tiếp từ cài đặt trong File Log"
+                            title={t('importLogBtn')}
                           >
                             <RefreshCw size={12} />
-                            <span>Tải tiếp từ Log</span>
+                            <span>{t('resume')}</span>
                           </button>
                         )}
 
@@ -331,10 +341,10 @@ export default function DownloadedTab({
                           className="btn btn-secondary"
                           style={{ padding: '5px 8px', fontSize: '11px' }}
                           onClick={() => handleOpenFolder(item.folderPath || item.filePath)}
-                          title="Mở thư mục chứa tệp"
+                          title={t('openFolder')}
                         >
                           <FolderOpen size={13} />
-                          <span>Mở thư mục</span>
+                          <span>{t('openFolder')}</span>
                         </button>
 
                         {!item.isPlaylist && (
@@ -342,10 +352,10 @@ export default function DownloadedTab({
                             className="btn btn-secondary"
                             style={{ padding: '5px 8px', fontSize: '11px' }}
                             onClick={() => handleOpenFile(item.filePath)}
-                            title="Phát tệp ngay"
+                            title={t('openFile')}
                           >
                             <Play size={13} />
-                            <span>Phát</span>
+                            <span>{t('openFile')}</span>
                           </button>
                         )}
 
@@ -354,7 +364,7 @@ export default function DownloadedTab({
                             className="btn btn-secondary"
                             style={{ padding: '5px 8px', fontSize: '11px' }}
                             onClick={() => handleOpenFile(item.logFilePath)}
-                            title="Xem file .log lưu trên đĩa"
+                            title="Log file"
                           >
                             <FileText size={13} />
                             <span>.log</span>
@@ -365,7 +375,7 @@ export default function DownloadedTab({
                           className="btn btn-danger"
                           style={{ padding: '5px 8px', fontSize: '11px' }}
                           onClick={() => deleteHistoryItem(item.id, item.filePath)}
-                          title="Xóa khỏi lịch sử"
+                          title={t('deleteItem')}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -376,18 +386,17 @@ export default function DownloadedTab({
                           onClick={() => toggleExpandFolder(item.id)}
                           style={{ background: 'transparent', border: 'none', color: '#c084fc', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}
                         >
-                          <span>{isExpanded ? 'Thu gọn bài trong playlist' : `Xem chi tiết ${item.playlistEntries?.length || 'các'} bài hát`}</span>
+                          <span>{isExpanded ? t('collapseBtn') : t('detailBtn')}</span>
                           {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                         </button>
                       )}
                     </div>
-                  </div>
 
-                  {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER WITH INDIVIDUAL ACTIONS */}
+                  {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER */}
                   {item.isPlaylist && isExpanded && (
                     <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                       <div style={{ fontSize: '12px', fontWeight: '600', color: '#c084fc', marginBottom: '8px' }}>
-                        Danh sách các bài hát trong Playlist (Kéo thả trực tiếp tệp bài hát ra ngoài):
+                        {t('playlistTitle')}:
                       </div>
 
                       {item.playlistEntries && item.playlistEntries.length > 0 ? (
@@ -398,6 +407,7 @@ export default function DownloadedTab({
                             return (
                               <div
                                 key={idx}
+                                className="playlist-child-track-row"
                                 draggable
                                 onDragStart={(e) => handleTrackDragStart(e, trackFilePath, item.folderPath)}
                                 style={{
@@ -411,40 +421,35 @@ export default function DownloadedTab({
                                   border: '1px solid rgba(255,255,255,0.04)',
                                   cursor: 'grab'
                                 }}
-                                title="Kéo thả trực tiếp tệp bài hát này ra DAW hoặc Explorer"
+                                title={t('dragHint')}
                               >
-                                {/* Track Drag Icon */}
                                 <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center' }}>
                                   <GripVertical size={14} />
                                 </div>
 
-                                {/* Track Thumbnail */}
                                 <div style={{ width: '32px', height: '32px', borderRadius: '4px', overflow: 'hidden', background: '#1e293b' }}>
                                   <img src={entry.thumbnail || item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
 
-                                {/* Title & Uploader */}
                                 <div style={{ overflow: 'hidden' }}>
                                   <div style={{ fontSize: '12px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    #{idx + 1}. {entry.title || 'Bài hát trong playlist'}
+                                    #{idx + 1}. {entry.title || 'Track'}
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {entry.uploader || item.uploader || 'Nguồn web'}
+                                    {entry.uploader || item.uploader || 'Web'}
                                   </div>
                                 </div>
 
-                                {/* Duration */}
                                 <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>
                                   {formatDuration(entry.duration)}
                                 </div>
 
-                                {/* Individual Track Action Buttons - ALWAYS INCLUDES PLAY BUTTON */}
                                 <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                                   <button
                                     className="btn btn-secondary"
                                     style={{ padding: '3px 6px', fontSize: '10px' }}
                                     onClick={() => (trackFilePath ? handleOpenFile(trackFilePath) : handleOpenFolder(item.folderPath))}
-                                    title={trackFilePath ? "Phát tệp bài hát này" : "Mở thư mục chứa bài hát này"}
+                                    title={t('openFile')}
                                   >
                                     <Play size={11} />
                                   </button>
@@ -453,7 +458,7 @@ export default function DownloadedTab({
                                     className="btn btn-secondary"
                                     style={{ padding: '3px 6px', fontSize: '10px' }}
                                     onClick={() => handleCopyFile(trackFilePath || item.folderPath)}
-                                    title="Sao chép đường dẫn tệp này"
+                                    title={t('copyPath')}
                                   >
                                     <Copy size={11} />
                                   </button>
@@ -463,7 +468,7 @@ export default function DownloadedTab({
                                       className="btn btn-danger"
                                       style={{ padding: '3px 6px', fontSize: '10px' }}
                                       onClick={() => handleDeleteIndividualFile(trackFilePath)}
-                                      title="Xóa tệp bài hát này khỏi ổ đĩa"
+                                      title={t('deleteItem')}
                                     >
                                       <Trash2 size={11} />
                                     </button>
@@ -475,7 +480,7 @@ export default function DownloadedTab({
                         </div>
                       ) : (
                         <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
-                          Thư mục lưu tại: <code style={{ color: '#a7f3d0' }}>{item.folderPath}</code>
+                          Folder: <code style={{ color: '#a7f3d0' }}>{item.folderPath}</code>
                         </div>
                       )}
                     </div>

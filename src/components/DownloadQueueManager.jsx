@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Play, Pause, X, Terminal, Download, Loader2, ChevronDown, ChevronUp, CheckCircle2, Clock, ListMusic, RotateCcw, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function DownloadQueueManager({
   activeDownloads,
@@ -14,6 +15,7 @@ export default function DownloadQueueManager({
   removeFailedTask,
   openLogModal
 }) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (activeDownloads.length === 0 && downloadQueue.length === 0 && pausedDownloads.length === 0 && failedDownloads.length === 0) {
@@ -50,22 +52,22 @@ export default function DownloadQueueManager({
             </div>
             <div className="under-taskbar-dl-sub">
               {isFailedOnly ? (
-                <span style={{ color: '#ef4444' }}>⚠️ Có tệp tải thất bại</span>
+                <span style={{ color: '#ef4444' }}>{t('downloadFailed')}</span>
               ) : isPaused ? (
-                <span style={{ color: '#f59e0b' }}>⏸️ Đã tạm dừng</span>
+                <span style={{ color: '#f59e0b' }}>{t('downloadPaused')}</span>
               ) : isQueued ? (
-                <span style={{ color: '#3b82f6' }}>⏳ Trong hàng chờ</span>
+                <span style={{ color: '#3b82f6' }}>{t('downloadQueued')}</span>
               ) : (
-                <span>⚡ Đang tải • {activeDownloads.length} luồng song song</span>
+                <span>{t('downloadActive', { count: activeDownloads.length })}</span>
               )}
               {failedDownloads.length > 0 && (
                 <span style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, 0.2)', padding: '1px 6px', borderRadius: '8px', fontSize: '10px' }}>
-                  {failedDownloads.length} lỗi
+                  {t('errorCount', { count: failedDownloads.length })}
                 </span>
               )}
               {totalTasksCount > 1 && (
                 <span style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: '8px' }}>
-                  +{totalTasksCount - 1} mục khác
+                  {t('moreItems', { count: totalTasksCount - 1 })}
                 </span>
               )}
             </div>
@@ -79,8 +81,8 @@ export default function DownloadQueueManager({
               <div className="progress-bar-fill" style={{ width: `${currentActive.percent || 0}%`, background: isFailedOnly ? '#ef4444' : undefined }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
-              <span>{currentActive.percent ? `${currentActive.percent.toFixed(1)}%` : (isFailedOnly ? 'Thất bại' : 'Đang xử lý...')}</span>
-              <span>{currentActive.speed || (currentActive.eta ? `còn ${currentActive.eta}` : '')}</span>
+              <span>{currentActive.percent ? `${currentActive.percent.toFixed(1)}%` : (isFailedOnly ? 'Failed' : '...')}</span>
+              <span>{currentActive.speed || (currentActive.eta ? `${currentActive.eta}` : '')}</span>
             </div>
           </div>
         </div>
@@ -92,9 +94,9 @@ export default function DownloadQueueManager({
             type="button"
             className="btn-toggle-drawer"
             onClick={() => setIsExpanded(!isExpanded)}
-            title={isExpanded ? "Thu gọn chi tiết" : "Xem chi tiết từng mục & danh sách lỗi"}
+            title={isExpanded ? t('collapseBtn') : t('detailBtn')}
           >
-            <span>{isExpanded ? "Thu gọn" : "Chi tiết"}</span>
+            <span>{isExpanded ? t('collapseBtn') : t('detailBtn')}</span>
             {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
@@ -110,7 +112,7 @@ export default function DownloadQueueManager({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', maxWidth: '65%' }}>
                   <Download size={15} color="#ec4899" />
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {dl.isPlaylistItem ? `${dl.playlistTitle} • #${dl.playlistIndex}. ${dl.mediaTitle}` : (dl.playlistTitle || dl.mediaTitle || dl.url)}
                   </span>
                   <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', padding: '1px 6px', borderRadius: '4px' }}>
@@ -120,13 +122,13 @@ export default function DownloadQueueManager({
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '11px', fontWeight: '700', color: '#ec4899' }}>
-                    ⚡ Đang tải ({dl.percent ? dl.percent.toFixed(1) : 0}%)
+                    ⚡ ({dl.percent ? dl.percent.toFixed(1) : 0}%)
                   </span>
                   {openLogModal && (
                     <button
                       onClick={() => openLogModal(dl)}
                       style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-color)', color: '#94a3b8', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
-                      title="Xem log CLI"
+                      title={t('viewCliLog')}
                     >
                       <Terminal size={11} />
                     </button>
@@ -134,14 +136,14 @@ export default function DownloadQueueManager({
                   <button
                     onClick={() => pauseDownload(dl.id)}
                     style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
-                    title="Dừng"
+                    title={t('pause')}
                   >
                     <Pause size={11} />
                   </button>
                   <button
                     onClick={() => cancelDownload(dl.id)}
                     style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
-                    title="Hủy"
+                    title={t('cancelTask')}
                   >
                     <X size={11} />
                   </button>
@@ -154,8 +156,8 @@ export default function DownloadQueueManager({
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
-                <span>{dl.speed ? `Tốc độ: ${dl.speed}` : (dl.totalSize ? `Dung lượng: ${dl.totalSize}` : 'Đang kết nối...')}</span>
-                <span>{dl.eta ? `Còn lại: ${dl.eta}` : ''}</span>
+                <span>{dl.speed || dl.totalSize || '...'}</span>
+                <span>{dl.eta || ''}</span>
               </div>
             </div>
           ))}
@@ -170,7 +172,7 @@ export default function DownloadQueueManager({
                     {f.isPlaylistItem ? `${f.playlistTitle} • #${f.playlistIndex}. ${f.mediaTitle}` : (f.playlistTitle || f.mediaTitle)}
                   </div>
                   <div style={{ fontSize: '10px', color: '#ef4444' }}>
-                    ⚠️ {f.errorMessage || 'Lỗi tải tệp'}
+                    ⚠️ {f.errorMessage || 'Error'}
                   </div>
                 </div>
               </div>
@@ -181,10 +183,10 @@ export default function DownloadQueueManager({
                     className="btn btn-primary"
                     style={{ padding: '3px 8px', fontSize: '11px', background: 'linear-gradient(135deg, #ef4444 0%, #ec4899 100%)', display: 'flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => retryDownload(f)}
-                    title="Thử tải lại bài này"
+                    title={t('retry')}
                   >
                     <RotateCcw size={12} />
-                    <span>Thử lại</span>
+                    <span>{t('retry')}</span>
                   </button>
                 )}
                 {removeFailedTask && (
@@ -192,7 +194,7 @@ export default function DownloadQueueManager({
                     className="btn btn-secondary"
                     style={{ padding: '3px 6px', fontSize: '10px' }}
                     onClick={() => removeFailedTask(f.id)}
-                    title="Bỏ qua"
+                    title={t('ignore')}
                   >
                     <X size={11} />
                   </button>
@@ -204,13 +206,13 @@ export default function DownloadQueueManager({
           {/* Paused Tasks Group */}
           {pausedDownloads.map((p) => (
             <div key={p.id} className="dl-parent-item" style={{ borderColor: 'rgba(245, 158, 11, 0.4)' }}>
-              <span style={{ color: '#f59e0b', fontSize: '12px' }}>⏸️ {p.playlistTitle || p.mediaTitle} (Tạm dừng)</span>
+              <span style={{ color: '#f59e0b', fontSize: '12px' }}>⏸️ {p.playlistTitle || p.mediaTitle} ({t('downloadPaused')})</span>
               <button
                 className="btn btn-primary"
                 style={{ padding: '2px 8px', fontSize: '11px' }}
                 onClick={() => resumeDownload(p)}
               >
-                Tiếp tục
+                {t('resume')}
               </button>
             </div>
           ))}
@@ -225,12 +227,12 @@ export default function DownloadQueueManager({
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>Chờ luồng...</span>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>{t('waiting')}</span>
                 <button
                   className="btn btn-danger"
                   style={{ padding: '2px 6px', fontSize: '10px' }}
                   onClick={() => cancelQueuedTask(q.id)}
-                  title="Xóa khỏi hàng chờ"
+                  title={t('cancelTask')}
                 >
                   <X size={11} />
                 </button>

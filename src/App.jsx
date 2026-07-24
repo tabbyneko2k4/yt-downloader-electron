@@ -8,6 +8,7 @@ import DownloadedTab from './components/DownloadedTab';
 import SettingsTab from './components/SettingsTab';
 import LogModal from './components/LogModal';
 import DownloadQueueManager from './components/DownloadQueueManager';
+import { LanguageProvider } from './i18n/LanguageContext';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('downloader');
@@ -19,6 +20,8 @@ export default function App() {
       try { return JSON.parse(saved); } catch (e) {}
     }
     return {
+      language: 'en',
+      theme: 'system',
       defaultPath: '',
       embedMetadata: true,
       embedThumbnail: true,
@@ -98,6 +101,27 @@ export default function App() {
       });
     }
   }, []);
+
+  // Dynamically apply Theme (dark, light, or system OS mode)
+  useEffect(() => {
+    const themeMode = settings.theme || 'system';
+    const applyTheme = () => {
+      let resolved = themeMode;
+      if (themeMode === 'system') {
+        resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+
+    applyTheme();
+
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = () => applyTheme();
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [settings.theme]);
 
   const updateSettings = (newFields) => {
     setSettings((prev) => {
@@ -416,102 +440,106 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
-      {/* Top Header & Tab Navigation */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        downloadsCount={downloadsHistory.length}
-        activeDownloads={activeDownloads}
-        downloadQueue={downloadQueue}
-      />
-
-      {/* Under-Taskbar Download Status Bar */}
-      {(activeDownloads.length > 0 || downloadQueue.length > 0 || pausedDownloads.length > 0 || failedDownloads.length > 0) && (
-        <DownloadQueueManager
+    <LanguageProvider language={settings.language || 'en'} onLanguageChange={(lang) => updateSettings({ language: lang })}>
+      <div className="app-container">
+        {/* Top Header & Tab Navigation */}
+        <Header
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          downloadsCount={downloadsHistory.length}
           activeDownloads={activeDownloads}
           downloadQueue={downloadQueue}
-          pausedDownloads={pausedDownloads}
-          failedDownloads={failedDownloads}
-          pauseDownload={pauseDownload}
-          resumeDownload={resumeDownload}
-          cancelDownload={cancelDownload}
-          cancelQueuedTask={cancelQueuedTask}
-          retryDownload={retryDownload}
-          removeFailedTask={removeFailedTask}
-          moveQueueItem={moveQueueItem}
-          openLogModal={(item) => setLogModalItem(item)}
-        />
-      )}
-
-      {/* Under-Taskbar Active Draft Bar */}
-      {activeTab !== 'downloader' && (
-        <ActiveDraftBar
-          mediaDraft={mediaDraft}
-          setActiveTab={setActiveTab}
-          clearDraft={clearDraft}
-          startDownload={startDownload}
           settings={settings}
-          advancedOptions={advancedOptions}
+          updateSettings={updateSettings}
         />
-      )}
 
-      {/* Main Tab Viewport */}
-      <main className="tab-content-container">
-        {activeTab === 'downloader' && (
-          <DownloaderTab
-            settings={settings}
-            advancedOptions={advancedOptions}
-            setAdvancedOptions={setAdvancedOptions}
+        {/* Under-Taskbar Download Status Bar */}
+        {(activeDownloads.length > 0 || downloadQueue.length > 0 || pausedDownloads.length > 0 || failedDownloads.length > 0) && (
+          <DownloadQueueManager
             activeDownloads={activeDownloads}
-            startDownload={startDownload}
-            cancelDownload={cancelDownload}
-            openLogModal={(item) => setLogModalItem(item)}
-            goToAdvanced={() => setActiveTab('advanced')}
-            mediaDraft={mediaDraft}
-            setMediaDraft={setMediaDraft}
-          />
-        )}
-
-        {activeTab === 'advanced' && (
-          <AdvancedTab
-            advancedOptions={advancedOptions}
-            setAdvancedOptions={setAdvancedOptions}
-          />
-        )}
-
-        {activeTab === 'downloads' && (
-          <DownloadedTab
-            downloadsHistory={downloadsHistory}
-            activeDownloads={activeDownloads}
-            cancelDownload={cancelDownload}
-            clearAllHistory={clearAllHistory}
-            deleteHistoryItem={deleteHistoryItem}
+            downloadQueue={downloadQueue}
+            pausedDownloads={pausedDownloads}
+            failedDownloads={failedDownloads}
+            pauseDownload={pauseDownload}
             resumeDownload={resumeDownload}
-            settings={settings}
+            cancelDownload={cancelDownload}
+            cancelQueuedTask={cancelQueuedTask}
+            retryDownload={retryDownload}
+            removeFailedTask={removeFailedTask}
+            moveQueueItem={moveQueueItem}
+            openLogModal={(item) => setLogModalItem(item)}
           />
         )}
 
-        {activeTab === 'settings' && (
-          <SettingsTab
+        {/* Under-Taskbar Active Draft Bar */}
+        {activeTab !== 'downloader' && (
+          <ActiveDraftBar
+            mediaDraft={mediaDraft}
+            setActiveTab={setActiveTab}
+            clearDraft={clearDraft}
+            startDownload={startDownload}
             settings={settings}
-            updateSettings={updateSettings}
+            advancedOptions={advancedOptions}
           />
         )}
-      </main>
 
-      {/* Sticky Bottom Disclaimer Bar */}
-      <FooterDisclaimer />
+        {/* Main Tab Viewport */}
+        <main className="tab-content-container">
+          {activeTab === 'downloader' && (
+            <DownloaderTab
+              settings={settings}
+              advancedOptions={advancedOptions}
+              setAdvancedOptions={setAdvancedOptions}
+              activeDownloads={activeDownloads}
+              startDownload={startDownload}
+              cancelDownload={cancelDownload}
+              openLogModal={(item) => setLogModalItem(item)}
+              goToAdvanced={() => setActiveTab('advanced')}
+              mediaDraft={mediaDraft}
+              setMediaDraft={setMediaDraft}
+            />
+          )}
 
-      {/* CLI Output Log Modal */}
-      {logModalItem && (
-        <LogModal
-          title={logModalItem.mediaTitle}
-          logs={logModalItem.logs}
-          logFilePath={logModalItem.logFilePath}
-          onClose={() => setLogModalItem(null)}
-        />
-      )}
-    </div>
+          {activeTab === 'advanced' && (
+            <AdvancedTab
+              advancedOptions={advancedOptions}
+              setAdvancedOptions={setAdvancedOptions}
+            />
+          )}
+
+          {activeTab === 'downloads' && (
+            <DownloadedTab
+              downloadsHistory={downloadsHistory}
+              activeDownloads={activeDownloads}
+              cancelDownload={cancelDownload}
+              clearAllHistory={clearAllHistory}
+              deleteHistoryItem={deleteHistoryItem}
+              resumeDownload={resumeDownload}
+              settings={settings}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsTab
+              settings={settings}
+              updateSettings={updateSettings}
+            />
+          )}
+        </main>
+
+        {/* Sticky Bottom Disclaimer Bar */}
+        <FooterDisclaimer />
+
+        {/* CLI Output Log Modal */}
+        {logModalItem && (
+          <LogModal
+            title={logModalItem.mediaTitle}
+            logs={logModalItem.logs}
+            logFilePath={logModalItem.logFilePath}
+            onClose={() => setLogModalItem(null)}
+          />
+        )}
+      </div>
+    </LanguageProvider>
   );
 }
