@@ -126,11 +126,14 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
           <div className="header-right window-controls">
             {/* Mobile Burger Menu Button */}
             <button
-              className="window-control-btn mobile-burger-toggle no-drag"
+              className={`window-control-btn mobile-burger-toggle no-drag ${isBurgerOpen ? 'active' : ''}`}
               onClick={() => setIsBurgerOpen(!isBurgerOpen)}
               title="Menu"
             >
-              {isBurgerOpen ? <X size={18} color="#ec4899" /> : <Menu size={18} color="#a78bfa" />}
+              {isBurgerOpen ? <X size={18} color="#ec4899" /> : <Menu size={18} className="burger-menu-icon" />}
+              {!isBurgerOpen && (isDownloading || downloadsCount > 0) && (
+                <span className="burger-notification-dot" />
+              )}
             </button>
 
             {/* Globe Icon-only Language Button */}
@@ -139,7 +142,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
               onClick={cycleLanguage}
               title={`${t('languageLabel')}: ${currentLangObj.flag} ${currentLangObj.name}`}
             >
-              <Globe size={14} color="#a78bfa" />
+              <Globe size={14} className="header-globe-icon" />
             </button>
 
             {/* Minimal Quick Theme Icon Button */}
@@ -177,9 +180,28 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
         <div className="burger-overlay" onClick={() => setIsBurgerOpen(false)}>
           <div className="burger-dropdown-menu" onClick={(e) => e.stopPropagation()}>
             <div className="burger-menu-header">
-              <span className="burger-menu-title">{t('appName')}</span>
-              <button className="burger-close-btn" onClick={() => setIsBurgerOpen(false)}>
-                <X size={16} />
+              <div className="burger-brand">
+                <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+                    fill="url(#burger-logo-grad)"
+                  />
+                  <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
+                  <defs>
+                    <linearGradient id="burger-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#ec4899" />
+                      <stop offset="0.5" stopColor="#8b5cf6" />
+                      <stop offset="1" stopColor="#3b82f6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="burger-brand-text">
+                  <span className="burger-menu-title">{t('appName')}</span>
+                  <span className="burger-menu-sub">Navigation</span>
+                </div>
+              </div>
+              <button className="burger-close-btn" onClick={() => setIsBurgerOpen(false)} title="Close">
+                <X size={18} />
               </button>
             </div>
 
@@ -188,25 +210,56 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 className={`burger-tab-item ${activeTab === 'downloader' ? 'active' : ''}`}
                 onClick={() => handleTabSelect('downloader')}
               >
-                <Download size={18} />
-                <span>{t('navDownloader')}</span>
+                <div className="burger-tab-left">
+                  <div className="burger-tab-icon-box downloader">
+                    <Download size={18} />
+                  </div>
+                  <div className="burger-tab-info">
+                    <span className="burger-tab-title">{t('navDownloader')}</span>
+                    <span className="burger-tab-desc">
+                      {language === 'vi' ? 'Tải video, MP3 & Playlist' : 'Download Video, Audio & Playlists'}
+                    </span>
+                  </div>
+                </div>
               </button>
 
               <button
                 className={`burger-tab-item ${activeTab === 'advanced' ? 'active' : ''}`}
                 onClick={() => handleTabSelect('advanced')}
               >
-                <Terminal size={18} />
-                <span>{t('navAdvanced')}</span>
+                <div className="burger-tab-left">
+                  <div className="burger-tab-icon-box advanced">
+                    <Terminal size={18} />
+                  </div>
+                  <div className="burger-tab-info">
+                    <span className="burger-tab-title">{t('navAdvanced')}</span>
+                    <span className="burger-tab-desc">
+                      {language === 'vi' ? 'Tùy chỉnh CLI, Cookie & Proxy' : 'CLI Customization & Presets'}
+                    </span>
+                  </div>
+                </div>
               </button>
 
               <button
                 className={`burger-tab-item ${activeTab === 'downloads' ? 'active' : ''}`}
                 onClick={() => handleTabSelect('downloads')}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FolderCheck size={18} />
-                  <span>{t('navDownloads')}</span>
+                <div className="burger-tab-left">
+                  <div className="burger-tab-icon-box downloads">
+                    {isDownloading ? (
+                      <ArrowDown size={18} className="chrome-dl-arrow" />
+                    ) : (
+                      <FolderCheck size={18} />
+                    )}
+                  </div>
+                  <div className="burger-tab-info">
+                    <span className="burger-tab-title">{t('navDownloads')}</span>
+                    <span className="burger-tab-desc">
+                      {isDownloading
+                        ? (language === 'vi' ? `Đang tải xuống (${activePercent}%)` : `Downloading (${activePercent}%)`)
+                        : (language === 'vi' ? 'Quản lý tệp đã tải xuống' : 'Manage downloaded history')}
+                    </span>
+                  </div>
                 </div>
                 {isDownloading ? (
                   <span className="badge-count chrome-dl-badge">{activePercent}%</span>
@@ -219,37 +272,58 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 className={`burger-tab-item ${activeTab === 'settings' ? 'active' : ''}`}
                 onClick={() => handleTabSelect('settings')}
               >
-                <Settings size={18} />
-                <span>{t('navSettings')}</span>
+                <div className="burger-tab-left">
+                  <div className="burger-tab-icon-box settings">
+                    <Settings size={18} />
+                  </div>
+                  <div className="burger-tab-info">
+                    <span className="burger-tab-title">{t('navSettings')}</span>
+                    <span className="burger-tab-desc">
+                      {language === 'vi' ? 'Thư mục lưu trữ & Giao diện' : 'Storage folder & UI Theme'}
+                    </span>
+                  </div>
+                </div>
               </button>
             </div>
 
             <div className="burger-quick-settings">
               <div className="burger-setting-row" onClick={cycleLanguage}>
                 <div className="burger-setting-left">
-                  <Globe size={16} color="#a78bfa" />
+                  <div className="burger-setting-icon">
+                    <Globe size={16} color="#a78bfa" />
+                  </div>
                   <span>{t('languageLabel')}</span>
                 </div>
-                <span className="burger-setting-val">{currentLangObj.flag} {currentLangObj.name}</span>
+                <span className="burger-setting-val-pill">
+                  {currentLangObj.flag} {currentLangObj.name}
+                </span>
               </div>
 
               {updateSettings && (
                 <div className="burger-setting-row" onClick={toggleTheme}>
                   <div className="burger-setting-left">
-                    {currentTheme === 'dark' ? (
-                      <Moon size={16} color="#c084fc" />
-                    ) : currentTheme === 'light' ? (
-                      <Sun size={16} color="#f59e0b" />
-                    ) : (
-                      <Monitor size={16} color="#3b82f6" />
-                    )}
+                    <div className="burger-setting-icon">
+                      {currentTheme === 'dark' ? (
+                        <Moon size={16} color="#c084fc" />
+                      ) : currentTheme === 'light' ? (
+                        <Sun size={16} color="#f59e0b" />
+                      ) : (
+                        <Monitor size={16} color="#3b82f6" />
+                      )}
+                    </div>
                     <span>{t('themeLabel')}</span>
                   </div>
-                  <span className="burger-setting-val">
+                  <span className="burger-setting-val-pill">
                     {currentTheme === 'system' ? t('themeSystem') : currentTheme === 'dark' ? t('themeDark') : t('themeLight')}
                   </span>
                 </div>
               )}
+            </div>
+
+            <div className="burger-footer-info">
+              <span>YT Downloader Pro</span>
+              <span className="burger-dot">•</span>
+              <span>v2.5</span>
             </div>
           </div>
         </div>

@@ -22,7 +22,7 @@ export default function DownloaderTab({
   const [playlistSelectedIndexes, setPlaylistSelectedIndexes] = useState([]);
   const [expandedActiveTasks, setExpandedActiveTasks] = useState({});
   const [detectedPlatform, setDetectedPlatform] = useState(null);
-  
+
   // Search & Queue states
   const [searchPlatform, setSearchPlatform] = useState('auto'); // 'youtube' | 'soundcloud' | 'auto'
   const [addedToQueueMap, setAddedToQueueMap] = useState({});
@@ -754,13 +754,13 @@ export default function DownloaderTab({
                     {/* Mobile Format Select Dropdown */}
                     <div className="mobile-format-select-container">
                       <select
-                        className="text-input"
-                        style={{ width: '100%', padding: '10px 14px', fontSize: '13px', fontWeight: '600' }}
+                        className="custom-select mobile-format-select"
+                        style={{ width: '100%', fontSize: '13px', fontWeight: '600' }}
                         value={formatType}
                         onChange={(e) => updateDraft({ formatType: e.target.value })}
                       >
-                        <option value="video">🎬 {t('formatVideo')} (MP4)</option>
-                        <option value="audio">🎵 {t('formatAudio')} (MP3/M4A/FLAC)</option>
+                        <option value="video">🎬 {t('formatVideo')}</option>
+                        <option value="audio">🎵 {t('formatAudio')}</option>
                         <option value="gif">🖼️ {t('formatGif')}</option>
                         <option value="thumbnail">📷 {t('formatThumbnail')}</option>
                       </select>
@@ -825,8 +825,8 @@ export default function DownloaderTab({
                                 {t('qualityLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '13px' }}
                                 value={videoQuality}
                                 onChange={(e) => updateDraft({ videoQuality: e.target.value })}
                               >
@@ -843,8 +843,8 @@ export default function DownloaderTab({
                                 {t('fpsLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '13px' }}
                                 value={videoFps}
                                 onChange={(e) => updateDraft({ videoFps: e.target.value })}
                               >
@@ -898,8 +898,8 @@ export default function DownloaderTab({
                                 {t('audioQualityLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '13px' }}
                                 value={audioQuality}
                                 onChange={(e) => updateDraft({ audioQuality: e.target.value })}
                               >
@@ -917,8 +917,8 @@ export default function DownloaderTab({
                                 {t('audioSampleRateLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '13px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '13px' }}
                                 value={audioSampleRate}
                                 onChange={(e) => updateDraft({ audioSampleRate: e.target.value })}
                               >
@@ -940,8 +940,8 @@ export default function DownloaderTab({
                                 {t('gifFpsLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '12px' }}
                                 value={gifFps}
                                 onChange={(e) => updateDraft({ gifFps: e.target.value })}
                               >
@@ -957,8 +957,8 @@ export default function DownloaderTab({
                                 {t('gifResLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '12px' }}
                                 value={gifRes}
                                 onChange={(e) => updateDraft({ gifRes: e.target.value })}
                               >
@@ -973,8 +973,8 @@ export default function DownloaderTab({
                                 {t('gifSpeedLabel')}
                               </label>
                               <select
-                                className="text-input"
-                                style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                                className="custom-select"
+                                style={{ width: '100%', fontSize: '12px' }}
                                 value={gifSpeed}
                                 onChange={(e) => updateDraft({ gifSpeed: e.target.value })}
                               >

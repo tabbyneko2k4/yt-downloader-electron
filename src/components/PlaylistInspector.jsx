@@ -121,8 +121,8 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
         <div className="playlist-sort-box">
           <ArrowUpDown size={14} color="#94a3b8" />
           <select
-            className="text-input"
-            style={{ padding: '6px 10px', fontSize: '12px' }}
+            className="custom-select playlist-sort-select"
+            style={{ fontSize: '12px' }}
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >

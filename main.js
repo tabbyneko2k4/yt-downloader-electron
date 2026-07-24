@@ -321,7 +321,21 @@ async function fetchSoundcloudPlaylist(url, retry = true) {
     throw new Error('Không thể lấy SoundCloud Client ID.');
   }
 
-  const resolveUrl = `https://api-v2.soundcloud.com/resolve?url=${encodeURIComponent(url)}&client_id=${clientId}`;
+  // Lấy URL sạch (bỏ query params như ?si=... nhưng giữ nguyên secret token /s-...)
+  // Secret set URL: soundcloud.com/user/sets/name/s-TOKEN
+  // Cần trích xuất URL cơ bản không có các tracking params
+  let cleanUrl = url.split('?')[0]; // bỏ query string (?si=..., utm_source=...)
+
+  // Trích xuất secret_token nếu có trong path (dạng /s-XXXXX)
+  const secretTokenMatch = cleanUrl.match(/\/s-([a-zA-Z0-9]+)$/);
+  const secretToken = secretTokenMatch ? secretTokenMatch[1] : null;
+
+  // Xây dựng resolve URL, truyền thêm secret_token nếu có
+  let resolveUrl = `https://api-v2.soundcloud.com/resolve?url=${encodeURIComponent(cleanUrl)}&client_id=${clientId}`;
+  if (secretToken) {
+    resolveUrl += `&secret_token=s-${secretToken}`;
+  }
+
   const response = await fetch(resolveUrl, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -383,21 +397,41 @@ async function fetchSoundcloudPlaylist(url, retry = true) {
     }
   }
 
+  // Hàm lấy thumbnail tốt nhất từ artwork_url (đổi -large thành -t500x500)
+  function upgradeThumbnail(url) {
+    if (!url) return '';
+    return url.replace(/-large\.jpg$/, '-t500x500.jpg').replace(/-large\.png$/, '-t500x500.png');
+  }
+
+  // Lấy thumbnail playlist: ưu tiên artwork_url của playlist,
+  // nếu không có thì lấy từ track đầu tiên có ảnh
+  let playlistThumbnail = upgradeThumbnail(data.artwork_url);
+  if (!playlistThumbnail && data.tracks && data.tracks.length > 0) {
+    for (const track of data.tracks) {
+      const t = upgradeThumbnail(track.artwork_url) || upgradeThumbnail(track.user?.avatar_url);
+      if (t) { playlistThumbnail = t; break; }
+    }
+  }
+  // Fallback: avatar của chủ playlist
+  if (!playlistThumbnail && data.user) {
+    playlistThumbnail = upgradeThumbnail(data.user.avatar_url);
+  }
+
   return {
     success: true,
     isPlaylist: true,
     info: {
       title: data.title,
       uploader: data.user ? data.user.username : 'N/A',
-      webpage_url: data.permalink_url || url,
+      webpage_url: data.permalink_url || cleanUrl,
       entriesCount: data.tracks ? data.tracks.length : 0,
-      thumbnail: data.artwork_url || (data.tracks && data.tracks[0] ? (data.tracks[0].artwork_url || data.tracks[0].user?.avatar_url || '') : ''),
+      thumbnail: playlistThumbnail,
       entries: data.tracks ? data.tracks.map(t => ({
         title: t.title || 'Bài hát không tên',
         uploader: t.user ? t.user.username : 'N/A',
         duration: t.duration ? Math.round(t.duration / 1000) : null,
         url: t.permalink_url,
-        thumbnail: t.artwork_url || (t.user ? t.user.avatar_url : '')
+        thumbnail: upgradeThumbnail(t.artwork_url) || upgradeThumbnail(t.user?.avatar_url) || ''
       })) : []
     }
   };

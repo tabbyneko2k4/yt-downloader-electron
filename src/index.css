@@ -1119,12 +1119,35 @@ body {
   backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 20px;
+  justify-content: space-between;
+  padding: 0 16px;
   font-size: 11px;
   color: var(--text-muted);
   z-index: 100;
-  gap: 6px;
+  gap: 8px;
+}
+
+.disclaimer-ok-btn {
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.disclaimer-ok-btn:hover {
+  background: #f59e0b;
+  color: #0b0f19;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
 }
 
 .modal-backdrop {
@@ -1551,45 +1574,51 @@ body {
    ULTRA-BEAUTIFIED DROPDOWN (SELECT) CONTROLS
    ========================================== */
 select,
-.custom-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: rgba(30, 41, 59, 0.75);
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 14px 14px;
+.custom-select,
+.app-dropdown-select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: rgba(30, 41, 59, 0.85);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px 14px !important;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 8px 36px 8px 12px;
+  border-radius: 10px;
+  padding: 8px 36px 8px 12px !important;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-main);
   cursor: pointer;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 select:hover,
-.custom-select:hover {
+.custom-select:hover,
+.app-dropdown-select:hover {
   background-color: rgba(30, 41, 59, 0.95);
   border-color: var(--accent-purple);
-  box-shadow: 0 0 14px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
   transform: translateY(-1px);
 }
 
 select:focus,
-.custom-select:focus {
+.custom-select:focus,
+.app-dropdown-select:focus {
   outline: none;
   border-color: var(--accent-purple);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3), 0 4px 16px rgba(139, 92, 246, 0.3);
-  background-color: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35), 0 4px 20px rgba(139, 92, 246, 0.25);
+  background-color: rgba(15, 23, 42, 0.98);
 }
 
-select option {
+select option,
+.custom-select option,
+.app-dropdown-select option {
   background-color: #1e293b;
   color: #f8fafc;
   padding: 10px 14px;
@@ -1597,23 +1626,59 @@ select option {
 }
 
 [data-theme="light"] select,
-[data-theme="light"] .custom-select {
+[data-theme="light"] .custom-select,
+[data-theme="light"] .app-dropdown-select {
   background-color: rgba(255, 255, 255, 0.95);
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%238b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%237c3aed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
   border-color: rgba(0, 0, 0, 0.15);
   color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] select:hover,
-[data-theme="light"] .custom-select:hover {
+[data-theme="light"] .custom-select:hover,
+[data-theme="light"] .app-dropdown-select:hover {
   background-color: #ffffff;
   border-color: var(--accent-purple);
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.22);
 }
 
-[data-theme="light"] select option {
+[data-theme="light"] select option,
+[data-theme="light"] .custom-select option,
+[data-theme="light"] .app-dropdown-select option {
   background-color: #ffffff;
   color: #0f172a;
+}
+
+/* Specific Dropdown Variations */
+.downloaded-sort-select,
+.playlist-sort-select {
+  height: 32px;
+  line-height: 1;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  font-size: 12px !important;
+}
+
+.settings-select {
+  max-width: 100%;
+}
+
+.downloaded-sort-box,
+.playlist-sort-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+}
+
+[data-theme="light"] .downloaded-sort-box,
+[data-theme="light"] .playlist-sort-box {
+  background: transparent;
+  border: none;
 }
 
 /* ==========================================
@@ -1621,6 +1686,51 @@ select option {
    ========================================== */
 .mobile-burger-toggle {
   display: none;
+  position: relative;
+}
+
+.mobile-burger-toggle.active {
+  background: rgba(236, 72, 153, 0.18) !important;
+  border: 1px solid rgba(236, 72, 153, 0.4) !important;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.3);
+}
+
+[data-theme="light"] .mobile-burger-toggle {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .mobile-burger-toggle:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+[data-theme="light"] .mobile-burger-toggle.active {
+  background: rgba(236, 72, 153, 0.12) !important;
+  border: 1px solid rgba(236, 72, 153, 0.35) !important;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);
+}
+
+.burger-menu-icon,
+.header-globe-icon {
+  color: #a78bfa;
+}
+
+[data-theme="light"] .burger-menu-icon,
+[data-theme="light"] .header-globe-icon {
+  color: #7c3aed;
+}
+
+.burger-notification-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-pink);
+  box-shadow: 0 0 8px var(--accent-pink);
+  animation: pulseDot 1.5s infinite;
 }
 
 .burger-overlay {
@@ -1629,19 +1739,24 @@ select option {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 14, 23, 0.75);
+  backdrop-filter: blur(12px);
   z-index: 1999;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 12px;
-  animation: burgerFadeIn 0.2s ease-out;
+  padding-top: 14px;
+  animation: burgerFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .burger-overlay {
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(10px);
 }
 
 @keyframes burgerFadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .burger-dropdown-menu {
@@ -1649,16 +1764,16 @@ select option {
   max-width: 440px;
   max-height: calc(100vh - 80px);
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(20px);
+  background: rgba(17, 24, 39, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.25);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(139, 92, 246, 0.25);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: burgerSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: burgerSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes burgerSlideDown {
@@ -1667,9 +1782,9 @@ select option {
 }
 
 [data-theme="light"] .burger-dropdown-menu {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.97);
   border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 24px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15), 0 0 24px rgba(139, 92, 246, 0.12);
 }
 
 .burger-menu-header {
@@ -1677,7 +1792,22 @@ select option {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-color);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
+}
+
+[data-theme="light"] .burger-menu-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.burger-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.burger-brand-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .burger-menu-title {
@@ -1686,74 +1816,200 @@ select option {
   background: var(--gradient-brand);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.burger-menu-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .burger-close-btn {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
   color: var(--text-muted);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 6px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
+
+[data-theme="light"] .burger-close-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: var(--text-muted);
+}
+
 .burger-close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: rotate(90deg);
 }
 
 .burger-tabs-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .burger-tab-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-main);
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.burger-tab-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.burger-tab-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.burger-tab-icon-box.downloader {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(236, 72, 153, 0.08));
+  color: #ec4899;
+}
+.burger-tab-icon-box.advanced {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.08));
+  color: #a78bfa;
+}
+.burger-tab-icon-box.downloads {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.08));
+  color: #60a5fa;
+}
+.burger-tab-icon-box.settings {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.08));
+  color: #fbbf24;
+}
+
+.burger-tab-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.burger-tab-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.burger-tab-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .burger-tab-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateX(4px);
+}
+
+.burger-tab-item:hover .burger-tab-icon-box {
+  transform: scale(1.1);
 }
 
 .burger-tab-item.active {
   background: var(--gradient-brand);
   color: #ffffff;
-  border: none;
-  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+}
+
+.burger-tab-item.active .burger-tab-title,
+.burger-tab-item.active .burger-tab-desc {
+  color: #ffffff;
+}
+
+.burger-tab-item.active .burger-tab-desc {
+  opacity: 0.85;
+}
+
+.burger-tab-item.active .burger-tab-icon-box {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
 }
 
 [data-theme="light"] .burger-tab-item {
   background: rgba(0, 0, 0, 0.03);
-  border-color: rgba(0, 0, 0, 0.06);
-  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.08);
 }
+
 [data-theme="light"] .burger-tab-item:hover {
   background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .burger-tab-item.active {
+  background: var(--gradient-brand);
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .burger-tab-item.active .burger-tab-title,
+[data-theme="light"] .burger-tab-item.active .burger-tab-desc {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .burger-tab-icon-box.downloader {
+  background: rgba(236, 72, 153, 0.12);
+  color: #db2777;
+}
+
+[data-theme="light"] .burger-tab-icon-box.advanced {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+[data-theme="light"] .burger-tab-icon-box.downloads {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+[data-theme="light"] .burger-tab-icon-box.settings {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
 }
 
 .burger-quick-settings {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   border-top: 1px solid var(--border-color);
-  padding-top: 12px;
+  padding-top: 14px;
+}
+
+[data-theme="light"] .burger-quick-settings {
+  border-top-color: rgba(0, 0, 0, 0.08);
 }
 
 .burger-setting-row {
@@ -1761,14 +2017,26 @@ select option {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
+[data-theme="light"] .burger-setting-row {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
 .burger-setting-row:hover {
   background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+[data-theme="light"] .burger-setting-row:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.25);
 }
 
 .burger-setting-left {
@@ -1777,12 +2045,52 @@ select option {
   gap: 10px;
   font-size: 13px;
   font-weight: 600;
+  color: var(--text-main);
 }
 
-.burger-setting-val {
+.burger-setting-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="light"] .burger-setting-icon {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.burger-setting-val-pill {
   font-size: 12px;
-  color: var(--accent-purple);
   font-weight: 600;
+  color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+[data-theme="light"] .burger-setting-val-pill {
+  color: #7c3aed;
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.burger-footer-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 4px;
+  font-weight: 500;
+}
+
+.burger-dot {
+  opacity: 0.5;
 }
 
 /* Header quick control buttons */
@@ -1799,14 +2107,67 @@ select option {
    RESPONSIVE MEDIA QUERIES & MOBILE REFACTORING
    ========================================== */
 
-/* 1. Mobile & Medium Screen Mode (501px <= width <= 800px): SHOW BURGER MENU */
-@media (min-width: 501px) and (max-width: 800px) {
+/* ==========================================
+   HEADER RESPONSIVE RULES (USER SPECIFIED BREAKPOINTS)
+   - Dưới 650px: Burger menu
+   - Từ 650px - 1024px: Chỉ icon
+   - Trên 1024px: Icon + Text
+   ========================================== */
+
+/* 1. Under 650px (< 650px): SHOW BURGER MENU, HIDE HEADER NAV TABS */
+@media (max-width: 649px) {
   .mobile-burger-toggle {
     display: flex !important;
   }
 
   .header-center {
     display: none !important;
+  }
+}
+
+/* 2. From 650px to 1024px (650px - 1024px): SHOW ICON-ONLY NAV TABS */
+@media (min-width: 650px) and (max-width: 1024px) {
+  .mobile-burger-toggle {
+    display: none !important;
+  }
+
+  .header-center {
+    display: flex !important;
+  }
+
+  .nav-tabs {
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .nav-tab-btn {
+    padding: 6px 10px;
+    gap: 0;
+  }
+
+  .nav-tab-btn .tab-label {
+    display: none !important; /* Hide text, icon only */
+  }
+
+  .nav-tab-btn .badge-count {
+    font-size: 9px;
+    padding: 1px 4px;
+    margin-left: 2px;
+  }
+}
+
+/* 3. Above 1024px (> 1024px): SHOW ICON + TEXT NAV TABS */
+@media (min-width: 1025px) {
+  .mobile-burger-toggle {
+    display: none !important;
+  }
+
+  .header-center {
+    display: flex !important;
+  }
+
+  .nav-tab-btn .tab-label {
+    display: inline-block !important; /* Show text labels */
   }
 }
 
@@ -1925,15 +2286,43 @@ select option {
   .downloaded-header-bar {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 12px !important;
+    gap: 10px !important;
+  }
+  .downloaded-header-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  .downloaded-header-actions .btn {
+    flex: 1 !important;
+    justify-content: center !important;
   }
   .downloaded-search-filter-row {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 10px !important;
   }
-  .downloaded-search-filter-row select,
-  .downloaded-search-filter-row input {
+  .downloaded-search-box {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .downloaded-filter-types {
+    width: 100% !important;
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .downloaded-filter-types::-webkit-scrollbar {
+    height: 3px !important;
+  }
+  .downloaded-filter-types .filter-type-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  .downloaded-sort-box {
+    width: 100% !important;
+  }
+  .downloaded-sort-box select {
     width: 100% !important;
   }
   .downloaded-item-card {
@@ -1941,23 +2330,57 @@ select option {
     align-items: flex-start !important;
     gap: 10px !important;
   }
+  .downloaded-item-main-info {
+    width: 100% !important;
+  }
   .downloaded-item-actions {
     width: 100% !important;
     flex-wrap: wrap !important;
     justify-content: flex-start !important;
-    margin-top: 6px !important;
+    gap: 6px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+  .downloaded-item-actions .btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    min-width: 60px !important;
   }
 
   /* Advanced Options Tab Mobile Responsive Rules */
+  .advanced-tab-container {
+    gap: 14px !important;
+  }
+  .advanced-header-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .advanced-header-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+  .advanced-header-actions .btn {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
   .advanced-preset-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
   }
   .advanced-options-grid {
     grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .advanced-grid-full-width {
+    grid-column: span 1 !important;
   }
   .cmd-preview-box {
     word-break: break-all !important;
     font-size: 11px !important;
+  }
+  .advanced-cookie-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 
   /* Downloader Options Grid Mobile Rules */
@@ -2000,9 +2423,10 @@ select option {
     padding: 8px 6px !important;
   }
   .playlist-child-track-row {
-    grid-template-columns: 16px 28px 1fr 45px !important;
+    display: grid !important;
+    grid-template-columns: 16px 28px 1fr 45px 85px !important;
     gap: 6px !important;
-    padding: 4px 6px !important;
+    padding: 6px 6px !important;
   }
 
   /* Responsive Result Card & Playlist Inspector Rules */
@@ -2059,7 +2483,7 @@ select option {
   }
 }
 
-/* 2. Ultra-Narrow Screen Mode (width <= 500px): SHOW ICON-ONLY TASKBAR */
+/* 2. Ultra-Narrow Screen Mode (width <= 500px) */
 @media (max-width: 500px) {
   .format-toggle-group {
     grid-template-columns: 1fr !important;
@@ -2071,13 +2495,6 @@ select option {
 
   .downloader-trim-grid {
     grid-template-columns: 1fr !important;
-  }
-  .mobile-burger-toggle {
-    display: none !important;
-  }
-
-  .header-center {
-    display: flex !important;
   }
 
   .app-header {
@@ -2095,27 +2512,6 @@ select option {
   .logo-icon {
     width: 22px;
     height: 22px;
-  }
-
-  .nav-tabs {
-    gap: 2px;
-    padding: 2px;
-  }
-
-  .nav-tab-btn {
-    padding: 6px 8px;
-    gap: 0;
-  }
-
-  /* ICON-ONLY TASKBAR: Hide text labels on taskbar buttons */
-  .nav-tab-btn .tab-label {
-    display: none !important;
-  }
-
-  .nav-tab-btn .badge-count {
-    font-size: 9px;
-    padding: 1px 4px;
-    margin-left: 2px;
   }
 
   .header-right {
@@ -2147,7 +2543,103 @@ select option {
   .settings-lang-grid {
     grid-template-columns: 1fr !important;
   }
+
+  .advanced-preset-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .advanced-cookie-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Downloaded History Ultra-Narrow (<= 500px) Responsive Rules */
+  .downloaded-action-btn-text {
+    display: none !important;
+  }
+  .downloaded-item-actions .btn {
+    padding: 5px 8px !important;
+    min-width: unset !important;
+    flex: unset !important;
+  }
+  .playlist-child-track-row {
+    grid-template-columns: 14px 24px 1fr 85px !important;
+    gap: 4px !important;
+  }
+  .playlist-child-track-row > div:nth-child(4) {
+    display: none !important;
+  }
 }
+
+/* ==========================================================================
+   Advanced Options Tab Base Styles
+   ========================================================================== */
+.advanced-tab-container {
+  max-width: 950px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.advanced-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.advanced-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.advanced-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.advanced-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.advanced-grid-full-width {
+  grid-column: span 2;
+}
+
+.advanced-cookie-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.advanced-checkbox-label {
+  font-size: 13px;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.advanced-checkbox-label:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Base Playlist Child Track Row Grid Layout */
+.playlist-child-track-row {
+  display: grid;
+  grid-template-columns: 20px 32px 1fr 60px 140px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
 
 
 

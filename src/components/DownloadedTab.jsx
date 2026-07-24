@@ -154,7 +154,7 @@ export default function DownloadedTab({
   return (
     <div style={{ maxWidth: '950px', margin: '0 auto' }}>
       <section className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="downloaded-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FolderCheck size={20} color="#10b981" />
             <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#f8fafc' }}>
@@ -162,7 +162,7 @@ export default function DownloadedTab({
             </h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="downloaded-header-actions" style={{ display: 'flex', gap: '8px' }}>
             <button
               className="btn btn-secondary"
               onClick={handleImportLogFileToResume}
@@ -170,7 +170,7 @@ export default function DownloadedTab({
               title={t('importLogBtn')}
             >
               <FileCode size={14} />
-              <span>{t('importLogBtn')}</span>
+              <span className="downloaded-action-btn-text">{t('importLogBtn')}</span>
             </button>
 
             {downloadsHistory.length > 0 && (
@@ -184,7 +184,7 @@ export default function DownloadedTab({
                 style={{ padding: '6px 12px', fontSize: '12px' }}
               >
                 <Trash2 size={14} />
-                <span>{t('clearHistoryBtn')}</span>
+                <span className="downloaded-action-btn-text">{t('clearHistoryBtn')}</span>
               </button>
             )}
           </div>
@@ -193,7 +193,7 @@ export default function DownloadedTab({
         {/* Search, Filter & Sort Controls */}
         <div className="downloaded-search-filter-row" style={{ display: 'flex', gap: '12px', marginBottom: '18px', flexWrap: 'wrap' }}>
           {/* Search Bar */}
-          <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
+          <div className="downloaded-search-box" style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
@@ -206,7 +206,7 @@ export default function DownloadedTab({
           </div>
 
           {/* Type Filter Buttons */}
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div className="downloaded-filter-types" style={{ display: 'flex', gap: '6px' }}>
             {[
               { id: 'all', label: t('filterAll') },
               { id: 'video', label: t('filterVideo') },
@@ -217,6 +217,7 @@ export default function DownloadedTab({
               <button
                 key={f.id}
                 type="button"
+                className="filter-type-btn"
                 onClick={() => setFilterType(f.id)}
                 style={{
                   padding: '6px 12px',
@@ -235,11 +236,11 @@ export default function DownloadedTab({
           </div>
 
           {/* Sort Dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="downloaded-sort-box" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <ArrowUpDown size={14} color="#94a3b8" />
             <select
-              className="text-input"
-              style={{ padding: '6px 10px', fontSize: '12px' }}
+              className="custom-select downloaded-sort-select"
+              style={{ fontSize: '12px' }}
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
@@ -279,7 +280,7 @@ export default function DownloadedTab({
                   title={t('dragHint')}
                 >
                   <div className="downloaded-item-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                    <div className="downloaded-item-main-info" style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, minWidth: 0 }}>
                       {/* Drag Handle Icon */}
                       <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
                         <GripVertical size={16} />
@@ -333,7 +334,7 @@ export default function DownloadedTab({
                             title={t('importLogBtn')}
                           >
                             <RefreshCw size={12} />
-                            <span>{t('resume')}</span>
+                            <span className="downloaded-action-btn-text">{t('resume')}</span>
                           </button>
                         )}
 
@@ -344,7 +345,7 @@ export default function DownloadedTab({
                           title={t('openFolder')}
                         >
                           <FolderOpen size={13} />
-                          <span>{t('openFolder')}</span>
+                          <span className="downloaded-action-btn-text">{t('openFolder')}</span>
                         </button>
 
                         {!item.isPlaylist && (
@@ -355,7 +356,7 @@ export default function DownloadedTab({
                             title={t('openFile')}
                           >
                             <Play size={13} />
-                            <span>{t('openFile')}</span>
+                            <span className="downloaded-action-btn-text">{t('openFile')}</span>
                           </button>
                         )}
 
@@ -367,7 +368,7 @@ export default function DownloadedTab({
                             title="Log file"
                           >
                             <FileText size={13} />
-                            <span>.log</span>
+                            <span className="downloaded-action-btn-text">.log</span>
                           </button>
                         )}
 
@@ -411,8 +412,6 @@ export default function DownloadedTab({
                                 draggable
                                 onDragStart={(e) => handleTrackDragStart(e, trackFilePath, item.folderPath)}
                                 style={{
-                                  display: 'grid',
-                                  gridTemplateColumns: '20px 32px 1fr 60px 140px',
                                   alignItems: 'center',
                                   gap: '8px',
                                   padding: '6px 8px',

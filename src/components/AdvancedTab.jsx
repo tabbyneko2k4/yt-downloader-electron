@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Bookmark, RotateCcw, Copy, Eye, Plus, Trash2, Subtitles, Clock, Cookie, Zap, Code, FileCode, Check } from 'lucide-react';
+import { Terminal, Bookmark, RotateCcw, Copy, Eye, Plus, Trash2, Subtitles, Clock, Cookie, Zap, Code, FileCode } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
@@ -71,7 +71,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
     const newPreset = {
       id: `custom-${Date.now()}`,
       name: newPresetName.trim(),
-      desc: 'Cấu hình tùy chỉnh cá nhân',
+      desc: t('customPresetDesc') || 'Cấu hình tùy chỉnh cá nhân',
       options: { ...advancedOptions }
     };
     const updated = [...customPresets, newPreset];
@@ -110,22 +110,22 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
   };
 
   return (
-    <div style={{ maxWidth: '950px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="advanced-tab-container">
       {/* Top Banner & Live CLI Command Preview Box */}
-      <section className="card" style={{ background: 'var(--bg-card)', padding: '18px 22px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+      <section className="card" style={{ background: 'var(--bg-card)', padding: '16px 20px' }}>
+        <div className="advanced-header-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Terminal size={20} color="#c084fc" />
-            <h2 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
               {t('advancedTitle')}
             </h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="advanced-header-actions">
             <button
               className="btn btn-secondary"
               onClick={() => setShowSaveModal(true)}
-              style={{ padding: '6px 12px', fontSize: '12px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
+              style={{ padding: '7px 12px', fontSize: '12px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
             >
               <Plus size={14} />
               <span>{t('savePresetBtn')}</span>
@@ -134,7 +134,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
             <button
               className="btn btn-secondary"
               onClick={handleReset}
-              style={{ padding: '6px 12px', fontSize: '12px' }}
+              style={{ padding: '7px 12px', fontSize: '12px' }}
             >
               <RotateCcw size={14} />
               <span>{t('resetBtn')}</span>
@@ -143,21 +143,21 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </div>
 
         {/* Live Command Terminal Box */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 16px', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 14px', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Eye size={12} color="#10b981" />
               <span>{t('previewCmdTitle')}</span>
             </span>
             <button
               onClick={copyCmdPreview}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              style={{ background: 'transparent', border: 'none', color: copiedCmd ? '#10b981' : 'var(--text-muted)', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 4px' }}
             >
               <Copy size={12} />
               <span>{copiedCmd ? t('cmdCopied') : t('copyCmd')}</span>
             </button>
           </div>
-          <code style={{ fontFamily: 'Consolas, monospace', fontSize: '12px', color: '#10b981', wordBreak: 'break-all' }}>
+          <code className="cmd-preview-box" style={{ fontFamily: 'Consolas, monospace', fontSize: '12px', color: '#10b981', wordBreak: 'break-all', display: 'block' }}>
             {generateCmdPreview()}
           </code>
         </div>
@@ -170,7 +170,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
           <span>{t('presetsSectionTitle')}</span>
         </h3>
 
-        <div className="advanced-preset-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+        <div className="advanced-preset-grid">
           {/* Built-in Presets */}
           {builtinPresets.map((preset) => (
             <div
@@ -190,7 +190,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
               <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
                 {preset.name}
               </h4>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', margin: 0 }}>
                 {preset.desc}
               </p>
             </div>
@@ -210,19 +210,21 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
                 transition: 'all 0.2s ease',
                 position: 'relative'
               }}
+              className="preset-card-item"
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#c084fc', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#c084fc', marginBottom: '4px', wordBreak: 'break-word' }}>
                   ⭐ {preset.name}
                 </h4>
                 <button
                   onClick={(e) => handleDeleteCustomPreset(e, preset.id)}
-                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px' }}
+                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0 }}
+                  title={t('delete') || 'Xóa'}
                 >
                   <Trash2 size={13} />
                 </button>
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', margin: 0 }}>
                 {preset.desc}
               </p>
             </div>
@@ -231,7 +233,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
       </section>
 
       {/* Categorized Visual Configuration Cards */}
-      <div className="advanced-options-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
+      <div className="advanced-options-grid">
         {/* Subtitles Visual Controls */}
         <section className="card" style={{ marginBottom: 0 }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -239,35 +241,35 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
             <span>{t('subtitlesSection')}</span>
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <label style={{ fontSize: '13px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label className="advanced-checkbox-label">
               <input
                 type="checkbox"
-                style={{ width: '16px', height: '16px', accentColor: '#8b5cf6' }}
+                style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
                 checked={advancedOptions.writeSubs}
                 onChange={(e) => handleChange('writeSubs', e.target.checked)}
               />
-              {t('writeSubs')}
+              <span>{t('writeSubs')}</span>
             </label>
 
-            <label style={{ fontSize: '13px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <label className="advanced-checkbox-label">
               <input
                 type="checkbox"
-                style={{ width: '16px', height: '16px', accentColor: '#8b5cf6' }}
+                style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
                 checked={advancedOptions.embedSubs}
                 onChange={(e) => handleChange('embedSubs', e.target.checked)}
               />
-              {t('embedSubs')}
+              <span>{t('embedSubs')}</span>
             </label>
 
-            <div>
+            <div style={{ marginTop: '4px' }}>
               <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
                 {t('subLangsLabel')}
               </label>
               <input
                 type="text"
                 className="text-input"
-                style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
                 placeholder="vi,en"
                 value={advancedOptions.subLangs}
                 onChange={(e) => handleChange('subLangs', e.target.value)}
@@ -287,7 +289,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
             <input
               type="text"
               className="text-input"
-              style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
               placeholder={t('downloadSectionsPlaceholder')}
               value={advancedOptions.downloadSections}
               onChange={(e) => handleChange('downloadSections', e.target.value)}
@@ -303,7 +305,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
           </h3>
 
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
+            <div className="advanced-cookie-grid">
               {[
                 { name: t('cookieNone'), id: 'none' },
                 { name: t('cookieChrome'), id: 'chrome' },
@@ -315,15 +317,19 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
                   key={b.id}
                   type="button"
                   onClick={() => handleChange('cookiesFromBrowser', b.id)}
+                  className="advanced-cookie-btn"
                   style={{
-                    padding: '8px',
+                    padding: '8px 6px',
                     borderRadius: '8px',
                     fontSize: '12px',
                     fontWeight: '600',
                     border: advancedOptions.cookiesFromBrowser === b.id ? '1px solid #f59e0b' : '1px solid var(--border-color)',
                     background: advancedOptions.cookiesFromBrowser === b.id ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-secondary)',
                     color: advancedOptions.cookiesFromBrowser === b.id ? '#f59e0b' : 'var(--text-muted)',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {b.name}
@@ -344,7 +350,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
             <input
               type="text"
               className="text-input"
-              style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+              style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
               placeholder={t('rateLimitPlaceholder')}
               value={advancedOptions.rateLimit}
               onChange={(e) => handleChange('rateLimit', e.target.value)}
@@ -353,7 +359,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Custom Format Box */}
-        <section className="card" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+        <section className="card advanced-grid-full-width" style={{ marginBottom: 0 }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Code size={18} color="#8b5cf6" />
             <span>{t('customFormatLabel')}</span>
@@ -362,7 +368,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
           <input
             type="text"
             className="text-input"
-            style={{ width: '100%', padding: '8px 12px', fontSize: '12px' }}
+            style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}
             placeholder={t('customFormatPlaceholder')}
             value={advancedOptions.customFormat}
             onChange={(e) => handleChange('customFormat', e.target.value)}
@@ -370,7 +376,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Extra CLI Flags */}
-        <section className="card" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+        <section className="card advanced-grid-full-width" style={{ marginBottom: 0 }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <FileCode size={18} color="#06b6d4" />
             <span>{t('customArgsLabel')}</span>
@@ -379,7 +385,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
           <input
             type="text"
             className="text-input"
-            style={{ width: '100%', padding: '8px 12px', fontSize: '12px' }}
+            style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}
             placeholder={t('customArgsPlaceholder')}
             value={advancedOptions.customArgs}
             onChange={(e) => handleChange('customArgs', e.target.value)}
@@ -390,13 +396,13 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
       {/* Save Preset Modal */}
       {showSaveModal && (
         <div className="modal-backdrop" onClick={() => setShowSaveModal(false)}>
-          <div className="modal-window" style={{ maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-window" style={{ maxWidth: '450px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-main)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-main)', margin: 0 }}>
                 {t('savePresetModalTitle')}
               </h3>
             </div>
-            <div style={{ padding: '20px' }}>
+            <div style={{ padding: '16px 20px' }}>
               <input
                 type="text"
                 className="text-input"
@@ -410,14 +416,14 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
                 <button
                   className="btn btn-secondary"
                   onClick={() => setShowSaveModal(false)}
-                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  style={{ padding: '8px 16px', fontSize: '13px', flex: '1' }}
                 >
                   {t('cancel')}
                 </button>
                 <button
                   className="btn btn-primary"
                   onClick={handleSaveCustomPreset}
-                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  style={{ padding: '8px 16px', fontSize: '13px', flex: '1' }}
                 >
                   {t('save')}
                 </button>
@@ -429,3 +435,4 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
     </div>
   );
 }
+

@@ -528,7 +528,9 @@ export default function App() {
         </main>
 
         {/* Sticky Bottom Disclaimer Bar */}
-        <FooterDisclaimer />
+        {settings.showFooterDisclaimer !== false && (
+          <FooterDisclaimer onClose={() => updateSettings({ showFooterDisclaimer: false })} />
+        )}
 
         {/* CLI Output Log Modal */}
         {logModalItem && (

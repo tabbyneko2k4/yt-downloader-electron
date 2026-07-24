@@ -1,8 +1,8 @@
 export const translations = {
   en: {
     // Header & Nav
-    appName: "Media Downloader",
-    navDownloader: "Media Downloader",
+    appName: "Nyanko's Media Downloader",
+    navDownloader: "Downloader",
     navAdvanced: "Advanced Customization",
     navDownloads: "Downloaded Items",
     navSettings: "Settings",
@@ -167,9 +167,18 @@ export const translations = {
     maxConcurrent3: "3 threads (Fast)",
     maxConcurrent5: "5 threads (Maximum speed)",
 
-    defaultMetadataLabel: "Default Metadata Options",
+    defaultMetadataLabel: "Default Metadata & Interface Options",
     embedMetadataCheck: "Auto-embed Metadata (ID3 Tags, Artist, Album) into files",
     embedThumbnailCheck: "Auto-embed Cover Artwork into MP3/MP4 files",
+    showFooterDisclaimerCheck: "Show legal disclaimer bar at the bottom of the app",
+
+    aboutTitle: "About Nyanko's Media Downloader",
+    aboutAppName: "Nyanko's Media Downloader",
+    aboutVersion: "Version 1.2.0",
+    aboutDesc: "A multi-source media downloader powered by yt-dlp, FFmpeg, Electron and React",
+    aboutTech: "Developer Dependencies (devDependencies)",
+    aboutLicense: "License & Terms",
+    aboutLicenseText: "ISC License • Developed by Tabby Neko",
 
     saveSettingsBtn: "Save Settings",
     settingsSavedSuccess: "✓ Settings saved successfully!",
@@ -232,7 +241,7 @@ export const translations = {
 
   zh: {
     // Header & Nav
-    appName: "Media Downloader",
+    appName: "Nyanko's Media Downloader",
     navDownloader: "媒体下载器",
     navAdvanced: "高级自定义",
     navDownloads: "已下载项目",
@@ -398,9 +407,18 @@ export const translations = {
     maxConcurrent3: "3 个任务 (快速)",
     maxConcurrent5: "5 个任务 (极速)",
 
-    defaultMetadataLabel: "默认元数据设置",
+    defaultMetadataLabel: "默认元数据与界面选项",
     embedMetadataCheck: "自动在文件中嵌入元数据 (ID3 标签、歌手、专辑)",
     embedThumbnailCheck: "自动在 MP3/MP4 文件中嵌入封面图片",
+    showFooterDisclaimerCheck: "在应用程序底部显示法律免责声明栏",
+
+    aboutTitle: "关于 Nyanko's Media Downloader",
+    aboutAppName: "Nyanko's Media Downloader",
+    aboutVersion: "版本 1.2.0",
+    aboutDesc: "基于 yt-dlp、FFmpeg、Electron 与 React 构建的多源媒体下载器",
+    aboutTech: "开发依赖项 (devDependencies)",
+    aboutLicense: "授权与条款",
+    aboutLicenseText: "ISC 许可证 • 由 Tabby Neko 开发",
 
     saveSettingsBtn: "保存设置",
     settingsSavedSuccess: "✓ 设置已成功保存！",
@@ -463,7 +481,7 @@ export const translations = {
 
   'zh-TW': {
     // Header & Nav
-    appName: "Media Downloader",
+    appName: "Nyanko's Media Downloader",
     navDownloader: "媒體下載器",
     navAdvanced: "高級自訂",
     navDownloads: "已下載項目",
@@ -629,9 +647,18 @@ export const translations = {
     maxConcurrent3: "3 個任務 (快速)",
     maxConcurrent5: "5 個任務 (極速)",
 
-    defaultMetadataLabel: "預設中繼資料設定",
+    defaultMetadataLabel: "預設中繼資料與介面選項",
     embedMetadataCheck: "自動在檔案中嵌入中繼資料 (ID3 標籤、歌手、專輯)",
     embedThumbnailCheck: "自動在 MP3/MP4 檔案中嵌入封面圖片",
+    showFooterDisclaimerCheck: "在應用程式底部顯示法律免責聲明欄",
+
+    aboutTitle: "關於 Nyanko's Media Downloader",
+    aboutAppName: "Nyanko's Media Downloader",
+    aboutVersion: "版本 1.2.0",
+    aboutDesc: "基於 yt-dlp、FFmpeg、Electron 與 React 建構的多源媒體下載器",
+    aboutTech: "開發相依性 (devDependencies)",
+    aboutLicense: "授權與條款",
+    aboutLicenseText: "ISC 授權條款 • 由 Tabby Neko 開發",
 
     saveSettingsBtn: "儲存設定",
     settingsSavedSuccess: "✓ 設定已成功儲存！",
@@ -694,7 +721,7 @@ export const translations = {
 
   vi: {
     // Header & Nav
-    appName: "Media Downloader",
+    appName: "Nyanko's Media Downloader",
     navDownloader: "Media Downloader",
     navAdvanced: "Tùy chỉnh Nâng cao",
     navDownloads: "Mục đã tải xuống",
@@ -860,9 +887,18 @@ export const translations = {
     maxConcurrent3: "3 tiến trình (Nhanh)",
     maxConcurrent5: "5 tiến trình (Tốc độ tối đa)",
 
-    defaultMetadataLabel: "Tùy chọn Metadata mặc định",
+    defaultMetadataLabel: "Tùy chọn Metadata & Giao diện",
     embedMetadataCheck: "Tự động nhúng Metadata (ID3 Tag, Tên ca sĩ, Album) vào file",
     embedThumbnailCheck: "Tự động nhúng Cover Artwork (Ảnh bìa) vào file MP3/MP4",
+    showFooterDisclaimerCheck: "Hiển thị thanh thông báo pháp lý & miễn trừ trách nhiệm ở chân trang",
+
+    aboutTitle: "Giới thiệu về Nyanko's Media Downloader",
+    aboutAppName: "Nyanko's Media Downloader",
+    aboutVersion: "Phiên bản 1.2.0",
+    aboutDesc: "Ứng dụng tải media đa nguồn phát triển trên nền yt-dlp, FFmpeg, Electron và React",
+    aboutTech: "Phụ thuộc phát triển (devDependencies)",
+    aboutLicense: "Giấy phép & Bản quyền",
+    aboutLicenseText: "Giấy phép ISC • Phát triển bởi Tabby Neko",
 
     saveSettingsBtn: "Lưu Cài đặt",
     settingsSavedSuccess: "✓ Đã lưu cài đặt thành công!",
@@ -925,7 +961,7 @@ export const translations = {
 
   ja: {
     // Header & Nav
-    appName: "Media Downloader",
+    appName: "Nyanko's Media Downloader",
     navDownloader: "メディアダウンローダー",
     navAdvanced: "高度なカスタマイズ",
     navDownloads: "ダウンロード済み",
@@ -1091,9 +1127,18 @@ export const translations = {
     maxConcurrent3: "3 スレッド (高速)",
     maxConcurrent5: "5 スレッド (最高速)",
 
-    defaultMetadataLabel: "デフォルトメタデータ設定",
+    defaultMetadataLabel: "デフォルトメタデータ＆UI設定",
     embedMetadataCheck: "メタデータ (ID3 タグ、歌手名、アルバム) を自動埋め込み",
     embedThumbnailCheck: "カバーアート (ジャケット画像) を MP3/MP4 に自動埋め込み",
+    showFooterDisclaimerCheck: "アプリ下部に法的免責事項バーを表示する",
+
+    aboutTitle: "Nyanko's Media Downloader について",
+    aboutAppName: "Nyanko's Media Downloader",
+    aboutVersion: "バージョン 1.2.0",
+    aboutDesc: "yt-dlp、FFmpeg、Electron、React を搭載したマルチソースメディアダウンローダー",
+    aboutTech: "開発依存関係 (devDependencies)",
+    aboutLicense: "ライセンスと規約",
+    aboutLicenseText: "ISC ライセンス • Tabby Neko 開発",
 
     saveSettingsBtn: "設定を保存",
     settingsSavedSuccess: "✓ 設定が正常に保存されました！",

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, HardDrive, Check, Move, Globe, Sun, Moon, Monitor, Palette } from 'lucide-react';
+import { Folder, HardDrive, Check, Move, Globe, Sun, Moon, Monitor, Palette, Info, ShieldCheck, Cpu } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function SettingsTab({ settings, updateSettings }) {
@@ -29,7 +29,7 @@ export default function SettingsTab({ settings, updateSettings }) {
   const currentTheme = settings.theme || 'system';
 
   return (
-    <div style={{ maxWidth: '850px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <section className="card fade-in-up">
         <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <HardDrive size={20} color="#8b5cf6" />
@@ -189,8 +189,8 @@ export default function SettingsTab({ settings, updateSettings }) {
               {t('maxConcurrentLabel')}
             </label>
             <select
-              className="text-input"
-              style={{ width: '250px', padding: '8px 12px', fontSize: '13px' }}
+              className="custom-select settings-select"
+              style={{ width: '250px', fontSize: '13px' }}
               value={settings.maxConcurrentDownloads || 2}
               onChange={(e) => updateSettings({ maxConcurrentDownloads: parseInt(e.target.value, 10) })}
             >
@@ -224,6 +224,15 @@ export default function SettingsTab({ settings, updateSettings }) {
               />
               <span>{t('embedThumbnailCheck')}</span>
             </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+              <input
+                type="checkbox"
+                checked={settings.showFooterDisclaimer !== false}
+                onChange={(e) => updateSettings({ showFooterDisclaimer: e.target.checked })}
+              />
+              <span>{t('showFooterDisclaimerCheck')}</span>
+            </label>
           </div>
 
           {/* Save Button */}
@@ -245,6 +254,96 @@ export default function SettingsTab({ settings, updateSettings }) {
           </div>
         </div>
       </section>
+
+      {/* About Section */}
+      <section className="card fade-in-up">
+        <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Info size={20} color="#ec4899" />
+          <span>{t('aboutTitle') || 'Giới thiệu về ứng dụng'}</span>
+        </h2>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', background: 'var(--bg-secondary)', padding: '18px 20px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flex: 1 }}>
+            <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '44px', height: '44px', minWidth: '44px', marginTop: '2px' }}>
+              <path
+                d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+                fill="url(#about-logo-grad)"
+              />
+              <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
+              <defs>
+                <linearGradient id="about-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#ec4899" />
+                  <stop offset="0.5" stopColor="#8b5cf6" />
+                  <stop offset="1" stopColor="#3b82f6" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span>{t('aboutAppName')}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', border: '1px solid rgba(236, 72, 153, 0.3)' }}>
+                  {t('aboutVersion')}
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px', maxWidth: '620px', lineHeight: '1.5' }}>
+                {t('aboutDesc')}
+              </p>
+              <div style={{ fontSize: '12px', color: 'var(--text-main)', marginTop: '8px', display: 'flex', gap: '18px', flexWrap: 'wrap' }}>
+                <span><strong>Author:</strong> Tabby Neko</span>
+                <span><strong>License:</strong> ISC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* devDependencies Badges List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Cpu size={14} color="#8b5cf6" />
+            <span>{t('aboutTech')}</span>
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {[
+              { name: 'electron', ver: '^31.0.0' },
+              { name: 'react', ver: '^19.2.8' },
+              { name: 'react-dom', ver: '^19.2.8' },
+              { name: 'vite', ver: '^5.4.21' },
+              { name: '@vitejs/plugin-react', ver: '^4.7.0' },
+              { name: 'electron-builder', ver: '^26.15.3' },
+              { name: 'lucide-react', ver: '^1.26.0' }
+            ].map((dep) => (
+              <span
+                key={dep.name}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  padding: '5px 10px',
+                  borderRadius: '8px',
+                  background: 'rgba(139, 92, 246, 0.12)',
+                  color: 'var(--text-main)',
+                  border: '1px solid rgba(139, 92, 246, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span style={{ color: '#c084fc' }}>{dep.name}</span>
+                <span style={{ opacity: 0.75, fontSize: '10px', color: 'var(--text-muted)' }}>{dep.ver}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* License Details Footer Box */}
+        <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(0, 0, 0, 0.04)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <ShieldCheck size={18} color="#10b981" style={{ minWidth: '18px' }} />
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            <strong style={{ color: 'var(--text-main)' }}>{t('aboutLicense')}: </strong>
+            {t('aboutLicenseText')}
+          </span>
+        </div>
+      </section>
     </div>
   );
 }
+
