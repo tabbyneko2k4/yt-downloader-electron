@@ -1,31 +1,44 @@
 {
-  "name": "yt-downloader-electron",
-  "version": "1.0.1",
-  "description": "A yt-dlp GUI downloader powered by Electron",
+  "name": "media-downloader",
+  "version": "1.2.0",
+  "description": "A multi-source media downloader powered by yt-dlp, FFmpeg, Electron and React",
   "main": "main.js",
   "scripts": {
+    "dev": "vite",
+    "build:react": "vite build",
     "start": "electron .",
-    "build": "electron-builder --windows",
-    "build:installer": "node build-installer.js",
+    "build": "vite build && electron-builder --windows",
+    "build:installer": "vite build && node build-installer.js",
     "start:installer": "electron ./installer"
   },
   "keywords": [
     "yt-dlp",
+    "ffmpeg",
     "electron",
+    "react",
     "downloader",
     "youtube",
+    "tiktok",
+    "facebook",
+    "soundcloud",
+    "gif",
     "mp3",
     "mp4"
   ],
   "author": "Tabby Neko",
   "license": "ISC",
   "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
     "electron": "^31.0.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "lucide-react": "^1.26.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "vite": "^5.4.21"
   },
   "build": {
-    "appId": "com.tabbyneko.ytdownloader",
-    "productName": "YT-DLP Media Downloader",
+    "appId": "com.tabbyneko.mediadownloader",
+    "productName": "Media Downloader",
     "icon": "icon/icon.png",
     "directories": {
       "output": "dist"
@@ -42,11 +55,9 @@
       ]
     },
     "files": [
-      "index.html",
-      "styles.css",
+      "dist-react/**/*",
       "main.js",
       "preload.js",
-      "renderer.js",
       "package.json"
     ],
     "asar": true
