@@ -62,36 +62,36 @@ export default function SettingsTab({ settings, updateSettings }) {
   const subTabs = [
     {
       id: 'appearance',
-      label: 'Giao diện & Ngôn ngữ',
-      desc: 'Ngôn ngữ ứng dụng, theme màu sáng/tối',
+      label: t('sectionAppearance'),
+      desc: t('sectionAppearanceDesc'),
       icon: Palette,
       color: '#ec4899'
     },
     {
       id: 'storage',
-      label: 'Thư mục & Tải xuống',
-      desc: 'Đường dẫn lưu, chế độ kéo thả playlist, metadata',
+      label: t('sectionStorage'),
+      desc: t('sectionStorageDesc'),
       icon: Folder,
       color: '#8b5cf6'
     },
     {
       id: 'general',
-      label: 'Cài đặt chung',
-      desc: 'Hành động khi đóng, số luồng tải, Chrome extension',
+      label: t('sectionGeneral'),
+      desc: t('sectionGeneralDesc'),
       icon: SettingsIcon,
       color: '#3b82f6'
     },
     {
       id: 'about',
-      label: t('aboutTitle') || 'Giới thiệu',
-      desc: 'Thông tin phiên bản, tác giả & thư viện cốt lõi',
+      label: t('aboutTitle'),
+      desc: t('sectionAppearanceDesc'),
       icon: Info,
       color: '#10b981'
     },
     {
       id: 'disclaimer',
-      label: t('disclaimerTitle') || 'Tuyên bố miễn trừ',
-      desc: 'Quy định pháp lý, bản quyền & mục đích sử dụng',
+      label: t('disclaimerTitle'),
+      desc: t('disclaimerText'),
       icon: AlertTriangle,
       color: '#f59e0b'
     }
@@ -119,10 +119,10 @@ export default function SettingsTab({ settings, updateSettings }) {
             <div className="p-4 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-1">
               <h2 className="text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <SettingsIcon size={18} className="text-purple-500" />
-                <span>Cài Đặt & Giới Thiệu</span>
+                <span>{t('settingsNavTitle')}</span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Chọn danh mục cài đặt để tùy chỉnh ứng dụng
+                {t('settingsNavSubtitle')}
               </p>
             </div>
 
@@ -169,7 +169,7 @@ export default function SettingsTab({ settings, updateSettings }) {
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
               >
                 <ArrowLeft size={15} />
-                <span>Quay lại menu</span>
+                <span>{t('settingsBackToMenu')}</span>
               </button>
 
               <span className="text-xs font-extrabold text-pink-600 dark:text-pink-300">
@@ -203,7 +203,7 @@ export default function SettingsTab({ settings, updateSettings }) {
         {/* Desktop Vertical Sidebar Tabs */}
         <aside className="flex flex-col gap-2 w-64 shrink-0 p-3.5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl self-start">
           <div className="px-3 py-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Danh Mục Cấu Hình
+            {t('settingsNavCategory')}
           </div>
 
           {subTabs.map((tab) => {
@@ -214,11 +214,10 @@ export default function SettingsTab({ settings, updateSettings }) {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border border-pink-400/60 text-pink-600 dark:text-pink-200 shadow-md scale-[1.02]'
-                    : 'bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isSelected
+                  ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border border-pink-400/60 text-pink-600 dark:text-pink-200 shadow-md scale-[1.02]'
+                  : 'bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <IconComp size={18} color={tab.color} />
@@ -274,7 +273,7 @@ function DetailSectionContent({
         <div className="space-y-6">
           <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
             <Palette size={20} className="text-pink-500" />
-            <span>Giao diện & Ngôn ngữ</span>
+            <span>{t('sectionAppearance')}</span>
           </h2>
 
           {/* Language Selection */}
@@ -293,11 +292,10 @@ function DetailSectionContent({
                       updateSettings({ language: l.code });
                       setLanguage(l.code);
                     }}
-                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
-                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                    }`}
+                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer ${isSelected
+                      ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                      : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
                   >
                     <span className="text-lg">{l.flag}</span>
                     <span>{l.name}</span>
@@ -321,11 +319,10 @@ function DetailSectionContent({
                   <div
                     key={opt.id}
                     onClick={() => updateSettings({ theme: opt.id })}
-                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
-                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                    }`}
+                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${isSelected
+                      ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                      : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
                   >
                     <IconComp size={16} color={opt.color} />
                     <span>{opt.name}</span>
@@ -342,7 +339,7 @@ function DetailSectionContent({
         <div className="space-y-6">
           <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
             <Folder size={20} className="text-purple-500" />
-            <span>Thư mục & Lưu trữ</span>
+            <span>{t('sectionStorageTitle')}</span>
           </h2>
 
           {/* Directory Storage Path */}
@@ -382,11 +379,10 @@ function DetailSectionContent({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div
                 onClick={() => updateSettings({ playlistDragMode: 'folder' })}
-                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${
-                  (settings.playlistDragMode || 'folder') === 'folder'
-                    ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
-                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${(settings.playlistDragMode || 'folder') === 'folder'
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                  : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
               >
                 <div className="font-bold mb-1">{t('dragModeFolder')}</div>
                 <div className="text-[11px] opacity-75">{t('dragModeFolderDesc')}</div>
@@ -394,11 +390,10 @@ function DetailSectionContent({
 
               <div
                 onClick={() => updateSettings({ playlistDragMode: 'files' })}
-                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${
-                  settings.playlistDragMode === 'files'
-                    ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
-                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${settings.playlistDragMode === 'files'
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                  : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
               >
                 <div className="font-bold mb-1">{t('dragModeFiles')}</div>
                 <div className="text-[11px] opacity-75">{t('dragModeFilesDesc')}</div>
@@ -442,7 +437,7 @@ function DetailSectionContent({
         <div className="space-y-6">
           <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
             <SettingsIcon size={20} className="text-sky-500" />
-            <span>Cài đặt chung</span>
+            <span>{t('sectionGeneralTitle')}</span>
           </h2>
 
           {/* Close Window Action */}
@@ -465,11 +460,10 @@ function DetailSectionContent({
                   <div
                     key={opt.id}
                     onClick={() => updateSettings({ closeAction: opt.action, dontAskClose: opt.dontAsk })}
-                    className={`p-3 rounded-2xl border text-xs text-center font-semibold transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
-                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                    }`}
+                    className={`p-3 rounded-2xl border text-xs text-center font-semibold transition-all cursor-pointer ${isSelected
+                      ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                      : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                      }`}
                   >
                     {opt.name}
                   </div>
@@ -499,7 +493,7 @@ function DetailSectionContent({
           <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
             <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Globe size={16} className="text-emerald-500" />
-              <span>Chrome Extension Integration</span>
+              <span>{t('chromeExtIntegration')}</span>
             </label>
 
             <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
@@ -509,7 +503,7 @@ function DetailSectionContent({
                 checked={settings.autoOpenMiniWindowOnExtension !== false}
                 onChange={(e) => updateSettings({ autoOpenMiniWindowOnExtension: e.target.checked })}
               />
-              <span>Tự động hiển thị Mini-Window khi nhận lệnh tải từ Chrome Extension</span>
+              <span>{t('autoMiniWindowLabel')}</span>
             </label>
           </div>
         </div>
@@ -519,7 +513,7 @@ function DetailSectionContent({
       {sectionId === 'about' && (
         <div className="space-y-6">
           <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
-            <Info size={20} className="text-emerald-500" />
+            <Info size={20} className="text-sky-500" />
             <span>{t('aboutTitle') || 'Giới thiệu về ứng dụng'}</span>
           </h2>
 
@@ -551,8 +545,8 @@ function DetailSectionContent({
                 {t('aboutDesc')}
               </p>
               <div className="text-xs text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-4 flex-wrap">
-                <span><strong>Tác giả:</strong> Tabby Neko</span>
-                <span><strong>Giấy phép:</strong> ISC License</span>
+                <span><strong>{t('authorLabel')}:</strong> Tabby Neko</span>
+                <span><strong>{t('licenseLabel')}:</strong> ISC License</span>
               </div>
             </div>
           </div>
@@ -610,10 +604,10 @@ function DetailSectionContent({
               <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <h4 className="font-bold text-amber-700 dark:text-amber-300">
-                  Mục đích Giáo dục & Lưu trữ Cá nhân
+                  {t('disclaimerPurposeTitle')}
                 </h4>
                 <p className="text-xs opacity-90">
-                  Ứng dụng Media Downloader được phát triển hoàn toàn vì mục đích học tập, nghiên cứu công nghệ truyền thông và hỗ trợ người dùng sao lưu nội dung cá nhân thuộc quyền sở hữu của mình.
+                  {t('disclaimerPurposeDesc')}
                 </p>
               </div>
             </div>
@@ -621,17 +615,17 @@ function DetailSectionContent({
             <div className="space-y-3 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
               <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-xs sm:text-sm">
                 <ShieldCheck size={16} className="text-emerald-500" />
-                <span>Quy định bản quyền & Trách nhiệm pháp lý</span>
+                <span>{t('disclaimerLegalTitle')}</span>
               </h4>
               <ul className="list-disc list-inside space-y-2 text-xs text-slate-500 dark:text-slate-400 pl-1">
                 <li>
-                  <strong>Tác quyền nội dung:</strong> Bản quyền của tất cả các tệp âm thanh, video, hình ảnh thuộc về tác giả hoặc đơn vị phát hành nội dung gốc.
+                  <strong>{t('disclaimerLegalItem1Title')}</strong> {t('disclaimerLegalItem1Desc')}
                 </li>
                 <li>
-                  <strong>Trách nhiệm người dùng:</strong> Người dùng tự chịu mọi trách nhiệm pháp lý nếu sử dụng ứng dụng này để tải xuống, phát tán hoặc kinh doanh các nội dung vi phạm Điều khoản dịch vụ (ToS) của nền tảng gốc hoặc vi phạm Luật Bản quyền hiện hành.
+                  <strong>{t('disclaimerLegalItem2Title')}</strong> {t('disclaimerLegalItem2Desc')}
                 </li>
                 <li>
-                  <strong>Không chứa mã độc / Không lưu dữ liệu:</strong> Ứng dụng không thu thập thông tin cá nhân, không lưu trữ tệp tin trên máy chủ trung gian và hoạt động hoàn toàn cục bộ trên máy tính của bạn.
+                  <strong>{t('disclaimerLegalItem3Title')}</strong> {t('disclaimerLegalItem3Desc')}
                 </li>
               </ul>
             </div>

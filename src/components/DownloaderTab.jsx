@@ -235,7 +235,7 @@ export default function DownloaderTab({
         });
       }
     } catch (err) {
-      setAnalyzeError(err.message || 'Error analyzing link');
+      setAnalyzeError(t('errorAnalyzing'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -373,8 +373,8 @@ export default function DownloaderTab({
   }, []);
 
   const getSearchPlaceholder = () => {
-    if (searchPlatform === 'youtube') return '🔍 Tìm kiếm video YouTube (lofi, nhạc trẻ...) hoặc dán link...';
-    if (searchPlatform === 'soundcloud') return '🎵 Tìm kiếm nhạc SoundCloud (lofi, remix...) hoặc dán link...';
+    if (searchPlatform === 'youtube') return t('searchYoutubePlaceholder');
+    if (searchPlatform === 'soundcloud') return t('searchSoundcloudPlaceholder');
     return t('urlPlaceholder');
   };
 
@@ -412,7 +412,7 @@ export default function DownloaderTab({
                   : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
               }`}
               onClick={() => setSearchPlatform('youtube')}
-              title="Chế độ tìm kiếm video YouTube"
+              title={t('searchYoutubeMode')}
             >
               <Film size={14} className={searchPlatform === 'youtube' ? 'text-pink-500 dark:text-pink-300' : 'text-slate-400'} />
               <span>YouTube Search</span>
@@ -429,7 +429,7 @@ export default function DownloaderTab({
                 setSearchPlatform('soundcloud');
                 updateDraft({ formatType: 'audio' });
               }}
-              title="Chế độ tìm kiếm nhạc SoundCloud"
+              title={t('searchSoundcloudMode')}
             >
               <Music size={14} className={searchPlatform === 'soundcloud' ? 'text-amber-500 dark:text-amber-300' : 'text-slate-400'} />
               <span>SoundCloud Search</span>
@@ -443,10 +443,10 @@ export default function DownloaderTab({
                   : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
               }`}
               onClick={() => setSearchPlatform('auto')}
-              title="Chế độ dán trực tiếp URL video/bài hát"
+              title={t('pasteUrlMode')}
             >
               <Globe size={14} className={searchPlatform === 'auto' ? 'text-sky-500 dark:text-sky-300' : 'text-slate-400'} />
-              <span>Dán Link URL</span>
+              <span>{t('pasteUrlLabel')}</span>
             </button>
           </div>
 
@@ -468,7 +468,7 @@ export default function DownloaderTab({
                 type="button"
                 className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 transition-colors cursor-pointer"
                 onClick={() => updateDraft({ url: '' })}
-                title="Xóa liên kết"
+                title={t('clearLinkTitle')}
               >
                 <X size={16} />
               </button>
@@ -497,7 +497,7 @@ export default function DownloaderTab({
               ) : (
                 <>
                   <Search size={16} className="text-slate-950" />
-                  <span>{searchPlatform !== 'auto' && !url.trim().startsWith('http') ? 'Tìm kiếm' : t('analyzeBtn')}</span>
+                  <span>{searchPlatform !== 'auto' && !url.trim().startsWith('http') ? t('searchBtn') : t('analyzeBtn')}</span>
                 </>
               )}
             </button>
@@ -519,7 +519,7 @@ export default function DownloaderTab({
                   <Loader2 size={16} className="animate-spin text-purple-500 dark:text-purple-400" />
                   <span>
                     {searchPlatform !== 'auto' && !url.trim().startsWith('http')
-                      ? `Đang tìm kiếm trên ${searchPlatform === 'soundcloud' ? 'SoundCloud' : 'YouTube'}...`
+                      ? t('searchingOn', { platform: searchPlatform === 'soundcloud' ? 'SoundCloud' : 'YouTube' })
                       : t('analyzing')}
                   </span>
                 </div>
@@ -556,7 +556,7 @@ export default function DownloaderTab({
                     className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
                   >
                     <ArrowLeft size={14} />
-                    <span>Quay lại</span>
+                    <span>{t('backBtn')}</span>
                   </button>
 
                   <div>
@@ -564,17 +564,17 @@ export default function DownloaderTab({
                       {mediaInfo.searchPlatform === 'soundcloud' ? (
                         <>
                           <Music size={18} className="text-amber-500" />
-                          <span>Kết quả tìm kiếm SoundCloud</span>
+                          <span>{t('searchResultsSoundcloud')}</span>
                         </>
                       ) : (
                         <>
                           <Film size={18} className="text-rose-500" />
-                          <span>Kết quả tìm kiếm YouTube</span>
+                          <span>{t('searchResultsYoutube')}</span>
                         </>
                       )}
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Từ khóa: "{mediaInfo.searchQuery || url}" ({mediaInfo.info.entries?.length || 0} kết quả)
+                      {t('searchKeyword', { query: mediaInfo.searchQuery || url, count: mediaInfo.info.entries?.length || 0 })}
                     </p>
                   </div>
                 </div>
@@ -586,13 +586,13 @@ export default function DownloaderTab({
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md active:scale-95 transition-all cursor-pointer"
                 >
                   {batchAdded ? <Check size={16} /> : <ListPlus size={16} />}
-                  <span>{batchAdded ? 'Đã thêm tất cả!' : `Thêm tất cả (${mediaInfo.info.entries?.length || 0}) vào Queue`}</span>
+                  <span>{batchAdded ? t('addedAllToQueue') : t('addAllToQueue', { count: mediaInfo.info.entries?.length || 0 })}</span>
                 </button>
               </div>
 
               {/* Format selection toolbar for search results */}
               <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Định dạng khi bấm +:</span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('formatWhenAdd')}</span>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -677,12 +677,12 @@ export default function DownloaderTab({
                           {isAdded ? (
                             <>
                               <Check size={15} />
-                              <span>Đã thêm</span>
+                              <span>{t('addedToQueue')}</span>
                             </>
                           ) : (
                             <>
                               <Plus size={15} />
-                              <span>Thêm Queue</span>
+                              <span>{t('addToQueue')}</span>
                             </>
                           )}
                         </button>
@@ -691,7 +691,7 @@ export default function DownloaderTab({
                           type="button"
                           className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-pink-500 border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
                           onClick={() => handleInspectSingle(item)}
-                          title="Xem chi tiết & Tùy chỉnh"
+                          title={t('inspectTitle')}
                         >
                           <SlidersHorizontal size={15} />
                         </button>
@@ -713,7 +713,7 @@ export default function DownloaderTab({
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
               >
                 <ArrowLeft size={14} />
-                <span>Quay lại</span>
+                <span>{t('backBtn')}</span>
               </button>
 
               <div className="flex items-center gap-2">
@@ -733,7 +733,7 @@ export default function DownloaderTab({
                   className="flex sm:hidden items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-pink-500 text-slate-950 font-extrabold text-xs shadow-md disabled:opacity-50 active:scale-95"
                 >
                   <Check size={16} />
-                  <span>OK ({mediaInfo.isPlaylist ? playlistSelectedIndexes.length : 'Tải ngay'})</span>
+                  <span>OK ({mediaInfo.isPlaylist ? playlistSelectedIndexes.length : t('downloadNow')})</span>
                 </button>
               </div>
             </div>
@@ -762,7 +762,7 @@ export default function DownloaderTab({
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
                       <Sparkles size={13} className="text-purple-500 dark:text-purple-400 shrink-0" />
-                      <span>{mediaInfo.info.uploader || 'Web Media'}</span>
+                      <span>{mediaInfo.info.uploader || t('webMedia')}</span>
                     </p>
                   </div>
 
@@ -1031,7 +1031,7 @@ export default function DownloaderTab({
                       >
                         <div className="flex items-center gap-2">
                           <SlidersHorizontal size={15} />
-                          <span>Cài đặt nâng cao (Metadata, Cắt video...)</span>
+                          <span>{t('advancedCollapse')}</span>
                         </div>
                         {showAdvancedInResult ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </button>
@@ -1047,7 +1047,7 @@ export default function DownloaderTab({
                               </label>
                               {((mediaInfo?.info?.subtitles && mediaInfo.info.subtitles.length > 0) || (mediaInfo?.info?.automatic_captions && mediaInfo.info.automatic_captions.length > 0)) && (
                                 <span className="text-[10px] font-semibold text-pink-600 dark:text-pink-300 bg-pink-500/15 border border-pink-400/30 px-2 py-0.5 rounded-full">
-                                  ✨ Đã nhận diện {(mediaInfo.info.subtitles?.length || 0) + (mediaInfo.info.automatic_captions?.length || 0)} ngôn ngữ phụ đề
+                                  {t('subtitleDetected', { count: (mediaInfo.info.subtitles?.length || 0) + (mediaInfo.info.automatic_captions?.length || 0) })}
                                 </span>
                               )}
                             </div>
@@ -1085,7 +1085,7 @@ export default function DownloaderTab({
                             {/* Multi-Select Subtitle Language Combobox */}
                             <div className="pt-1">
                               <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1.5 font-medium">
-                                {t('subLangsLabel')} (Multi-Select)
+                              {t('subLangsLabel')} {t('subLangMultiSelect')}
                               </label>
                               <Listbox
                                 multiple
@@ -1100,7 +1100,7 @@ export default function DownloaderTab({
                                   }
                                 }}
                                 options={getSubtitleOptions(mediaInfo)}
-                                placeholder="Chọn các ngôn ngữ phụ đề..."
+                                placeholder={t('subLangPlaceholder')}
                               />
                             </div>
                           </div>
@@ -1163,7 +1163,7 @@ export default function DownloaderTab({
                           {(advancedOptions.writeSubs || advancedOptions.downloadSections || advancedOptions.cookiesFromBrowser !== 'none' || advancedOptions.customArgs) && (
                             <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-400/20 text-[11px] text-purple-600 dark:text-purple-300 flex items-center gap-2 font-medium">
                               <Terminal size={14} className="shrink-0" />
-                              <span>CLI options active from Advanced Tab.</span>
+                              <span>{t('cliOptionsActive')}</span>
                             </div>
                           )}
                         </div>
@@ -1191,7 +1191,7 @@ export default function DownloaderTab({
                       <Download size={18} className="text-slate-950 shrink-0" />
                       <span>
                         {mediaInfo.isPlaylist
-                          ? `Download (${playlistSelectedIndexes.length})`
+                          ? t('downloadPlaylist', { count: playlistSelectedIndexes.length })
                           : t('startDownload')}
                       </span>
                     </button>

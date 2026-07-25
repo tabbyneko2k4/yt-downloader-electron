@@ -181,59 +181,76 @@ export default function DownloadedTab({
     <div className="relative z-10 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 text-slate-800 dark:text-slate-100 font-sans select-none animate-fade-in-up">
       {/* Sticky Top Toolbar Card */}
       <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center justify-between gap-3">
+          {/* Left */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 shrink-0">
               <FolderCheck size={20} />
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
-              {t('downloadedTitle')} ({filteredHistory.length})
+
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+              {t("downloadedTitle")} ({filteredHistory.length})
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Right */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Open Folder */}
             <button
               type="button"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               onClick={async () => {
                 let baseDir = settings?.defaultPath;
-                if (!baseDir && window.api && window.api.getDownloadsPath) {
+                if (!baseDir && window.api?.getDownloadsPath) {
                   baseDir = await window.api.getDownloadsPath();
                 }
-                let targetPath = baseDir || '';
-                if (targetPath && !targetPath.includes('Media Download')) {
-                  targetPath = targetPath.replace(/[/\\]$/, '') + '/Media Download';
+
+                let targetPath = baseDir || "";
+
+                if (targetPath && !targetPath.includes("Media Download")) {
+                  targetPath =
+                    targetPath.replace(/[/\\]$/, "") + "/Media Download";
                 }
-                handleOpenFolder(targetPath || '');
+
+                handleOpenFolder(targetPath || "");
               }}
-              title={t('openDownloadFolder') || 'Mở thư mục tải xuống của ứng dụng (Media Download)'}
+              title={t("openDownloadFolder")}
             >
-              <FolderOpen size={14} />
-              <span>{t('openDownloadFolder') || 'Mở thư mục download'}</span>
+              <FolderOpen size={14} className="shrink-0" />
+              <span className="hidden sm:inline">
+                {t("openDownloadFolder")}
+              </span>
             </button>
 
+            {/* Import Log */}
             <button
               type="button"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
               onClick={handleImportLogFileToResume}
-              title={t('importLogBtn')}
+              title={t("importLogBtn")}
             >
-              <FileCode size={14} />
-              <span>{t('importLogBtn')}</span>
+              <FileCode size={14} className="shrink-0" />
+              <span className="hidden sm:inline">
+                {t("importLogBtn")}
+              </span>
             </button>
 
+            {/* Clear History */}
             {downloadsHistory.length > 0 && (
               <button
                 type="button"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
                 onClick={() => {
-                  if (confirm(t('confirmClearHistory'))) {
+                  if (confirm(t("confirmClearHistory"))) {
                     clearAllHistory();
                   }
                 }}
+                title={t("clearHistoryBtn")}
               >
-                <Trash2 size={14} />
-                <span>{t('clearHistoryBtn')}</span>
+                <Trash2 size={14} className="shrink-0" />
+                <span className="hidden sm:inline">
+                  {t("clearHistoryBtn")}
+                </span>
               </button>
             )}
           </div>
@@ -267,11 +284,10 @@ export default function DownloadedTab({
                   key={f.id}
                   type="button"
                   onClick={() => setFilterType(f.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                    filterType === f.id
-                      ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-sm font-bold scale-105'
-                      : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${filterType === f.id
+                    ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-sm font-bold scale-105'
+                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -317,11 +333,10 @@ export default function DownloadedTab({
                   key={item.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, item)}
-                  className={`group rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3.5 space-y-3 shadow-sm hover:shadow-md ${
-                    item.isCancelled
-                      ? 'bg-rose-500/10 border-rose-400/30'
-                      : 'bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800/80 hover:border-pink-400/50'
-                  }`}
+                  className={`group rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3.5 space-y-3 shadow-sm hover:shadow-md ${item.isCancelled
+                    ? 'bg-rose-500/10 border-rose-400/30'
+                    : 'bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800/80 hover:border-pink-400/50'
+                    }`}
                   title={t('dragHint')}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
@@ -351,7 +366,7 @@ export default function DownloadedTab({
                         </h4>
 
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
-                          <span>{item.uploader || 'Web Media'}</span>
+                          <span>{item.uploader || t('webMedia')}</span>
                           <span>•</span>
                           <span>{formatDate(item.downloadedAt)}</span>
 
@@ -408,7 +423,7 @@ export default function DownloadedTab({
                           type="button"
                           className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-600 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
                           onClick={() => handleOpenFile(item.logFilePath)}
-                          title="View log file (.log)"
+                          title={t('viewLogFile')}
                         >
                           <FileText size={14} />
                         </button>
@@ -442,7 +457,7 @@ export default function DownloadedTab({
                     <div className="flex items-center gap-1.5 overflow-hidden text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
                       <Globe size={13} className="text-sky-500 shrink-0" />
                       <span className="truncate flex-1 font-mono text-[10px]" title={item.sourceUrl || item.url || 'Web Direct'}>
-                        {item.sourceUrl || item.url ? (item.sourceUrl || item.url) : 'Nguồn: Web Direct'}
+                        {item.sourceUrl || item.url ? (item.sourceUrl || item.url) : t('webDirect')}
                       </span>
                       {(item.sourceUrl || item.url) && (
                         <button
@@ -451,9 +466,9 @@ export default function DownloadedTab({
                           onClick={(e) => {
                             e.stopPropagation();
                             navigator.clipboard.writeText(item.sourceUrl || item.url);
-                            alert('Đã sao chép link nguồn!');
+                            alert(t('copiedSourceLink'));
                           }}
-                          title="Sao chép link nguồn"
+                          title={t('copySourceLink')}
                         >
                           <Copy size={11} />
                         </button>
@@ -464,7 +479,7 @@ export default function DownloadedTab({
                     <div className="flex items-center gap-1.5 overflow-hidden text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
                       <FolderOpen size={13} className="text-emerald-500 shrink-0" />
                       <span className="truncate flex-1 font-mono text-[10px]" title={item.playlistDir || item.folderPath || item.filePath}>
-                        {item.isPlaylist ? (item.playlistDir || item.folderPath || 'Thư mục Playlist') : (item.filePath || 'Đường dẫn tệp')}
+                        {item.isPlaylist ? (item.playlistDir || item.folderPath || t('playlistFolder')) : (item.filePath || t('filePath'))}
                       </span>
                       <button
                         type="button"
@@ -473,7 +488,7 @@ export default function DownloadedTab({
                           e.stopPropagation();
                           handleOpenFolder(item.playlistDir || item.folderPath || item.filePath);
                         }}
-                        title="Mở thư mục"
+                        title={t('openFolderTitle')}
                       >
                         <FolderOpen size={11} />
                       </button>
@@ -484,7 +499,9 @@ export default function DownloadedTab({
                       <div className="flex items-center gap-1.5 overflow-hidden">
                         <Subtitles size={13} className={item.hasSub || (item.subPaths && item.subPaths.length > 0) ? "text-purple-500" : "text-slate-400 opacity-50"} />
                         <span className="font-semibold text-[11px] truncate">
-                          {item.hasSub || (item.subPaths && item.subPaths.length > 0) ? `Có Sub (${item.subPaths?.length || 1})` : 'Không có Sub'}
+                          {item.hasSub || (item.subPaths && item.subPaths.length > 0)
+                            ? `${t('hasSub')} (${item.subPaths?.length || 1})`
+                            : t('noSub')}
                         </span>
                       </div>
                       {(item.hasSub || (item.subPaths && item.subPaths.length > 0)) && (
@@ -496,9 +513,9 @@ export default function DownloadedTab({
                             const subFile = item.subPaths && item.subPaths[0] ? item.subPaths[0] : (item.folderPath || item.filePath);
                             handleOpenFile(subFile);
                           }}
-                          title={item.subPaths && item.subPaths[0] ? item.subPaths[0] : 'Mở file sub'}
+                          title={item.subPaths && item.subPaths[0] ? item.subPaths[0] : t('openSub')}
                         >
-                          Mở Sub
+                          {t('openSub')}
                         </button>
                       )}
                     </div>
@@ -508,7 +525,7 @@ export default function DownloadedTab({
                       <div className="flex items-center gap-1.5 overflow-hidden">
                         <ImageIcon size={13} className={item.hasThumbnail || item.thumbnailPath ? "text-pink-500" : "text-slate-400 opacity-50"} />
                         <span className="font-semibold text-[11px] truncate">
-                          {item.hasThumbnail || item.thumbnailPath ? 'Có Thumbnail' : 'Không Thumbnail'}
+                          {item.hasThumbnail || item.thumbnailPath ? t('hasThumbnail') : t('noThumbnail')}
                         </span>
                       </div>
                       {(item.hasThumbnail || item.thumbnailPath) && (
@@ -519,9 +536,9 @@ export default function DownloadedTab({
                             e.stopPropagation();
                             handleOpenFile(item.thumbnailPath || item.thumbnail);
                           }}
-                          title={item.thumbnailPath || 'Xem thumbnail'}
+                          title={item.thumbnailPath || t('hasThumbnail')}
                         >
-                          Xem Ảnh
+                          {t('viewImage')}
                         </button>
                       )}
                     </div>
@@ -535,7 +552,7 @@ export default function DownloadedTab({
                           <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-2 py-1">
                             <span>📁 {t('playlistTitle')}</span>
                             <span className="text-[11px] opacity-75">
-                              {item.playlistEntries.length} {t('tracks') || 'items'}
+                              {item.playlistEntries.length} {t('tracks')}
                             </span>
                           </div>
                           {item.playlistEntries.map((entry, idx) => {

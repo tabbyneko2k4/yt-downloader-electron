@@ -953,7 +953,7 @@ export default function MiniApp() {
                       className="w-36"
                       value={quality}
                       onChange={(e) => setQuality(e.target.value)}
-                      options={formatType === 'video' ? getResolutionOptions(mediaInfo) : (formatType === 'audio' ? getAudioQualityOptions() : [{ value: 'best', label: 'Tốt nhất' }])}
+                      options={formatType === 'video' ? getResolutionOptions(mediaInfo) : (formatType === 'audio' ? getAudioQualityOptions() : [{ value: 'best', label: t('qualityBestSimple') }])}
                     />
                   </div>
                 </div>
