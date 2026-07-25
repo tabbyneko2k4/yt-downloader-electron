@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, HardDrive, Check, Move, Globe, Sun, Moon, Monitor, Palette, Info, ShieldCheck, Cpu } from 'lucide-react';
+import { Folder, HardDrive, Check, Move, Globe, Sun, Moon, Monitor, Palette, Info, ShieldCheck, Cpu, LogOut } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function SettingsTab({ settings, updateSettings }) {
@@ -183,6 +183,45 @@ export default function SettingsTab({ settings, updateSettings }) {
             </div>
           </div>
 
+          {/* 2.5 Close Window Action Settings */}
+          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <LogOut size={15} color="#ef4444" />
+              <span>{t('closeSettingLabel') || 'Khi đóng cửa sổ chính'}</span>
+            </label>
+
+            <div className="settings-close-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '10px' }}>
+              {[
+                { id: 'ask', name: t('closeSettingAsk') || 'Luôn hỏi tôi', dontAsk: false, action: 'ask' },
+                { id: 'minimize', name: t('closeSettingMinimize') || 'Thu nhỏ khay hệ thống', dontAsk: true, action: 'minimize' },
+                { id: 'exit', name: t('closeSettingExit') || 'Thoát ứng dụng', dontAsk: true, action: 'exit' }
+              ].map((opt) => {
+                const isSelected = settings.dontAskClose
+                  ? settings.closeAction === opt.action
+                  : opt.id === 'ask';
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => updateSettings({ closeAction: opt.action, dontAskClose: opt.dontAsk })}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: isSelected ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
+                      background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: isSelected ? '700' : '500',
+                      color: 'var(--text-main)',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {opt.name}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* 3. Concurrent Downloads Limit */}
           <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>
@@ -232,6 +271,23 @@ export default function SettingsTab({ settings, updateSettings }) {
                 onChange={(e) => updateSettings({ showFooterDisclaimer: e.target.checked })}
               />
               <span>{t('showFooterDisclaimerCheck')}</span>
+            </label>
+          </div>
+
+          {/* 5. Chrome Extension Integration Settings */}
+          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Globe size={16} color="#10b981" />
+              <span>Chrome Extension</span>
+            </label>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+              <input
+                type="checkbox"
+                checked={settings.autoOpenMiniWindowOnExtension !== false}
+                onChange={(e) => updateSettings({ autoOpenMiniWindowOnExtension: e.target.checked })}
+              />
+              <span>Tự động hiển thị Mini-Window khi nhận lệnh tải từ Chrome Extension</span>
             </label>
           </div>
 

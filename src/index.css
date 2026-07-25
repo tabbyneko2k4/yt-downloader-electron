@@ -100,8 +100,9 @@
 }
 
 [data-theme="light"] .nav-tab-btn.active {
-  color: #8b5cf6;
-  background: rgba(139, 92, 246, 0.12);
+  color: #ffffff;
+  background: var(--gradient-brand);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
 }
 
 [data-theme="light"] .modal-backdrop {
@@ -237,10 +238,14 @@ body {
   align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 0;
 }
 .logo-icon {
   width: 28px;
   height: 28px;
+  flex-shrink: 0;
   filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.5));
 }
 .app-header-title {
@@ -248,6 +253,10 @@ body {
   font-weight: 700;
   color: #f8fafc;
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
 }
 
 .header-center {
@@ -264,12 +273,14 @@ body {
   padding: 4px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
+  position: relative;
 }
 .nav-tab-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: 8px;
   background: transparent;
   border: none;
@@ -277,16 +288,62 @@ body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  user-select: none;
+}
+.nav-tab-btn .tab-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+.nav-tab-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .nav-tab-btn:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+}
+.nav-tab-btn:hover svg {
+  transform: scale(1.12);
 }
 .nav-tab-btn.active {
   background: var(--gradient-brand);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.38);
+  transform: translateY(-1px) scale(1.02);
+  animation: tabPulse 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-tab-btn.active svg {
+  transform: scale(1.1);
+  color: #ffffff;
+}
+
+@keyframes tabPulse {
+  0% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
+  100% { transform: translateY(-1px) scale(1.02); }
+}
+
+/* Tab Pane Entry Animation on switch */
+.tab-pane-animate {
+  animation: tabPaneFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width: 100%;
+}
+
+@keyframes tabPaneFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .badge-count {
   background: rgba(255, 255, 255, 0.25);
@@ -2114,6 +2171,13 @@ select option,
    - Trên 1024px: Icon + Text
    ========================================== */
 
+/* Under 850px (< 850px): HIDE APP TITLE (KEEP ICON ONLY) TO PREVENT OVERCROWDING */
+@media (max-width: 850px) {
+  .app-header-title {
+    display: none !important;
+  }
+}
+
 /* 1. Under 650px (< 650px): SHOW BURGER MENU, HIDE HEADER NAV TABS */
 @media (max-width: 649px) {
   .mobile-burger-toggle {
@@ -2136,12 +2200,14 @@ select option,
   }
 
   .nav-tabs {
-    gap: 4px;
-    padding: 3px;
+    gap: 6px;
+    padding: 4px;
   }
 
   .nav-tab-btn {
-    padding: 6px 10px;
+    padding: 7px 14px;
+    min-width: 44px;
+    justify-content: center;
     gap: 0;
   }
 
@@ -2151,8 +2217,8 @@ select option,
 
   .nav-tab-btn .badge-count {
     font-size: 9px;
-    padding: 1px 4px;
-    margin-left: 2px;
+    padding: 1px 5px;
+    margin-left: 3px;
   }
 }
 
@@ -2799,6 +2865,7 @@ select option,
   z-index: 1;
   display: flex;
   flex-direction: column;
+  -webkit-app-region: no-drag;
 }
 
 .mini-tab-panel {
@@ -3450,6 +3517,7 @@ select option,
   padding: 6px 8px 6px 14px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
   transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
 }
 
 .google-mini-search:focus-within {
@@ -3471,6 +3539,7 @@ select option,
   color: var(--text-main);
   font-size: 12px;
   font-family: inherit;
+  -webkit-app-region: no-drag;
 }
 
 .google-paste-btn {
@@ -3583,6 +3652,106 @@ select option,
   align-items: center;
   justify-content: space-between;
   padding: 2px 4px 6px;
+}
+
+/* Progress Header Bar & Synchronized Icon-Only Action Buttons */
+.mini-progress-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 8px;
+}
+
+.mini-progress-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mini-badge-thread {
+  background: rgba(34, 211, 238, 0.12);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #22d3ee;
+}
+
+.mini-badge-remain {
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.25);
+  color: #c084fc;
+}
+
+.mini-badge-val {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mini-progress-global-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mini-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.mini-btn-pause-all {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.mini-btn-pause-all:hover {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fef08a;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+}
+
+.mini-btn-cancel-all {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.mini-btn-cancel-all:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.mini-btn-manage-main {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.mini-btn-manage-main:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .mini-panel-title {
@@ -4279,6 +4448,74 @@ select option,
   100% {
     background-position: -100% 0;
   }
+}
+
+/* Sticky Scroll Containers for Advanced & Downloaded Tabs */
+.advanced-sticky-header {
+  position: sticky;
+  top: -20px;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+[data-theme="light"] .advanced-sticky-header {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.downloaded-sticky-toolbar {
+  position: sticky;
+  top: -20px;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+[data-theme="light"] .downloaded-sticky-toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Playlist tracks inside drawer sticky sub-header */
+.playlist-drawer-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(9, 13, 22, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 4px 8px 4px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  color: #c084fc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+[data-theme="light"] .playlist-drawer-sticky-header {
+  background: rgba(248, 250, 252, 0.95);
+  color: #8b5cf6;
+  border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 
 

@@ -42,10 +42,14 @@ contextBridge.exposeInMainWorld('api', {
 
   // Mini Window Controls
   miniClose: () => ipcRenderer.invoke('mini:close'),
-  miniShowMain: () => ipcRenderer.invoke('mini:show-main'),
+  miniShowMain: (draft) => ipcRenderer.invoke('mini:show-main', draft),
   miniGetDownloadsMeta: () => ipcRenderer.invoke('mini:get-downloads-meta'),
   miniRequestHistory: () => ipcRenderer.invoke('mini:request-history'),
   miniStartDownload: (options) => ipcRenderer.invoke('mini:start-download', options),
+
+  // App & Window Actions
+  quitApp: () => ipcRenderer.invoke('app:quit-app'),
+  hideWindow: () => ipcRenderer.invoke('window:hide'),
 
   // Sync: mini window events
   onMiniActiveUpdate: (callback) => {
@@ -64,8 +68,32 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('sync:history', handler);
   },
 
-  // Sync: main renderer pushes history to main process
+  // Sync: draft state between main app and mini app
+  syncPushDraft: (draft) => ipcRenderer.invoke('sync:push-draft', draft),
+  syncGetDraft: () => ipcRenderer.invoke('sync:get-draft'),
+  onSyncDraft: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('sync:draft', handler);
+    return () => ipcRenderer.removeListener('sync:draft', handler);
+  },
+
+  // Close Confirmation Dialog Event Listener
+  onPromptCloseDialog: (callback) => {
+    const handler = (_event) => callback();
+    ipcRenderer.on('prompt-close-dialog', handler);
+    return () => ipcRenderer.removeListener('prompt-close-dialog', handler);
+  },
+
+  // Sync: main renderer pushes history & settings to main process
   syncPushHistory: (history) => ipcRenderer.invoke('sync:push-history', history),
+  syncPushSettings: (settings) => ipcRenderer.invoke('sync:push-settings', settings),
+
+  // Sync: listen for real-time settings updates
+  onSyncSettings: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('sync:settings', handler);
+    return () => ipcRenderer.removeListener('sync:settings', handler);
+  },
 
   // Sync: main renderer listens for request-push-history (from mini asking for fresh data)
   onRequestPushHistory: (callback) => {

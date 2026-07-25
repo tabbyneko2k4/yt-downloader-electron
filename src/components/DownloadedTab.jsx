@@ -153,11 +153,12 @@ export default function DownloadedTab({
 
   return (
     <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-      <section className="card">
-        <div className="downloaded-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+      {/* Sticky Top Toolbar: Header Actions & Search / Filter Bar */}
+      <section className="card downloaded-sticky-toolbar">
+        <div className="downloaded-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FolderCheck size={20} color="#10b981" />
-            <h2 style={{ fontSize: '17px', fontWeight: '700', color: '#f8fafc' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
               {t('downloadedTitle')} ({filteredHistory.length})
             </h2>
           </div>
@@ -191,7 +192,7 @@ export default function DownloadedTab({
         </div>
 
         {/* Search, Filter & Sort Controls */}
-        <div className="downloaded-search-filter-row" style={{ display: 'flex', gap: '12px', marginBottom: '18px', flexWrap: 'wrap' }}>
+        <div className="downloaded-search-filter-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           {/* Search Bar */}
           <div className="downloaded-search-box" style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
@@ -251,6 +252,10 @@ export default function DownloadedTab({
             </select>
           </div>
         </div>
+      </section>
+
+      {/* History List Container */}
+      <section className="card downloaded-history-container">
 
         {/* History List Rendering */}
         {filteredHistory.length === 0 ? (
@@ -395,13 +400,15 @@ export default function DownloadedTab({
 
                   {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER */}
                   {item.isPlaylist && isExpanded && (
-                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#c084fc', marginBottom: '8px' }}>
-                        {t('playlistTitle')}:
-                      </div>
-
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
                       {item.playlistEntries && item.playlistEntries.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', background: '#090d16', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', background: 'var(--bg-secondary)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                          <div className="playlist-drawer-sticky-header">
+                            <span>📁 {t('playlistTitle')}</span>
+                            <span style={{ fontSize: '11px', opacity: 0.8 }}>
+                              {item.playlistEntries.length} {t('tracks') || 'items'}
+                            </span>
+                          </div>
                           {item.playlistEntries.map((entry, idx) => {
                             const trackFilePath = item.downloadedFiles && item.downloadedFiles[idx] ? item.downloadedFiles[idx] : null;
 

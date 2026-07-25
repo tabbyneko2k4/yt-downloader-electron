@@ -78,7 +78,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 onClick={() => handleTabSelect('downloader')}
                 title={t('navDownloader')}
               >
-                <Download size={15} />
+                <Download size={17} />
                 <span className="tab-label">{t('navDownloader')}</span>
               </button>
 
@@ -87,7 +87,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 onClick={() => handleTabSelect('advanced')}
                 title={t('navAdvanced')}
               >
-                <Terminal size={15} />
+                <Terminal size={17} />
                 <span className="tab-label">{t('navAdvanced')}</span>
               </button>
 
@@ -98,10 +98,10 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
               >
                 {isDownloading ? (
                   <div className="chrome-dl-anim-wrapper">
-                    <ArrowDown size={15} className="chrome-dl-arrow" />
+                    <ArrowDown size={17} className="chrome-dl-arrow" />
                   </div>
                 ) : (
-                  <FolderCheck size={15} />
+                  <FolderCheck size={17} />
                 )}
                 <span className="tab-label">{t('navDownloads')}</span>
                 {isDownloading ? (
@@ -116,7 +116,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 onClick={() => handleTabSelect('settings')}
                 title={t('navSettings')}
               >
-                <Settings size={15} />
+                <Settings size={17} />
                 <span className="tab-label">{t('navSettings')}</span>
               </button>
 

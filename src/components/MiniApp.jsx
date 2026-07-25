@@ -80,7 +80,7 @@ export default function MiniApp() {
   // Custom & Built-in Presets
   const [customPresets, setCustomPresets] = useState([]);
 
-  const builtinPresets = [
+  const builtinPresets = useMemo(() => [
     {
       id: 'preset-speed',
       name: t('presetSpeedBoost') || '🚀 Speed Boost',
@@ -101,7 +101,7 @@ export default function MiniApp() {
       name: t('presetCut') || '✂️ Cut First 1 Min',
       options: { downloadSections: '*00:00:00-00:01:00' }
     }
-  ];
+  ], [t]);
 
   // Load Presets & History on mount
   useEffect(() => {
@@ -130,6 +130,27 @@ export default function MiniApp() {
       api.miniRequestHistory().then((hist) => {
         if (Array.isArray(hist)) {
           setHistory(hist);
+        }
+      }).catch(() => {});
+    }
+
+    // Initial draft fetch from Main process
+    if (api && api.syncGetDraft) {
+      api.syncGetDraft().then((draft) => {
+        if (draft && typeof draft === 'object') {
+          if (draft.url) setUrl(draft.url);
+          if (draft.mediaInfo) {
+            setMediaInfo(draft.mediaInfo);
+            setDownloaderStage('stage2');
+          }
+          if (draft.formatType) setFormatType(draft.formatType);
+          if (draft.quality || draft.videoQuality) setQuality(draft.quality || draft.videoQuality);
+          if (draft.playlistSelectedIndexes && Array.isArray(draft.playlistSelectedIndexes)) {
+            setPlaylistSelectedIndexes(draft.playlistSelectedIndexes);
+          } else if (draft.playlistItems && typeof draft.playlistItems === 'string') {
+            const parsed = draft.playlistItems.split(',').map((n) => parseInt(n.trim(), 10)).filter((n) => !isNaN(n));
+            if (parsed.length > 0) setPlaylistSelectedIndexes(parsed);
+          }
         }
       }).catch(() => {});
     }
@@ -168,14 +189,20 @@ export default function MiniApp() {
 
     const unsubProgress = api.onDownloadProgress ? api.onDownloadProgress((data) => {
       setActiveDownloads((prev) => {
-        if (!prev[data.id]) return prev;
+        const existing = prev[data.id] || {
+          id: data.id,
+          title: data.mediaTitle || 'Downloading...',
+          percent: 0,
+          totalItems: 1,
+          currentItem: 1
+        };
         return {
           ...prev,
           [data.id]: {
-            ...prev[data.id],
-            percent: data.percent || 0,
-            speed: data.speed || '—',
-            eta: data.eta || '—'
+            ...existing,
+            percent: data.percent !== undefined ? data.percent : existing.percent,
+            speed: data.speed || existing.speed || '—',
+            eta: data.eta || existing.eta || '—'
           }
         };
       });
@@ -183,13 +210,13 @@ export default function MiniApp() {
 
     const unsubItemChange = api.onDownloadItemChange ? api.onDownloadItemChange((data) => {
       setActiveDownloads((prev) => {
-        if (!prev[data.id]) return prev;
+        const existing = prev[data.id] || { id: data.id, title: 'Downloading...', percent: 0 };
         return {
           ...prev,
           [data.id]: {
-            ...prev[data.id],
+            ...existing,
             currentItem: data.currentItem,
-            totalItems: data.totalItems
+            totalItems: data.totalItems || existing.totalItems || 1
           }
         };
       });
@@ -197,6 +224,27 @@ export default function MiniApp() {
 
     const unsubSyncHistory = api.onSyncHistory ? api.onSyncHistory((hist) => {
       if (Array.isArray(hist)) setHistory(hist);
+    }) : null;
+
+    const unsubSyncDraft = api.onSyncDraft ? api.onSyncDraft((draft) => {
+      if (draft && typeof draft === 'object') {
+        const isInputFocused = document.activeElement && document.activeElement.tagName === 'INPUT';
+        if (draft.url !== undefined && !isInputFocused) {
+          setUrl(draft.url);
+        }
+        if (draft.mediaInfo !== undefined) {
+          setMediaInfo(draft.mediaInfo);
+          if (draft.mediaInfo) setDownloaderStage('stage2');
+        }
+        if (draft.formatType) setFormatType(draft.formatType);
+        if (draft.quality || draft.videoQuality || draft.audioQuality) setQuality(draft.quality || draft.videoQuality || draft.audioQuality);
+        if (draft.playlistSelectedIndexes && Array.isArray(draft.playlistSelectedIndexes)) {
+          setPlaylistSelectedIndexes(draft.playlistSelectedIndexes);
+        } else if (draft.playlistItems && typeof draft.playlistItems === 'string') {
+          const parsed = draft.playlistItems.split(',').map((n) => parseInt(n.trim(), 10)).filter((n) => !isNaN(n));
+          if (parsed.length > 0) setPlaylistSelectedIndexes(parsed);
+        }
+      }
     }) : null;
 
     const unsubLog = api.onDownloadLog ? api.onDownloadLog((data) => {
@@ -390,8 +438,24 @@ export default function MiniApp() {
   };
 
   const handleOpenMainProgram = () => {
+    const draftData = {
+      url: url.trim(),
+      mediaInfo,
+      formatType,
+      quality,
+      playlistSelectedIndexes,
+      playlistItems: playlistSelectedIndexes.join(','),
+      downloaderStage,
+      isAnalyzing
+    };
+    if (api && api.syncPushDraft) {
+      api.syncPushDraft(draftData);
+    }
     if (api && api.miniShowMain) {
-      api.miniShowMain();
+      api.miniShowMain(draftData);
+    }
+    if (api && api.miniClose) {
+      api.miniClose();
     }
   };
 
@@ -421,15 +485,20 @@ export default function MiniApp() {
     });
   };
 
-  const activeKeys = Object.keys(activeDownloads);
+  const activeKeys = Object.keys(activeDownloads).filter((id) => {
+    const item = activeDownloads[id];
+    return item && (item.percent === undefined || item.percent < 100);
+  });
   const completedCount = history.filter((d) => !d.isCancelled).length;
 
-  const totalRemainItems = activeKeys.reduce((acc, id) => {
+  const totalRemainItems = Object.keys(activeDownloads).reduce((acc, id) => {
     const item = activeDownloads[id];
     if (!item) return acc;
+    if (item.percent >= 100) return acc;
     const total = item.totalItems || 1;
     const current = item.currentItem || 1;
-    const remaining = Math.max(1, total - current + 1);
+    let remaining = Math.max(1, total - current + 1);
+    if (item.percent > 99) remaining = Math.max(0, remaining - 1);
     return acc + remaining;
   }, 0);
 
@@ -596,8 +665,8 @@ export default function MiniApp() {
                   <div className="mini-hero-badge">
                     <Sparkles size={20} className="text-pink-500" />
                   </div>
-                  <h2 className="mini-hero-title">Media Downloader</h2>
-                  <p className="mini-hero-subtitle">Paste URL or search YouTube & SoundCloud</p>
+                  <h2 className="mini-hero-title">{t('appName')}</h2>
+                  <p className="mini-hero-subtitle">{t('miniHeroSubtitle')}</p>
                 </div>
 
                 {/* Google-Style Search Bar */}
@@ -606,7 +675,7 @@ export default function MiniApp() {
                   <input
                     type="text"
                     className="google-search-input"
-                    placeholder="Search or paste media link..."
+                    placeholder={t('miniSearchOrPaste')}
                     value={url}
                     onChange={handleUrlChange}
                     onKeyDown={(e) => e.key === 'Enter' && triggerAnalyze()}
@@ -616,10 +685,10 @@ export default function MiniApp() {
                   <button
                     className="google-paste-btn"
                     onClick={handlePasteClipboard}
-                    title="Paste from Clipboard"
+                    title={t('pasteClipboard')}
                   >
                     <Clipboard size={14} />
-                    <span>Paste</span>
+                    <span>{t('miniPaste')}</span>
                   </button>
                 </div>
 
@@ -627,7 +696,7 @@ export default function MiniApp() {
                   <div className="mini-auto-detect-tag center-tag">
                     <Sparkles size={12} />
                     <span>
-                      Detected {detectedPlatform.platform || 'Media'} ({detectedPlatform.formatType.toUpperCase()})
+                      {t('detectedPlatform', { platform: detectedPlatform.platform || 'Media' })} ({detectedPlatform.formatType.toUpperCase()})
                     </span>
                   </div>
                 )}
@@ -641,12 +710,12 @@ export default function MiniApp() {
                   {isAnalyzing ? (
                     <>
                       <Loader2 size={15} className="animate-spin" />
-                      <span>Analyzing Media...</span>
+                      <span>{t('analyzing')}</span>
                     </>
                   ) : (
                     <>
                       <Search size={15} />
-                      <span>Analyze Link</span>
+                      <span>{t('analyzeBtn')}</span>
                     </>
                   )}
                 </button>
@@ -668,7 +737,7 @@ export default function MiniApp() {
                     onClick={() => setDownloaderStage('stage1')}
                   >
                     <ArrowLeft size={13} />
-                    <span>Back to Search</span>
+                    <span>{t('miniBackSearch')}</span>
                   </button>
                 </div>
 
@@ -695,7 +764,7 @@ export default function MiniApp() {
                         <p className="mini-media-uploader">{mediaInfo.info.uploader || 'Unknown Artist'}</p>
                         {mediaInfo.isPlaylist && mediaInfo.info.entries && (
                           <span className="mini-badge-playlist">
-                            🎵 Playlist: {mediaInfo.info.entries.length} tracks
+                            🎵 {t('playlistTitle')}: {mediaInfo.info.entries.length} {t('playlistItemCount', { count: '' }).trim()}
                           </span>
                         )}
                       </div>
@@ -709,7 +778,7 @@ export default function MiniApp() {
                     <div className="mini-playlist-header">
                       <div className="mini-playlist-title-wrap">
                         <ListPlus size={14} className="text-purple-400" />
-                        <span className="mini-playlist-title">Select Playlist Tracks</span>
+                        <span className="mini-playlist-title">{t('miniSelectPlaylistTracks')}</span>
                       </div>
                       <span className="mini-playlist-count">
                         {playlistSelectedIndexes.length} / {mediaInfo.info.entries.length}
@@ -722,14 +791,14 @@ export default function MiniApp() {
                         className="mini-playlist-btn-sm"
                         onClick={handleSelectAllPlaylist}
                       >
-                        Select All
+                        {t('selectAll')}
                       </button>
                       <button
                         type="button"
                         className="mini-playlist-btn-sm"
                         onClick={handleDeselectAllPlaylist}
                       >
-                        Deselect All
+                        {t('deselectAll')}
                       </button>
                     </div>
 
@@ -768,7 +837,7 @@ export default function MiniApp() {
                 {/* Format Type Selector Pills */}
                 <div className="mini-card mini-format-card">
                   <div className="mini-card-header">
-                    <span className="mini-card-label">Select Format:</span>
+                    <span className="mini-card-label">{t('miniSelectFormatLabel')}</span>
                   </div>
                   <div className="mini-pill-selector">
                     <button
@@ -779,7 +848,7 @@ export default function MiniApp() {
                       }}
                     >
                       <Film size={13} />
-                      <span>Video</span>
+                      <span>{t('formatVideo')}</span>
                     </button>
                     <button
                       className={`mini-pill-btn ${formatType === 'audio' ? 'active' : ''}`}
@@ -789,7 +858,7 @@ export default function MiniApp() {
                       }}
                     >
                       <Music size={13} />
-                      <span>Audio</span>
+                      <span>{t('formatAudio')}</span>
                     </button>
                     <button
                       className={`mini-pill-btn ${formatType === 'thumbnail' ? 'active' : ''}`}
@@ -799,13 +868,13 @@ export default function MiniApp() {
                       }}
                     >
                       <ImageIcon size={13} />
-                      <span>Thumb</span>
+                      <span>{t('miniThumbPill')}</span>
                     </button>
                   </div>
 
                   {/* Quality Select */}
                   <div className="mini-quality-row mt-2">
-                    <span className="mini-label">{t('qualityLabel') || 'Quality'}:</span>
+                    <span className="mini-label">{t('qualityLabel')}:</span>
                     <select
                       className="mini-select"
                       value={quality}
@@ -813,7 +882,7 @@ export default function MiniApp() {
                     >
                       {formatType === 'video' && (
                         <>
-                          <option value="best">{t('qualityBest') || 'Best (1080p+)'}</option>
+                          <option value="best">{t('qualityBest')}</option>
                           <option value="1080p">1080p Full HD</option>
                           <option value="720p">720p HD</option>
                           <option value="480p">480p SD</option>
@@ -821,16 +890,15 @@ export default function MiniApp() {
                       )}
                       {formatType === 'audio' && (
                         <>
-                          <option value="mp3-320">MP3 (320 kbps High)</option>
-                          <option value="mp3-192">MP3 (192 kbps Std)</option>
-                          <option value="m4a">M4A (AAC Original)</option>
-                          <option value="flac">FLAC (Lossless)</option>
+                          <option value="mp3-320">{t('audioMp3_320')}</option>
+                          <option value="mp3-192">{t('audioMp3_256')}</option>
+                          <option value="m4a">{t('audioM4a')}</option>
+                          <option value="flac">{t('audioFlac')}</option>
                         </>
                       )}
                       {formatType === 'thumbnail' && (
                         <>
-                          <option value="best">Original Max Resolution</option>
-                          <option value="hq">High Quality</option>
+                          <option value="best">{t('qualityBest')}</option>
                         </>
                       )}
                     </select>
@@ -842,14 +910,14 @@ export default function MiniApp() {
                   <div className="mini-preset-header">
                     <div className="mini-preset-title">
                       <SlidersHorizontal size={13} className="text-purple-400" />
-                      <span>{t('presetsSectionTitle') || 'Advanced Preset'}</span>
+                      <span>{t('presetsSectionTitle')}</span>
                     </div>
                     <button
                       className="mini-edit-presets-link"
                       onClick={handleOpenMainProgram}
-                      title="Open Main Window to Edit Presets"
+                      title={t('miniOpenMainPresetHint')}
                     >
-                      <span>Edit in Main</span>
+                      <span>{t('miniEditInMain')}</span>
                       <ExternalLink size={11} />
                     </button>
                   </div>
@@ -859,8 +927,8 @@ export default function MiniApp() {
                     value={selectedPresetId}
                     onChange={(e) => setSelectedPresetId(e.target.value)}
                   >
-                    <option value="">-- {t('defaultPreset') || 'None (Standard Download)'} --</option>
-                    <optgroup label={t('presetsSectionTitle') || 'Built-in Presets'}>
+                    <option value="">-- {t('miniDefaultPreset')} --</option>
+                    <optgroup label={t('presetsSectionTitle')}>
                       {builtinPresets.map((preset) => (
                         <option key={preset.id} value={preset.id}>
                           {preset.name}
@@ -868,7 +936,7 @@ export default function MiniApp() {
                       ))}
                     </optgroup>
                     {customPresets.length > 0 && (
-                      <optgroup label={t('customPresetsTitle') || 'Personal Presets'}>
+                      <optgroup label={t('customPresetsTitle')}>
                         {customPresets.map((preset) => (
                           <option key={preset.id} value={preset.id}>
                             ⭐ {preset.name}
@@ -888,8 +956,8 @@ export default function MiniApp() {
                   <Download size={16} />
                   <span>
                     {mediaInfo && mediaInfo.isPlaylist
-                      ? `Download ${playlistSelectedIndexes.length} Selected Tracks`
-                      : 'Start Download Now'}
+                      ? t('miniDownloadXTracks', { count: playlistSelectedIndexes.length })
+                      : t('miniStartDownloadNow')}
                   </span>
                 </button>
               </div>
@@ -903,44 +971,41 @@ export default function MiniApp() {
             {/* Header Toolbar: Threads, Remain, & Manage Controls */}
             <div className="mini-panel-title-bar mini-progress-header-bar">
               <div className="mini-progress-meta-badges">
-                <span className="mini-badge-thread" title="Active Download Threads">
-                  <Cpu size={12} className="text-cyan-400" />
-                  <span>Threads: {activeKeys.length}</span>
-                </span>
-                <span className="mini-badge-remain" title="Total Remaining Tasks">
-                  <Layers size={12} className="text-purple-400" />
-                  <span>Remain: {totalRemainItems}</span>
-                </span>
+                <div className="mini-badge-pill mini-badge-thread" title={t('miniThreads', { count: activeKeys.length })}>
+                  <Cpu size={13} className="text-cyan-400" />
+                  <span className="mini-badge-val">{activeKeys.length}</span>
+                </div>
+                <div className="mini-badge-pill mini-badge-remain" title={t('miniRemain', { count: totalRemainItems })}>
+                  <Layers size={13} className="text-purple-400" />
+                  <span className="mini-badge-val">{totalRemainItems}</span>
+                </div>
               </div>
 
               <div className="mini-progress-global-actions">
                 {activeKeys.length > 0 && (
                   <>
                     <button
-                      className="mini-manage-btn pause-all-btn"
+                      className="mini-icon-btn mini-btn-pause-all"
                       onClick={handlePauseAll}
-                      title="Pause All Downloads"
+                      title={t('miniPauseAll')}
                     >
-                      <Pause size={12} />
-                      <span>Pause</span>
+                      <Pause size={13} />
                     </button>
                     <button
-                      className="mini-manage-btn cancel-all-btn"
+                      className="mini-icon-btn mini-btn-cancel-all"
                       onClick={handleCancelAll}
-                      title="Cancel All Downloads"
+                      title={t('miniCancelAll')}
                     >
-                      <Trash2 size={12} />
-                      <span>Cancel</span>
+                      <Trash2 size={13} />
                     </button>
                   </>
                 )}
                 <button
-                  className="mini-manage-btn manage-main-btn"
+                  className="mini-icon-btn mini-btn-manage-main"
                   onClick={handleOpenMainProgram}
-                  title="Open Queue Manager in Main Program"
+                  title={t('miniOpenMainQueueHint')}
                 >
-                  <ListFilter size={12} />
-                  <span>Queue</span>
+                  <Maximize2 size={13} />
                 </button>
               </div>
             </div>
@@ -948,7 +1013,7 @@ export default function MiniApp() {
             {activeKeys.length === 0 ? (
               <div className="mini-empty-state">
                 <Loader2 size={32} className="opacity-20 mb-2" />
-                <span>No active downloads in progress</span>
+                <span>{t('miniNoActiveDownloads')}</span>
               </div>
             ) : (
               <div className="mini-active-list">
@@ -993,7 +1058,7 @@ export default function MiniApp() {
 
                         <div className="mini-active-info">
                           <h4 className="mini-active-item-title" title={dl.title || dl.mediaTitle}>
-                            {dl.title || dl.mediaTitle || 'Downloading media...'}
+                            {dl.title || dl.mediaTitle || t('miniDownloadingMedia')}
                           </h4>
 
                           <div className="mini-active-item-sub">
@@ -1007,8 +1072,8 @@ export default function MiniApp() {
                           {isPlaylist && (
                             <div className="mini-playlist-track-banner">
                               <span className="mini-playlist-current-track">
-                                Track {dl.currentItem || 1} of {dl.totalItems || 1}:{' '}
-                                <strong>{dl.currentTrackTitle || dl.title || 'In progress...'}</strong>
+                                {t('miniTrackProgress', { current: dl.currentItem || 1, total: dl.totalItems || 1 })}:{' '}
+                                <strong>{dl.currentTrackTitle || dl.title || t('miniDownloadingMedia')}</strong>
                               </span>
                             </div>
                           )}
@@ -1356,7 +1421,7 @@ export default function MiniApp() {
             className="mini-toast-action-btn"
             onClick={() => setActiveTab('progress')}
           >
-            Progress
+            {t('miniNavProgress')}
           </button>
         </div>
       )}
@@ -1365,7 +1430,7 @@ export default function MiniApp() {
       <nav className="mini-bottom-nav">
         {/* Animated Nav-Under Progress Bar */}
         {activeKeys.length > 0 && (
-          <div className="mini-nav-under-progress" title={`Overall Downloads Progress: ${overallAvgPercent.toFixed(1)}%`}>
+          <div className="mini-nav-under-progress" title={`Progress: ${overallAvgPercent.toFixed(1)}%`}>
             <div
               className="mini-nav-under-fill animate-shimmer"
               style={{ width: `${overallAvgPercent}%` }}
@@ -1376,16 +1441,16 @@ export default function MiniApp() {
         <button
           className={`mini-bottom-tab ${activeTab === 'downloader' ? 'active' : ''}`}
           onClick={() => setActiveTab('downloader')}
-          title="Downloader"
+          title={t('navDownloader')}
         >
           <Download size={16} />
-          <span>Downloader</span>
+          <span>{t('navDownloader')}</span>
         </button>
 
         <button
           className={`mini-bottom-tab ${activeTab === 'progress' ? 'active' : ''}`}
           onClick={() => setActiveTab('progress')}
-          title="Download Progress"
+          title={t('miniNavProgress')}
         >
           <div className="mini-tab-icon-wrap">
             <Loader2 size={16} className={activeKeys.length > 0 ? 'animate-spin text-purple-400' : ''} />
@@ -1393,13 +1458,13 @@ export default function MiniApp() {
               <span className="mini-bottom-badge">{activeKeys.length}</span>
             )}
           </div>
-          <span>Progress</span>
+          <span>{t('miniNavProgress')}</span>
         </button>
 
         <button
           className={`mini-bottom-tab ${activeTab === 'files' ? 'active' : ''}`}
           onClick={() => setActiveTab('files')}
-          title="Downloaded File"
+          title={t('miniNavFiles')}
         >
           <div className="mini-tab-icon-wrap">
             <Folder size={16} />
@@ -1407,17 +1472,17 @@ export default function MiniApp() {
               <span className="mini-bottom-badge">{completedCount}</span>
             )}
           </div>
-          <span>Files</span>
+          <span>{t('miniNavFiles')}</span>
         </button>
 
         {/* 4. Pop về main program Button */}
         <button
           className="mini-bottom-tab pop-main-btn"
           onClick={handleOpenMainProgram}
-          title="Pop về Main Program"
+          title={t('miniPopMainHint')}
         >
           <Maximize2 size={16} />
-          <span>Main App</span>
+          <span>{t('miniNavMainApp')}</span>
         </button>
       </nav>
     </div>

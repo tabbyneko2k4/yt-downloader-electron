@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build:react": "vite build",
+    "build:extension": "vite build --config chrome-extension/vite.config.js",
     "start": "electron .",
     "build": "vite build && electron-builder --windows",
     "build:installer": "vite build && node build-installer.js",

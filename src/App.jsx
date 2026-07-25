@@ -8,10 +8,12 @@ import DownloadedTab from './components/DownloadedTab';
 import SettingsTab from './components/SettingsTab';
 import LogModal from './components/LogModal';
 import DownloadQueueManager from './components/DownloadQueueManager';
+import CloseModal from './components/CloseModal';
 import { LanguageProvider } from './i18n/LanguageContext';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('downloader');
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   // Settings State
   const [settings, setSettings] = useState(() => {
@@ -123,10 +125,20 @@ export default function App() {
     }
   }, [settings.theme]);
 
+  // Sync settings with main process & mini window
+  useEffect(() => {
+    if (window.api && window.api.syncPushSettings) {
+      window.api.syncPushSettings(settings);
+    }
+  }, [settings]);
+
   const updateSettings = (newFields) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newFields };
       localStorage.setItem('media_downloader_settings', JSON.stringify(updated));
+      if (window.api && window.api.syncPushSettings) {
+        window.api.syncPushSettings(updated);
+      }
       return updated;
     });
   };
@@ -271,6 +283,44 @@ export default function App() {
     const unsub = window.api.onNavigateTab((tabKey) => {
       if (tabKey) {
         setActiveTab(tabKey);
+      }
+    });
+    return () => { if (unsub) unsub(); };
+  }, []);
+
+  // Listen for prompt-close-dialog from main process
+  useEffect(() => {
+    if (!window.api || !window.api.onPromptCloseDialog) return;
+    const unsub = window.api.onPromptCloseDialog(() => {
+      setIsCloseModalOpen(true);
+    });
+    return () => { if (unsub) unsub(); };
+  }, []);
+
+  // Push mediaDraft to main process whenever draft changes
+  useEffect(() => {
+    if (window.api && window.api.syncPushDraft) {
+      window.api.syncPushDraft(mediaDraft);
+    }
+  }, [mediaDraft]);
+
+  // Listen for draft sync updates (e.g. from MiniApp)
+  useEffect(() => {
+    if (!window.api || !window.api.onSyncDraft) return;
+    const unsub = window.api.onSyncDraft((draft) => {
+      if (draft && typeof draft === 'object') {
+        setMediaDraft((prev) => ({
+          ...prev,
+          url: draft.url !== undefined ? draft.url : prev.url,
+          mediaInfo: draft.mediaInfo !== undefined ? draft.mediaInfo : prev.mediaInfo,
+          formatType: draft.formatType || prev.formatType,
+          videoQuality: draft.quality || draft.videoQuality || prev.videoQuality,
+          audioQuality: draft.quality || draft.audioQuality || prev.audioQuality,
+          playlistItems: draft.playlistItems || (draft.playlistSelectedIndexes ? draft.playlistSelectedIndexes.join(',') : prev.playlistItems)
+        }));
+        if (draft.url || draft.mediaInfo) {
+          setActiveTab('downloader');
+        }
       }
     });
     return () => { if (unsub) unsub(); };
@@ -539,46 +589,48 @@ export default function App() {
 
         {/* Main Tab Viewport */}
         <main className="tab-content-container">
-          {activeTab === 'downloader' && (
-            <DownloaderTab
-              settings={settings}
-              advancedOptions={advancedOptions}
-              setAdvancedOptions={setAdvancedOptions}
-              activeDownloads={activeDownloads}
-              startDownload={startDownload}
-              cancelDownload={cancelDownload}
-              openLogModal={(item) => setLogModalItem(item)}
-              goToAdvanced={() => setActiveTab('advanced')}
-              mediaDraft={mediaDraft}
-              setMediaDraft={setMediaDraft}
-            />
-          )}
+          <div key={activeTab} className="tab-pane-animate">
+            {activeTab === 'downloader' && (
+              <DownloaderTab
+                settings={settings}
+                advancedOptions={advancedOptions}
+                setAdvancedOptions={setAdvancedOptions}
+                activeDownloads={activeDownloads}
+                startDownload={startDownload}
+                cancelDownload={cancelDownload}
+                openLogModal={(item) => setLogModalItem(item)}
+                goToAdvanced={() => setActiveTab('advanced')}
+                mediaDraft={mediaDraft}
+                setMediaDraft={setMediaDraft}
+              />
+            )}
 
-          {activeTab === 'advanced' && (
-            <AdvancedTab
-              advancedOptions={advancedOptions}
-              setAdvancedOptions={setAdvancedOptions}
-            />
-          )}
+            {activeTab === 'advanced' && (
+              <AdvancedTab
+                advancedOptions={advancedOptions}
+                setAdvancedOptions={setAdvancedOptions}
+              />
+            )}
 
-          {activeTab === 'downloads' && (
-            <DownloadedTab
-              downloadsHistory={downloadsHistory}
-              activeDownloads={activeDownloads}
-              cancelDownload={cancelDownload}
-              clearAllHistory={clearAllHistory}
-              deleteHistoryItem={deleteHistoryItem}
-              resumeDownload={resumeDownload}
-              settings={settings}
-            />
-          )}
+            {activeTab === 'downloads' && (
+              <DownloadedTab
+                downloadsHistory={downloadsHistory}
+                activeDownloads={activeDownloads}
+                cancelDownload={cancelDownload}
+                clearAllHistory={clearAllHistory}
+                deleteHistoryItem={deleteHistoryItem}
+                resumeDownload={resumeDownload}
+                settings={settings}
+              />
+            )}
 
-          {activeTab === 'settings' && (
-            <SettingsTab
-              settings={settings}
-              updateSettings={updateSettings}
-            />
-          )}
+            {activeTab === 'settings' && (
+              <SettingsTab
+                settings={settings}
+                updateSettings={updateSettings}
+              />
+            )}
+          </div>
         </main>
 
         {/* Sticky Bottom Disclaimer Bar */}
@@ -595,6 +647,14 @@ export default function App() {
             onClose={() => setLogModalItem(null)}
           />
         )}
+
+        {/* Exit / Minimize Confirmation Modal */}
+        <CloseModal
+          isOpen={isCloseModalOpen}
+          onClose={() => setIsCloseModalOpen(false)}
+          settings={settings}
+          updateSettings={updateSettings}
+        />
       </div>
     </LanguageProvider>
   );

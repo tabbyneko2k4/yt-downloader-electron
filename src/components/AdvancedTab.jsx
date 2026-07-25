@@ -110,9 +110,9 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
   };
 
   return (
-    <div className="advanced-tab-container">
+    <div className="advanced-tab-container" style={{ maxWidth: '950px', margin: '0 auto' }}>
       {/* Top Banner & Live CLI Command Preview Box */}
-      <section className="card" style={{ background: 'var(--bg-card)', padding: '16px 20px' }}>
+      <section className="card advanced-sticky-header">
         <div className="advanced-header-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Terminal size={20} color="#c084fc" />

@@ -158,16 +158,22 @@ function getSpawnEnv() {
 let mainWindow;
 let tray = null;
 let miniWindow = null;
+let cachedDraft = null;
+let isQuitting = false;
 const activeDownloads = new Map();
 const cancelledDownloads = new Set();
 const pausedDownloads = new Set();
 
+app.on('before-quit', () => {
+  isQuitting = true;
+});
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1050,
-    height: 780,
-    minWidth: 380,
-    minHeight: 500,
+    width: 880,
+    height: 720,
+    minWidth: 400,
+    minHeight: 520,
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -191,6 +197,30 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+  });
+
+  mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+
+    const { dontAskClose, closeAction } = currentSettings || {};
+
+    if (dontAskClose) {
+      if (closeAction === 'minimize') {
+        e.preventDefault();
+        mainWindow.hide();
+        if (!tray) createTray();
+        return;
+      } else if (closeAction === 'exit') {
+        isQuitting = true;
+        return;
+      }
+    }
+
+    e.preventDefault();
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+    mainWindow.webContents.send('prompt-close-dialog');
   });
 
   mainWindow.on('closed', () => {
@@ -269,6 +299,7 @@ app.whenReady().then(() => {
   }
   createWindow();
   createTray();
+  startLocalHttpBridge();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -313,17 +344,55 @@ ipcMain.handle('window:close', () => {
   if (mainWindow) mainWindow.close();
 });
 
+ipcMain.handle('app:quit-app', () => {
+  isQuitting = true;
+  app.quit();
+});
+
+ipcMain.handle('window:hide', () => {
+  if (mainWindow) {
+    mainWindow.hide();
+    if (!tray) createTray();
+  }
+});
+
 // Mini Window IPC Handlers
 ipcMain.handle('mini:close', () => {
   if (miniWindow) miniWindow.close();
 });
 
-ipcMain.handle('mini:show-main', () => {
+ipcMain.handle('mini:show-main', (_event, draft) => {
+  if (draft) {
+    cachedDraft = draft;
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send('sync:draft', cachedDraft);
+    }
+  }
+  if (miniWindow && !miniWindow.isDestroyed()) {
+    miniWindow.hide();
+  }
   if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.show();
-    mainWindow.restore();
     mainWindow.focus();
   }
+});
+
+// Draft State Sync IPC Handlers
+ipcMain.handle('sync:push-draft', (event, draft) => {
+  cachedDraft = draft;
+  const senderWebContents = event.sender;
+  if (miniWindow && !miniWindow.isDestroyed() && senderWebContents !== miniWindow.webContents) {
+    miniWindow.webContents.send('sync:draft', cachedDraft);
+  }
+  if (mainWindow && !mainWindow.isDestroyed() && senderWebContents !== mainWindow.webContents) {
+    mainWindow.webContents.send('sync:draft', cachedDraft);
+  }
+  return true;
+});
+
+ipcMain.handle('sync:get-draft', () => {
+  return cachedDraft;
 });
 
 ipcMain.handle('mini:get-active-downloads', () => {
@@ -391,6 +460,86 @@ async function downloadThumbnailTemp(url) {
   }
 }
 
+// Active App Settings state in main process
+let currentSettings = {
+  language: 'en',
+  theme: 'system'
+};
+
+// Notification localization templates
+const NOTIF_TRANSLATIONS = {
+  en: {
+    appName: 'Media Downloader',
+    successTitle: 'Download Completed ✅',
+    errorTitle: 'Download Failed ❌',
+    mediaTitleDefault: 'Media File',
+    uploaderDefault: 'Unknown Artist',
+    statusSuccess: 'Completed (100%)',
+    statusError: 'Failed',
+    labelTitle: '🎬 Title',
+    labelArtist: '👤 Artist',
+    labelStatus: '📌 Status',
+    errCodeStatus: (code) => `Error (Error code ${code})`,
+    errMessageStatus: (msg) => `Error: ${msg}`
+  },
+  vi: {
+    appName: 'Media Downloader',
+    successTitle: 'Tải xuống hoàn tất ✅',
+    errorTitle: 'Tải xuống thất bại ❌',
+    mediaTitleDefault: 'Tệp Media',
+    uploaderDefault: 'Không rõ nghệ sĩ',
+    statusSuccess: 'Hoàn tất (100%)',
+    statusError: 'Thất bại',
+    labelTitle: '🎬 Tiêu đề',
+    labelArtist: '👤 Nghệ sĩ',
+    labelStatus: '📌 Trạng thái',
+    errCodeStatus: (code) => `Lỗi (Mã lỗi ${code})`,
+    errMessageStatus: (msg) => `Lỗi: ${msg}`
+  },
+  zh: {
+    appName: 'Media Downloader',
+    successTitle: '下载完成 ✅',
+    errorTitle: '下载失败 ❌',
+    mediaTitleDefault: '媒体文件',
+    uploaderDefault: '未知艺术家',
+    statusSuccess: '已完成 (100%)',
+    statusError: '失败',
+    labelTitle: '🎬 标题',
+    labelArtist: '👤 艺术家',
+    labelStatus: '📌 状态',
+    errCodeStatus: (code) => `错误 (错误码 ${code})`,
+    errMessageStatus: (msg) => `错误: ${msg}`
+  },
+  'zh-TW': {
+    appName: 'Media Downloader',
+    successTitle: '下載完成 ✅',
+    errorTitle: '下載失敗 ❌',
+    mediaTitleDefault: '媒體檔案',
+    uploaderDefault: '未知藝術家',
+    statusSuccess: '已完成 (100%)',
+    statusError: '失敗',
+    labelTitle: '🎬 標題',
+    labelArtist: '👤 藝術家',
+    labelStatus: '📌 狀態',
+    errCodeStatus: (code) => `錯誤 (錯誤碼 ${code})`,
+    errMessageStatus: (msg) => `錯誤: ${msg}`
+  },
+  ja: {
+    appName: 'Media Downloader',
+    successTitle: 'ダウンロード完了 ✅',
+    errorTitle: 'ダウンロード失敗 ❌',
+    mediaTitleDefault: 'メディアファイル',
+    uploaderDefault: '不明なアーティスト',
+    statusSuccess: '完了 (100%)',
+    statusError: '失敗',
+    labelTitle: '🎬 タイトル',
+    labelArtist: '👤 アーティスト',
+    labelStatus: '📌 ステータス',
+    errCodeStatus: (code) => `エラー (エラーコード ${code})`,
+    errMessageStatus: (msg) => `エラー: ${msg}`
+  }
+};
+
 // Desktop Notification System with App Name, Title, Uploader, Status & Thumbnail
 async function showDownloadNotification({
   title,
@@ -414,16 +563,19 @@ async function showDownloadNotification({
         iconFilePath = defaultAppIcon;
       }
 
-      const appName = 'Media Downloader';
+      const langKey = currentSettings.language || 'en';
+      const dict = NOTIF_TRANSLATIONS[langKey] || NOTIF_TRANSLATIONS.en;
+
+      const appName = dict.appName;
       const notifTitle = title
         ? `${appName} • ${title}`
-        : `${appName} • ${isError ? '❌ Tải xuống thất bại' : '✅ Tải xuống hoàn tất'}`;
+        : `${appName} • ${isError ? dict.errorTitle : dict.successTitle}`;
 
-      const nameStr = mediaTitle || 'Tệp Media';
-      const uploaderStr = uploader || 'Không rõ nghệ sĩ';
-      const statusStr = status || (isError ? 'Thất bại' : 'Hoàn tất (100%)');
+      const nameStr = mediaTitle || dict.mediaTitleDefault;
+      const uploaderStr = uploader || dict.uploaderDefault;
+      const statusStr = status || (isError ? dict.statusError : dict.statusSuccess);
 
-      const notifBody = customBody || `🎬 Tiêu đề: ${nameStr}\n👤 Nghệ sĩ: ${uploaderStr}\n📌 Trạng thái: ${statusStr}`;
+      const notifBody = customBody || `${dict.labelTitle}: ${nameStr}\n${dict.labelArtist}: ${uploaderStr}\n${dict.labelStatus}: ${statusStr}`;
 
       const notification = new Notification({
         title: notifTitle,
@@ -432,7 +584,7 @@ async function showDownloadNotification({
       });
 
       notification.on('click', () => {
-        if (mainWindow) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
           if (mainWindow.isMinimized()) mainWindow.restore();
           mainWindow.show();
           mainWindow.focus();
@@ -451,6 +603,20 @@ ipcMain.handle('show-notification', async (_event, options) => {
   if (options && typeof options === 'object') {
     await showDownloadNotification(options);
   }
+});
+
+// IPC Handler to sync settings between processes
+ipcMain.handle('sync:push-settings', (_event, settings) => {
+  if (settings && typeof settings === 'object') {
+    currentSettings = { ...currentSettings, ...settings };
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('sync:settings', currentSettings);
+    }
+    if (miniWindow && !miniWindow.isDestroyed()) {
+      miniWindow.webContents.send('sync:settings', currentSettings);
+    }
+  }
+  return true;
 });
 
 // Helpers
@@ -651,7 +817,7 @@ async function fetchSoundcloudPlaylist(url, retry = true) {
   };
 }
 
-ipcMain.handle('yt-dlp:get-info', async (event, url) => {
+async function getVideoInfoInternal(url) {
   const isSoundcloudPlaylist = url.includes('soundcloud.com') && url.includes('/sets/');
   if (isSoundcloudPlaylist) {
     try {
@@ -760,7 +926,225 @@ ipcMain.handle('yt-dlp:get-info', async (event, url) => {
       }
     });
   });
+}
+
+ipcMain.handle('yt-dlp:get-info', async (event, url) => {
+  return getVideoInfoInternal(url);
 });
+
+// Local HTTP Bridge Server cho Chrome Extension (Port 38472)
+function startLocalHttpBridge() {
+  const http = require('http');
+  const PORT = 38472;
+
+  const server = http.createServer((req, res) => {
+    // Cross-Origin Resource Sharing (CORS) cho Chrome Extensions
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    const host = req.headers.host || `127.0.0.1:${PORT}`;
+    const urlObj = new URL(req.url, `http://${host}`);
+
+    if (req.method === 'GET' && urlObj.pathname === '/api/status') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        status: 'online',
+        app: 'YT-DLP Premium Downloader',
+        version: app.getVersion ? app.getVersion() : '1.0.0',
+        settings: currentSettings
+      }));
+      return;
+    }
+
+    if (req.method === 'POST' && urlObj.pathname === '/api/open-app') {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        createWindow();
+      } else {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Desktop app opened' }));
+      return;
+    }
+
+    if (req.method === 'POST' && urlObj.pathname === '/api/extract') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          if (!payload.url) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing url parameter' }));
+            return;
+          }
+          const result = await getVideoInfoInternal(payload.url);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message || 'Failed to extract video info' }));
+        }
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && urlObj.pathname === '/api/download') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const downloadOptions = JSON.parse(body || '{}');
+          if (!downloadOptions || !downloadOptions.url) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Download options missing URL' }));
+            return;
+          }
+
+          const defaultDest = (currentSettings && currentSettings.defaultPath) ? currentSettings.defaultPath : (app.getPath('downloads') || path.join(process.env.USERPROFILE || 'C:\\Users\\1', 'Downloads'));
+          const normalizedOptions = {
+            id: downloadOptions.id || `dl_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            url: downloadOptions.url,
+            formatType: downloadOptions.formatType || downloadOptions.downloadType || 'video',
+            quality: downloadOptions.quality || 'best',
+            audioFormat: downloadOptions.audioFormat || 'mp3',
+            destDir: downloadOptions.destDir || defaultDest,
+            mediaTitle: downloadOptions.mediaTitle || downloadOptions.title || 'Video từ Chrome Extension',
+            uploader: downloadOptions.uploader || 'N/A',
+            thumbnail: downloadOptions.thumbnail || '',
+            embedMetadata: downloadOptions.embedMetadata !== undefined ? downloadOptions.embedMetadata : (currentSettings ? currentSettings.embedMetadata : true),
+            embedThumbnail: downloadOptions.embedThumbnail !== undefined ? downloadOptions.embedThumbnail : (currentSettings ? currentSettings.embedThumbnail : true)
+          };
+
+          // Gửi request về MainWindow để thêm vào hàng đợi tải
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('mini:download-request', normalizedOptions);
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Download queued successfully' }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message || 'Failed to initiate download' }));
+        }
+      });
+      return;
+    }
+
+    if (req.method === 'GET' && urlObj.pathname === '/api/progress') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      const activeList = Array.from(activeDownloadsMeta.entries()).map(([id, meta]) => ({ id, ...meta }));
+      res.end(JSON.stringify({
+        activeDownloads: activeList,
+        history: cachedHistory || []
+      }));
+      return;
+    }
+
+    if (req.method === 'POST' && urlObj.pathname === '/api/control') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const { id, action } = JSON.parse(body || '{}');
+          if (!id || !action) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing id or action' }));
+            return;
+          }
+
+          if (action === 'cancel') {
+            cancelledDownloads.add(id);
+            const proc = activeDownloads.get(id);
+            if (proc) {
+              if (process.platform === 'win32') {
+                const { exec } = require('child_process');
+                exec(`taskkill /pid ${proc.pid} /T /F`);
+              } else {
+                try { proc.kill('SIGTERM'); } catch (e) { }
+              }
+              activeDownloads.delete(id);
+            }
+            activeDownloadsMeta.delete(id);
+          } else if (action === 'pause') {
+            pausedDownloads.add(id);
+            const proc = activeDownloads.get(id);
+            if (proc) {
+              if (process.platform === 'win32') {
+                const { exec } = require('child_process');
+                exec(`taskkill /pid ${proc.pid} /T /F`);
+              } else {
+                try { proc.kill('SIGTERM'); } catch (e) { }
+              }
+              activeDownloads.delete(id);
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && urlObj.pathname === '/api/file-action') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const { action, filePath } = JSON.parse(body || '{}');
+          if (!filePath) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing filePath' }));
+            return;
+          }
+
+          if (action === 'openFolder') {
+            const dir = fs.existsSync(filePath) && fs.statSync(filePath).isDirectory() ? filePath : path.dirname(filePath);
+            await shell.openPath(dir);
+          } else if (action === 'openFile') {
+            await shell.openPath(filePath);
+          } else if (action === 'copyPath') {
+            const { clipboard } = require('electron');
+            clipboard.writeText(filePath);
+          } else if (action === 'delete') {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Endpoint not found' }));
+  });
+
+  server.listen(PORT, '127.0.0.1', () => {
+    console.log(`[Extension Bridge] Server running at http://127.0.0.1:${PORT}`);
+  });
+
+  server.on('error', (err) => {
+    console.error('[Extension Bridge] Server error:', err.message);
+  });
+}
 
 function parseProgress(line) {
   if (!line.includes('[download]')) return null;
@@ -848,7 +1232,8 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
   return new Promise((resolve, reject) => {
     const args = ['--continue'];
 
-    const baseDest = path.join(destDir, 'Media Download');
+    const effectiveDestDir = destDir || (currentSettings && currentSettings.defaultPath) || app.getPath('downloads') || path.join(process.env.USERPROFILE || 'C:\\Users\\1', 'Downloads');
+    const baseDest = path.join(effectiveDestDir, 'Media Download');
     try {
       if (!fs.existsSync(baseDest)) {
         fs.mkdirSync(baseDest, { recursive: true });
@@ -1186,10 +1571,11 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
           downloadedFiles: uniqueFiles
         });
 
+        const dict = NOTIF_TRANSLATIONS[currentSettings.language || 'en'] || NOTIF_TRANSLATIONS.en;
         showDownloadNotification({
-          title: 'Tải xuống hoàn tất ✅',
-          status: 'Hoàn tất (100%)',
-          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          title: dict.successTitle,
+          status: dict.statusSuccess,
+          mediaTitle: options.mediaTitle || options.playlistTitle || dict.mediaTitleDefault,
           uploader: options.uploader,
           thumbnail: options.thumbnail,
           isError: false,
@@ -1201,10 +1587,11 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         writeLogLine(`[ERROR] Process exited with code ${code}`);
         saveTaskLogManifest(finalDestDir, options, 'error');
 
+        const dict = NOTIF_TRANSLATIONS[currentSettings.language || 'en'] || NOTIF_TRANSLATIONS.en;
         showDownloadNotification({
-          title: 'Tải xuống thất bại ❌',
-          status: `Lỗi (Mã lỗi ${code})`,
-          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          title: dict.errorTitle,
+          status: dict.errCodeStatus(code),
+          mediaTitle: options.mediaTitle || options.playlistTitle || dict.mediaTitleDefault,
           uploader: options.uploader,
           thumbnail: options.thumbnail,
           isError: true,
@@ -1222,10 +1609,11 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         pausedDownloads.delete(id);
         resolve({ success: false, cancelled: true, logFilePath, taskLogFilePath });
       } else {
+        const dict = NOTIF_TRANSLATIONS[currentSettings.language || 'en'] || NOTIF_TRANSLATIONS.en;
         showDownloadNotification({
-          title: 'Tải xuống thất bại ❌',
-          status: `Lỗi: ${err.message || 'Lỗi hệ thống'}`,
-          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          title: dict.errorTitle,
+          status: dict.errMessageStatus(err.message || dict.statusError),
+          mediaTitle: options.mediaTitle || options.playlistTitle || dict.mediaTitleDefault,
           uploader: options.uploader,
           thumbnail: options.thumbnail,
           isError: true,
