@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ArrowUpDown, CheckSquare, Square, Music, Clock, Sparkles } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
+import Listbox from './Listbox';
 
 export default function PlaylistInspector({ entries, selectedIndexes, setSelectedIndexes }) {
   const { t } = useTranslation();
@@ -117,8 +118,8 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
 
         <div className="flex items-center gap-1.5 shrink-0">
           <ArrowUpDown size={14} className="text-slate-400" />
-          <select
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+          <Listbox
+            className="w-36 sm:w-40"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -127,7 +128,7 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
             <option value="name-desc">{t('sortNameDesc')}</option>
             <option value="duration-desc">{t('sortDurationDesc')}</option>
             <option value="duration-asc">{t('sortDurationAsc')}</option>
-          </select>
+          </Listbox>
         </div>
       </div>
 

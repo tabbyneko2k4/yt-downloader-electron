@@ -34,6 +34,7 @@ import {
   Laptop
 } from 'lucide-react';
 import { detectFormatFromUrl } from './utils/formatDetector';
+import Listbox from './Listbox';
 
 const API_BASE = 'http://127.0.0.1:38472';
 
@@ -726,8 +727,9 @@ export default function Popup() {
 
                       <div className="mini-quality-row">
                         <span className="mini-label">Chất lượng:</span>
-                        <select
-                          className="mini-select"
+                        <Listbox
+                          size="sm"
+                          className="w-36"
                           value={quality}
                           onChange={(e) => setQuality(e.target.value)}
                         >
@@ -750,7 +752,7 @@ export default function Popup() {
                           {formatType === 'thumbnail' && (
                             <option value="best">Ảnh Bìa Gốc (Best resolution)</option>
                           )}
-                        </select>
+                        </Listbox>
                       </div>
                     </div>
 
@@ -763,8 +765,8 @@ export default function Popup() {
                         </div>
                       </div>
 
-                      <select
-                        className="mini-select"
+                      <Listbox
+                        className="w-full"
                         value={selectedPresetId}
                         onChange={(e) => setSelectedPresetId(e.target.value)}
                       >
@@ -772,7 +774,7 @@ export default function Popup() {
                         {builtinPresets.map((p) => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
-                      </select>
+                      </Listbox>
                     </div>
 
                     {analyzeError && (
@@ -916,17 +918,17 @@ export default function Popup() {
                   />
                 </div>
 
-                <select
-                  className="mini-select"
+                <Listbox
+                  size="sm"
+                  className="w-28"
                   value={filesSort}
                   onChange={(e) => setFilesSort(e.target.value)}
-                  style={{ fontSize: '10px', padding: '3px 4px', width: 'auto' }}
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="oldest">Cũ nhất</option>
                   <option value="title-asc">Tên A-Z</option>
                   <option value="title-desc">Tên Z-A</option>
-                </select>
+                </Listbox>
               </div>
 
               <div style={{ display: 'flex', gap: '4px' }}>

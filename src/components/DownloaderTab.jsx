@@ -33,6 +33,7 @@ import {
   ListPlus
 } from 'lucide-react';
 import PlaylistInspector from './PlaylistInspector';
+import Listbox from './Listbox';
 import { detectFormatFromUrl } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -796,8 +797,8 @@ export default function DownloaderTab({
 
                     {/* Mobile Select */}
                     <div className="block sm:hidden">
-                      <select
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:border-pink-500"
+                      <Listbox
+                        className="w-full"
                         value={formatType}
                         onChange={(e) => updateDraft({ formatType: e.target.value })}
                       >
@@ -805,7 +806,7 @@ export default function DownloaderTab({
                         <option value="audio">🎵 {t('formatAudio')}</option>
                         <option value="gif">🖼️ {t('formatGif')}</option>
                         <option value="thumbnail">📷 {t('formatThumbnail')}</option>
-                      </select>
+                      </Listbox>
                     </div>
 
                     {/* Desktop Format Cards Toggle */}
@@ -886,8 +887,8 @@ export default function DownloaderTab({
                               <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                                 {t('qualityLabel')}
                               </label>
-                              <select
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              <Listbox
+                                className="w-full"
                                 value={videoQuality}
                                 onChange={(e) => updateDraft({ videoQuality: e.target.value })}
                               >
@@ -896,15 +897,15 @@ export default function DownloaderTab({
                                 <option value="720p">{t('quality720p')}</option>
                                 <option value="480p">{t('quality480p')}</option>
                                 <option value="360p">360p (SD)</option>
-                              </select>
+                              </Listbox>
                             </div>
 
                             <div>
                               <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                                 {t('fpsLabel')}
                               </label>
-                              <select
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              <Listbox
+                                className="w-full"
                                 value={videoFps}
                                 onChange={(e) => updateDraft({ videoFps: e.target.value })}
                               >
@@ -912,7 +913,7 @@ export default function DownloaderTab({
                                 <option value="60">{t('fps60')}</option>
                                 <option value="30">{t('fps30')}</option>
                                 <option value="24">24 FPS</option>
-                              </select>
+                              </Listbox>
                             </div>
                           </div>
 
@@ -951,8 +952,8 @@ export default function DownloaderTab({
                             <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                               {t('audioQualityLabel')}
                             </label>
-                            <select
-                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                            <Listbox
+                              className="w-full"
                               value={audioQuality}
                               onChange={(e) => updateDraft({ audioQuality: e.target.value })}
                             >
@@ -962,22 +963,22 @@ export default function DownloaderTab({
                               <option value="m4a">{t('audioM4a')}</option>
                               <option value="flac">{t('audioFlac')}</option>
                               <option value="wav">{t('audioWav')}</option>
-                            </select>
+                            </Listbox>
                           </div>
 
                           <div>
                             <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                               {t('audioSampleRateLabel')}
                             </label>
-                            <select
-                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                            <Listbox
+                              className="w-full"
                               value={audioSampleRate}
                               onChange={(e) => updateDraft({ audioSampleRate: e.target.value })}
                             >
                               <option value="auto">{t('sampleRateAuto')}</option>
                               <option value="48000">{t('sampleRate48k')}</option>
                               <option value="44100">{t('sampleRate44k')}</option>
-                            </select>
+                            </Listbox>
                           </div>
                         </div>
                       )}
@@ -989,8 +990,8 @@ export default function DownloaderTab({
                             <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
                               {t('gifFpsLabel')}
                             </label>
-                            <select
-                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                            <Listbox
+                              className="w-full"
                               value={gifFps}
                               onChange={(e) => updateDraft({ gifFps: e.target.value })}
                             >
@@ -998,30 +999,30 @@ export default function DownloaderTab({
                               <option value="15">15 FPS</option>
                               <option value="20">20 FPS</option>
                               <option value="30">30 FPS</option>
-                            </select>
+                            </Listbox>
                           </div>
 
                           <div>
                             <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
                               {t('gifResLabel')}
                             </label>
-                            <select
-                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                            <Listbox
+                              className="w-full"
                               value={gifRes}
                               onChange={(e) => updateDraft({ gifRes: e.target.value })}
                             >
                               <option value="480p">480p</option>
                               <option value="360p">360p</option>
                               <option value="240p">240p</option>
-                            </select>
+                            </Listbox>
                           </div>
 
                           <div>
                             <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
                               {t('gifSpeedLabel')}
                             </label>
-                            <select
-                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                            <Listbox
+                              className="w-full"
                               value={gifSpeed}
                               onChange={(e) => updateDraft({ gifSpeed: e.target.value })}
                             >
@@ -1030,7 +1031,7 @@ export default function DownloaderTab({
                               <option value="1.5">1.5x</option>
                               <option value="2.0">2.0x</option>
                               <option value="0.5">0.5x</option>
-                            </select>
+                            </Listbox>
                           </div>
                         </div>
                       )}

@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { detectFormatFromUrl } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
+import Listbox from './Listbox';
 
 export default function MiniApp() {
   const { t } = useTranslation();
@@ -889,33 +890,34 @@ export default function MiniApp() {
                   {/* Quality Select */}
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('qualityLabel')}:</span>
-                    <select
-                      className="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700/70 rounded-xl px-2.5 py-1 text-xs font-semibold outline-none focus:border-pink-500 transition-all duration-200 cursor-pointer shadow-sm"
+                    <Listbox
+                      size="sm"
+                      className="w-32"
                       value={quality}
                       onChange={(e) => setQuality(e.target.value)}
                     >
                       {formatType === 'video' && (
                         <>
-                          <option value="best" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('qualityBest')}</option>
-                          <option value="1080p" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1080p Full HD</option>
-                          <option value="720p" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">720p HD</option>
-                          <option value="480p" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">480p SD</option>
+                          <option value="best">{t('qualityBest')}</option>
+                          <option value="1080p">1080p Full HD</option>
+                          <option value="720p">720p HD</option>
+                          <option value="480p">480p SD</option>
                         </>
                       )}
                       {formatType === 'audio' && (
                         <>
-                          <option value="mp3-320" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('audioMp3_320')}</option>
-                          <option value="mp3-192" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('audioMp3_256')}</option>
-                          <option value="m4a" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('audioM4a')}</option>
-                          <option value="flac" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('audioFlac')}</option>
+                          <option value="mp3-320">{t('audioMp3_320')}</option>
+                          <option value="mp3-192">{t('audioMp3_256')}</option>
+                          <option value="m4a">{t('audioM4a')}</option>
+                          <option value="flac">{t('audioFlac')}</option>
                         </>
                       )}
                       {formatType === 'thumbnail' && (
                         <>
-                          <option value="best" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('qualityBest')}</option>
+                          <option value="best">{t('qualityBest')}</option>
                         </>
                       )}
-                    </select>
+                    </Listbox>
                   </div>
                 </div>
 
@@ -936,29 +938,29 @@ export default function MiniApp() {
                     </button>
                   </div>
 
-                  <select
-                    className="w-full bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold outline-none focus:border-purple-500 transition-all duration-200 cursor-pointer shadow-sm"
+                  <Listbox
+                    className="w-full"
                     value={selectedPresetId}
                     onChange={(e) => setSelectedPresetId(e.target.value)}
                   >
-                    <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">-- {t('miniDefaultPreset')} --</option>
-                    <optgroup label={t('presetsSectionTitle')} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                    <option value="">-- {t('miniDefaultPreset')} --</option>
+                    <optgroup label={t('presetsSectionTitle')}>
                       {builtinPresets.map((preset) => (
-                        <option key={preset.id} value={preset.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                        <option key={preset.id} value={preset.id}>
                           {preset.name}
                         </option>
                       ))}
                     </optgroup>
                     {customPresets.length > 0 && (
-                      <optgroup label={t('customPresetsTitle')} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                      <optgroup label={t('customPresetsTitle')}>
                         {customPresets.map((preset) => (
-                          <option key={preset.id} value={preset.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                          <option key={preset.id} value={preset.id}>
                             ⭐ {preset.name}
                           </option>
                         ))}
                       </optgroup>
                     )}
-                  </select>
+                  </Listbox>
                 </div>
 
                 {/* Primary Download Button */}
@@ -1151,16 +1153,17 @@ export default function MiniApp() {
                 </div>
 
                 <div className="flex items-center gap-1.5 h-full shrink-0">
-                  <select
-                    className="h-full bg-slate-100/90 dark:bg-slate-950/70 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 rounded-xl px-2.5 text-[11px] font-bold outline-none focus:border-pink-500 cursor-pointer shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200"
+                  <Listbox
+                    size="sm"
+                    className="w-28 sm:w-32"
                     value={filesSort}
                     onChange={(e) => setFilesSort(e.target.value)}
                   >
-                    <option value="newest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('sortNewest') || 'Newest'}</option>
-                    <option value="oldest" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('sortOldest') || 'Oldest'}</option>
-                    <option value="title-asc" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('sortTitleAsc') || 'Title A-Z'}</option>
-                    <option value="title-desc" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">{t('sortTitleDesc') || 'Title Z-A'}</option>
-                  </select>
+                    <option value="newest">{t('sortNewest') || 'Newest'}</option>
+                    <option value="oldest">{t('sortOldest') || 'Oldest'}</option>
+                    <option value="title-asc">{t('sortTitleAsc') || 'Title A-Z'}</option>
+                    <option value="title-desc">{t('sortTitleDesc') || 'Title Z-A'}</option>
+                  </Listbox>
 
                   {history.length > 0 && (
                     <button

@@ -22,6 +22,7 @@ import {
   GripVertical
 } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
+import Listbox from './Listbox';
 
 export default function DownloadedTab({
   downloadsHistory,
@@ -258,8 +259,8 @@ export default function DownloadedTab({
             {/* Sort Dropdown */}
             <div className="flex items-center gap-1.5 ml-auto md:ml-0">
               <ArrowUpDown size={14} className="text-slate-400 shrink-0" />
-              <select
-                className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+              <Listbox
+                className="w-36 sm:w-40"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -267,7 +268,7 @@ export default function DownloadedTab({
                 <option value="oldest">{t('sortOldest')}</option>
                 <option value="title-asc">{t('sortTitleAsc')}</option>
                 <option value="title-desc">{t('sortTitleDesc')}</option>
-              </select>
+              </Listbox>
             </div>
           </div>
         </div>
@@ -349,72 +350,68 @@ export default function DownloadedTab({
 
                     {/* Action Buttons Column */}
                     <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                      {item.originalOptions && (
+                      {!item.isPlaylist && (
                         <button
                           type="button"
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95"
-                          onClick={() => resumeDownload(item.originalOptions)}
-                          title={t('importLogBtn')}
+                          className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-600 dark:text-emerald-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
+                          onClick={() => handleOpenFile(item.filePath)}
+                          title={t('openFile')}
                         >
-                          <RefreshCw size={13} />
-                          <span>{t('resume')}</span>
+                          <Play size={14} className="fill-current" />
                         </button>
                       )}
 
                       <button
                         type="button"
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
+                        className="p-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
                         onClick={() => handleOpenFolder(item.folderPath || item.filePath)}
                         title={t('openFolder')}
                       >
-                        <FolderOpen size={13} />
-                        <span>{t('openFolder')}</span>
+                        <FolderOpen size={14} />
                       </button>
 
-                      {!item.isPlaylist && (
+                      {item.originalOptions && (
                         <button
                           type="button"
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
-                          onClick={() => handleOpenFile(item.filePath)}
-                          title={t('openFile')}
+                          className="p-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
+                          onClick={() => resumeDownload(item.originalOptions)}
+                          title={t('resume')}
                         >
-                          <Play size={13} />
-                          <span>{t('openFile')}</span>
+                          <RefreshCw size={14} />
                         </button>
                       )}
 
                       {item.logFilePath && (
                         <button
                           type="button"
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
+                          className="p-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-600 dark:text-amber-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
                           onClick={() => handleOpenFile(item.logFilePath)}
-                          title="Log file"
+                          title="View log file (.log)"
                         >
-                          <FileText size={13} />
-                          <span>.log</span>
+                          <FileText size={14} />
+                        </button>
+                      )}
+
+                      {item.isPlaylist && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandFolder(item.id)}
+                          className="p-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
+                          title={isExpanded ? t('collapseBtn') : t('detailBtn')}
+                        >
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
                       )}
 
                       <button
                         type="button"
-                        className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 transition-all cursor-pointer"
+                        className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
                         onClick={() => deleteHistoryItem(item.id, item.filePath)}
                         title={t('deleteItem')}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
-
-                    {item.isPlaylist && (
-                      <button
-                        type="button"
-                        onClick={() => toggleExpandFolder(item.id)}
-                        className="text-purple-600 dark:text-purple-300 text-xs font-semibold flex items-center gap-1 hover:text-pink-500 transition-colors cursor-pointer"
-                      >
-                        <span>{isExpanded ? t('collapseBtn') : t('detailBtn')}</span>
-                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                      </button>
-                    )}
                   </div>
 
                   {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER */}

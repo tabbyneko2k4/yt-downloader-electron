@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
+import Listbox from './Listbox';
 
 export default function SettingsTab({ settings, updateSettings }) {
   const { t, language, setLanguage, LANGUAGES } = useTranslation();
@@ -482,8 +483,8 @@ function DetailSectionContent({
             <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 block">
               {t('maxConcurrentLabel')}
             </label>
-            <select
-              className="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:border-pink-500"
+            <Listbox
+              className="w-full sm:w-64"
               value={settings.maxConcurrentDownloads || 2}
               onChange={(e) => updateSettings({ maxConcurrentDownloads: parseInt(e.target.value, 10) })}
             >
@@ -491,7 +492,7 @@ function DetailSectionContent({
               <option value="2">{t('maxConcurrent2')}</option>
               <option value="3">{t('maxConcurrent3')}</option>
               <option value="5">{t('maxConcurrent5')}</option>
-            </select>
+            </Listbox>
           </div>
 
           {/* Chrome Extension Settings */}
