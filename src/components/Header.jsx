@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Download, Terminal, FolderCheck, Settings, Minus, Square, X, ArrowDown, Globe, Sun, Moon, Monitor, Menu } from 'lucide-react';
+import { Download, Terminal, FolderCheck, Settings, Minus, Square, X, ArrowDown, Globe, Sun, Moon, Monitor, Menu, Check } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function Header({ activeTab, setActiveTab, downloadsCount, activeDownloads = [], downloadQueue = [], settings, updateSettings }) {
   const { t, language, setLanguage, LANGUAGES } = useTranslation();
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
-  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
   const handleMinimize = () => {
     if (window.api && window.api.minimizeWindow) window.api.minimizeWindow();
@@ -148,81 +148,78 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
               )}
             </button>
 
-            {/* Globe Icon-only Language Button */}
-            <button
-              className="window-control-btn header-quick-btn no-drag"
-              onClick={cycleLanguage}
-              title={`${t('languageLabel')}: ${currentLangObj.flag} ${currentLangObj.name}`}
-            >
-              <Globe size={14} className="header-globe-icon" />
-            </button>
+            {/* Language Selector Icon Button with Dropdown Tab Popover */}
+            <div className="relative no-drag">
+              <button
+                type="button"
+                className="window-control-btn no-drag cursor-pointer"
+                onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                title={`${t('languageLabel')}: ${currentLangObj.name}`}
+              >
+                <Globe size={16} className="text-pink-500 dark:text-pink-400 shrink-0" />
+              </button>
 
-            {/* Quick Theme Style Dropdown Selector */}
-            {updateSettings && (
-              <div className="relative no-drag">
-                <button
-                  type="button"
-                  className="window-control-btn header-quick-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all shadow-sm"
-                  onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                  title={`${t('themeLabel')}: ${currentTheme === 'system' ? t('themeSystem') : currentTheme === 'dark' ? t('themeDark') : t('themeLight')}`}
-                >
-                  {currentTheme === 'dark' ? (
-                    <Moon size={14} color="#c084fc" />
-                  ) : currentTheme === 'light' ? (
-                    <Sun size={14} color="#f59e0b" />
-                  ) : (
-                    <Monitor size={14} color="#3b82f6" />
-                  )}
-                  <span className="hidden sm:inline-block text-[11px] font-semibold">
-                    {currentTheme === 'dark' ? 'Dark Cyber' : currentTheme === 'light' ? 'Light Soft' : 'Auto System'}
-                  </span>
-                </button>
-
-                {/* Dropdown Menu Popover */}
-                {isThemeDropdownOpen && (
+              {/* Language Selector Dropdown Tab Popover */}
+              {isLangDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsLangDropdownOpen(false)} />
                   <div
-                    className="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-pink-500/30 shadow-2xl p-1.5 z-50 animate-fade-in-up space-y-1"
+                    className="absolute right-0 mt-2 w-48 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-pink-500/30 shadow-2xl p-1.5 z-50 animate-fade-in-up space-y-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      Theme Style Mode
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-1.5 mb-1">
+                      <span>{t('languageLabel') || 'Language'}</span>
+                      <Globe size={13} className="text-pink-400" />
                     </div>
 
-                    {[
-                      { id: 'system', label: t('themeSystem'), desc: 'Theo hệ thống OS', icon: Monitor, color: '#3b82f6' },
-                      { id: 'dark', label: 'Dark Kawaii Cyber', desc: 'Giao diện Tối Neon', icon: Moon, color: '#c084fc' },
-                      { id: 'light', label: 'Light Soft Pastel', desc: 'Giao diện Sáng Pastel', icon: Sun, color: '#f59e0b' }
-                    ].map((mode) => {
-                      const IconComp = mode.icon;
-                      const isSelected = currentTheme === mode.id;
+                    {LANGUAGES.map((lang) => {
+                      const isSelected = language === lang.code;
                       return (
                         <button
-                          key={mode.id}
+                          key={lang.code}
                           type="button"
                           onClick={() => {
-                            updateSettings({ theme: mode.id });
-                            setIsThemeDropdownOpen(false);
+                            setLanguage(lang.code);
+                            if (updateSettings) {
+                              updateSettings({ language: lang.code });
+                            }
+                            setIsLangDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-gradient-to-r from-sky-500/15 to-pink-500/15 border border-pink-400/50 text-pink-600 dark:text-pink-300 font-bold'
+                              ? 'bg-gradient-to-r from-pink-500/15 to-purple-500/15 border border-pink-400/40 text-pink-600 dark:text-pink-300 font-bold'
                               : 'hover:bg-slate-100 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300 text-xs'
                           }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <IconComp size={15} color={mode.color} />
-                            <div>
-                              <div className="text-xs">{mode.label}</div>
-                              <div className="text-[10px] text-slate-400">{mode.desc}</div>
-                            </div>
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-base leading-none">{lang.flag}</span>
+                            <span className="text-xs font-medium">{lang.name}</span>
                           </div>
-                          {isSelected && <span className="text-xs text-pink-500">✓</span>}
+                          {isSelected && <Check size={14} className="text-pink-500 shrink-0" />}
                         </button>
                       );
                     })}
                   </div>
+                </>
+              )}
+            </div>
+
+            {/* Icon-Only Dark Mode / Light Mode Theme Toggle Button */}
+            {updateSettings && (
+              <button
+                type="button"
+                className="window-control-btn no-drag cursor-pointer"
+                onClick={toggleTheme}
+                title={`${t('themeLabel')}: ${currentTheme === 'system' ? t('themeSystem') : currentTheme === 'dark' ? t('themeDark') : t('themeLight')}`}
+              >
+                {currentTheme === 'dark' ? (
+                  <Moon size={16} className="text-purple-400 shrink-0" />
+                ) : currentTheme === 'light' ? (
+                  <Sun size={16} className="text-amber-400 shrink-0" />
+                ) : (
+                  <Monitor size={16} className="text-sky-400 shrink-0" />
                 )}
-              </div>
+              </button>
             )}
 
             <button className="window-control-btn btn-min" onClick={handleMinimize} title={t('minTitle')}>

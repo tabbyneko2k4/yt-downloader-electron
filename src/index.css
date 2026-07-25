@@ -23,8 +23,23 @@
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --radius-sm: 8px;
   --radius-md: 14px;
-  --radius-lg: 20px;
   --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.3);
+}
+
+/* ==========================================
+   GPU HARDWARE ACCELERATION & ANIMATION TUNE
+   ========================================== */
+.gpu-layer,
+.tab-pane-animate,
+.fade-in-up,
+.burger-dropdown-menu,
+.mini-tab-panel,
+.mini-stage-1-container,
+.mini-stage-2-container,
+.animate-fade-in-up {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 [data-theme="light"] {
@@ -342,11 +357,11 @@ body {
 @keyframes tabPaneFadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.995);
+    transform: translate3d(0, 6px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 .badge-count {
@@ -983,16 +998,17 @@ body {
   content: '';
   position: absolute;
   top: 0;
-  left: -50%;
+  left: 0;
   width: 50%;
   height: 100%;
   background: var(--gradient-brand);
   border-radius: 2px;
   animation: pulseScan 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
 }
 @keyframes pulseScan {
-  0% { left: -50%; }
-  100% { left: 100%; }
+  0% { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(250%, 0, 0); }
 }
 
 .hero-badge-pill {
@@ -1021,7 +1037,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
 .btn-clear-input:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -1029,17 +1045,18 @@ body {
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.35s ease-out forwards;
+  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(18px) scale(0.98);
+    transform: translate3d(0, 12px, 0) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -3945,26 +3962,27 @@ select optgroup,
 /* 3. Hero Icon Floating & Pulsing */
 @keyframes floatBadge {
   0%, 100% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.92;
   }
   50% {
-    transform: translateY(-4px) scale(1.04);
-    box-shadow: 0 0 28px rgba(236, 72, 153, 0.4);
+    transform: translate3d(0, -4px, 0) scale(1.03);
+    opacity: 1;
   }
 }
 
 .mini-hero-badge {
   animation: floatBadge 3.5s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 /* 4. Google Search Bar Shimmer & Glow */
 @keyframes searchGlow {
   0%, 100% {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    opacity: 0.92;
   }
   50% {
-    box-shadow: 0 4px 24px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.2);
+    opacity: 1;
   }
 }
 
@@ -3988,7 +4006,7 @@ select optgroup,
 .google-analyze-btn,
 .full-width-download {
   background-size: 200% 200%;
-  animation: shimmerGlow 5s ease infinite;
+  will-change: background-position;
 }
 
 .google-analyze-btn:active,
@@ -3999,20 +4017,21 @@ select optgroup,
 /* 6. Media Thumbnail Hover Zoom */
 .mini-media-thumb {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  will-change: transform;
 }
 
 .mini-media-thumb:hover {
-  transform: scale(1.08) rotate(1deg);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.06) rotate(1deg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 /* 7. Under Tabs Pop Bounce */
 @keyframes tabPop {
   0% {
-    transform: scale(0.92);
+    transform: scale(0.94);
   }
   50% {
-    transform: scale(1.08);
+    transform: scale(1.05);
   }
   100% {
     transform: scale(1);
@@ -4021,6 +4040,7 @@ select optgroup,
 
 .mini-bottom-tab.active {
   animation: tabPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
 
 .mini-bottom-tab:active {
@@ -4029,19 +4049,17 @@ select optgroup,
 
 /* 8. Active Progress Bar Shimmer Glow */
 @keyframes progressGlow {
-  0% {
-    filter: brightness(1);
+  0%, 100% {
+    opacity: 0.85;
   }
   50% {
-    filter: brightness(1.25) drop-shadow(0 0 4px rgba(236, 72, 153, 0.6));
-  }
-  100% {
-    filter: brightness(1);
+    opacity: 1;
   }
 }
 
 .mini-progress-bar-fill {
   animation: progressGlow 2s infinite ease-in-out;
+  will-change: opacity;
 }
 
 /* ==========================================================================

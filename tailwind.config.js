@@ -49,21 +49,21 @@ module.exports = {
       },
       keyframes: {
         fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': { opacity: '0', transform: 'translate3d(0, 12px, 0)' },
+          '100%': { opacity: '1', transform: 'translate3d(0, 0, 0)' },
         },
         glowPulse: {
-          '0%, 100%': { boxShadow: '0 0 15px rgba(56, 189, 248, 0.25)' },
-          '50%': { boxShadow: '0 0 30px rgba(236, 72, 153, 0.4)' },
+          '0%, 100%': { opacity: '0.85', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.015)' },
         },
         floatBg: {
-          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-          '50%': { transform: 'translateY(-10px) rotate(2deg)' },
+          '0%, 100%': { transform: 'translate3d(0, 0px, 0) rotate(0deg)' },
+          '50%': { transform: 'translate3d(0, -6px, 0) rotate(1.5deg)' },
         }
       },
       animation: {
-        'fade-in-up': 'fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        'glow-pulse': 'glowPulse 3s infinite ease-in-out',
+        'fade-in-up': 'fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'glow-pulse': 'glowPulse 3s ease-in-out infinite',
         'float': 'floatBg 6s ease-in-out infinite',
       }
     },
