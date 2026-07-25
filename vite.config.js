@@ -8,6 +8,12 @@ export default defineConfig({
   build: {
     outDir: 'dist-react',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        mini: path.resolve(__dirname, 'mini.html')
+      }
+    }
   },
   server: {
     port: 5173,

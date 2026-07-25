@@ -143,6 +143,10 @@ export default function App() {
   const saveHistory = (newHistory) => {
     setDownloadsHistory(newHistory);
     localStorage.setItem('media_downloader_history', JSON.stringify(newHistory));
+    // Sync to mini window via main process
+    if (window.api && window.api.syncPushHistory) {
+      window.api.syncPushHistory(newHistory);
+    }
   };
 
   const clearAllHistory = () => {
@@ -220,6 +224,45 @@ export default function App() {
       if (unsubItemChange) unsubItemChange();
       if (unsubLog) unsubLog();
     };
+  }, []);
+
+  // Listen for mini window requesting a history push & sync updates
+  useEffect(() => {
+    if (!window.api) return;
+    const unsubPush = window.api.onRequestPushHistory ? window.api.onRequestPushHistory(() => {
+      if (window.api.syncPushHistory) {
+        const saved = localStorage.getItem('media_downloader_history');
+        const hist = saved ? JSON.parse(saved) : [];
+        window.api.syncPushHistory(hist);
+      }
+    }) : null;
+
+    const unsubSync = window.api.onSyncHistory ? window.api.onSyncHistory((hist) => {
+      if (Array.isArray(hist)) {
+        setDownloadsHistory(hist);
+        localStorage.setItem('media_downloader_history', JSON.stringify(hist));
+      }
+    }) : null;
+
+    // Push history on first load
+    if (window.api.syncPushHistory) {
+      const saved = localStorage.getItem('media_downloader_history');
+      const hist = saved ? JSON.parse(saved) : [];
+      window.api.syncPushHistory(hist);
+    }
+    return () => {
+      if (unsubPush) unsubPush();
+      if (unsubSync) unsubSync();
+    };
+  }, []);
+
+  // Listen for download requests from mini window (relay into queue)
+  useEffect(() => {
+    if (!window.api || !window.api.onMiniDownloadRequest) return;
+    const unsub = window.api.onMiniDownloadRequest((options) => {
+      startDownload(options);
+    });
+    return () => { if (unsub) unsub(); };
   }, []);
 
   // Process next queue task automatically

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage, Tray } = require('electron');
 
 // Vô hiệu hóa GPU acceleration & GPU sub-process để tránh lỗi crash GPU helper (exit_code=-1073741515 / 0xC0000135 DLL Not Found)
 app.disableHardwareAcceleration();
@@ -156,6 +156,8 @@ function getSpawnEnv() {
 
 
 let mainWindow;
+let tray = null;
+let miniWindow = null;
 const activeDownloads = new Map();
 const cancelledDownloads = new Set();
 const pausedDownloads = new Set();
@@ -196,8 +198,74 @@ function createWindow() {
   });
 }
 
+function createMiniWindow() {
+  const { screen } = require('electron');
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+  const winW = 360;
+  const winH = 560;
+  const margin = 12;
+  miniWindow = new BrowserWindow({
+    width: winW,
+    height: winH,
+    x: sw - winW - margin,
+    y: sh - winH - margin,
+    minWidth: 300,
+    minHeight: 400,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    titleBarStyle: 'hidden',
+    alwaysOnTop: false,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    },
+    show: false
+  });
+
+  const devUrl = process.env.VITE_DEV_SERVER_URL;
+  const miniDistPath = path.join(__dirname, 'dist-react', 'mini.html');
+  const miniPath = path.join(__dirname, 'mini.html');
+
+  if (devUrl) {
+    miniWindow.loadURL(`${devUrl}/mini.html`);
+  } else if (fs.existsSync(miniDistPath)) {
+    miniWindow.loadFile(miniDistPath);
+  } else if (fs.existsSync(miniPath)) {
+    miniWindow.loadFile(miniPath);
+  } else {
+    miniWindow.loadFile('index.html');
+  }
+
+  miniWindow.once('ready-to-show', () => miniWindow.show());
+  miniWindow.on('closed', () => { miniWindow = null; });
+}
+
+function createTray() {
+  const iconPath = 'C:\\Users\\1\\.gemini\\antigravity-ide\\brain\\a626b701-239b-4406-87e0-4379625520b9\\tray_icon_1784924763103.png';
+  tray = new Tray(iconPath);
+  tray.setToolTip('YT Downloader');
+  tray.on('click', () => {
+    if (!miniWindow) {
+      createMiniWindow();
+    } else {
+      miniWindow.show();
+    }
+  });
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.restore();
+    }
+  });
+}
+
+
 app.whenReady().then(() => {
   createWindow();
+  createTray();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -222,7 +290,10 @@ app.on('window-all-closed', () => {
 
 // Window Control IPC Handlers
 ipcMain.handle('window:minimize', () => {
-  if (mainWindow) mainWindow.minimize();
+  if (mainWindow) {
+    mainWindow.hide();
+    if (!tray) createTray();
+  }
 });
 
 ipcMain.handle('window:maximize', () => {
@@ -237,6 +308,60 @@ ipcMain.handle('window:maximize', () => {
 
 ipcMain.handle('window:close', () => {
   if (mainWindow) mainWindow.close();
+});
+
+// Mini Window IPC Handlers
+ipcMain.handle('mini:close', () => {
+  if (miniWindow) miniWindow.close();
+});
+
+ipcMain.handle('mini:show-main', () => {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
+ipcMain.handle('mini:get-active-downloads', () => {
+  return Array.from(activeDownloads.keys());
+});
+
+// History sync: main renderer pushes history to main process so mini can read it
+ipcMain.handle('sync:push-history', (_event, history) => {
+  cachedHistory = history || [];
+  if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+  if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+});
+
+ipcMain.handle('sync:get-history', () => {
+  return cachedHistory;
+});
+
+// Mini window requests history from main renderer (relayed via main process)
+ipcMain.handle('mini:request-history', async () => {
+  if (mainWindow) {
+    // Ask main renderer to push its current history
+    mainWindow.webContents.send('request:push-history');
+    // Give it a moment then return cached
+    await new Promise(r => setTimeout(r, 150));
+  }
+  return cachedHistory;
+});
+
+// Active download metadata store (rich info for mini window)
+const activeDownloadsMeta = new Map(); // id -> { title, uploader, thumbnail, formatType, percent, speed, eta, totalItems, currentItem }
+
+ipcMain.handle('mini:get-downloads-meta', () => {
+  return Array.from(activeDownloadsMeta.entries()).map(([id, meta]) => ({ id, ...meta }));
+});
+
+// When mini triggers a download, relay to main renderer queue system
+ipcMain.handle('mini:start-download', (event, options) => {
+  // Relay to main window to handle via its queue system
+  if (mainWindow) {
+    mainWindow.webContents.send('mini:download-request', options);
+  }
 });
 
 // Helpers
@@ -796,6 +921,22 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
     const downloadProcess = spawn(ytDlpCmd, args, { env });
     activeDownloads.set(id, downloadProcess);
 
+    // Track rich meta for mini window
+    activeDownloadsMeta.set(id, {
+      title: options.mediaTitle || options.playlistTitle || 'Downloading…',
+      uploader: options.uploader || '',
+      thumbnail: options.thumbnail || '',
+      formatType: options.formatType || 'video',
+      isPlaylist: !!(options.isPlaylist || options.isPlaylistItem),
+      playlistTitle: options.playlistTitle || null,
+      percent: 0,
+      speed: '—',
+      eta: '—',
+      currentItem: 1,
+      totalItems: playlistEntries ? playlistEntries.length : 1
+    });
+    if (miniWindow) miniWindow.webContents.send('mini:active-update', { id, ...activeDownloadsMeta.get(id) });
+
     let logs = '';
     let currentItemIdx = 1;
     const downloadedItemIndexes = new Set();
@@ -816,11 +957,16 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
           if (currentItemIdx > 1) {
             downloadedItemIndexes.add(currentItemIdx - 1);
           }
-          mainWindow.webContents.send('download-item-change', {
-            id,
-            currentItem: currentItemIdx,
-            totalItems: parseInt(itemMatch[2], 10)
-          });
+          const itemPayload = { id, currentItem: currentItemIdx, totalItems: parseInt(itemMatch[2], 10) };
+          mainWindow.webContents.send('download-item-change', itemPayload);
+          if (miniWindow) miniWindow.webContents.send('download-item-change', itemPayload);
+          // Update meta
+          if (activeDownloadsMeta.has(id)) {
+            const m = activeDownloadsMeta.get(id);
+            m.currentItem = itemPayload.currentItem;
+            m.totalItems  = itemPayload.totalItems;
+            if (miniWindow) miniWindow.webContents.send('mini:active-update', { id, ...m });
+          }
         }
 
         const destMatch = line.match(/\[download\] Destination: (.+)$/);
@@ -836,8 +982,18 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         const progress = parseProgress(line);
         if (progress) {
           mainWindow.webContents.send('download-progress', { id, ...progress, logLine: line.trim(), logFilePath });
+          if (miniWindow) miniWindow.webContents.send('download-progress', { id, ...progress, logLine: line.trim(), logFilePath });
+          // Update meta
+          if (activeDownloadsMeta.has(id)) {
+            const m = activeDownloadsMeta.get(id);
+            m.percent = progress.percent;
+            m.speed   = progress.speed;
+            m.eta     = progress.eta;
+            if (miniWindow) miniWindow.webContents.send('mini:active-update', { id, ...m });
+          }
         } else {
           mainWindow.webContents.send('download-log', { id, logLine: line.trim(), logFilePath });
+          if (miniWindow) miniWindow.webContents.send('download-log', { id, logLine: line.trim(), logFilePath });
         }
       }
     });
@@ -847,10 +1003,13 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
       logs += text;
       writeLogLine(`[STDERR] ${text.trim()}`);
       mainWindow.webContents.send('download-log', { id, logLine: `[Error Log] ${text.trim()}`, logFilePath });
+      if (miniWindow) miniWindow.webContents.send('download-log', { id, logLine: `[Error Log] ${text.trim()}`, logFilePath });
     });
 
     downloadProcess.on('close', (code) => {
       activeDownloads.delete(id);
+      activeDownloadsMeta.delete(id);
+      if (miniWindow) miniWindow.webContents.send('mini:active-removed', { id });
 
       const downloadedArr = Array.from(downloadedItemIndexes);
       const missingArr = [];

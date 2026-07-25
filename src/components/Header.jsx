@@ -119,6 +119,17 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 <Settings size={15} />
                 <span className="tab-label">{t('navSettings')}</span>
               </button>
+
+              {/* Animated Nav-Under Progress Bar */}
+              {isDownloading && (
+                <div className="header-nav-under-progress">
+                  <div
+                    className="header-nav-under-fill animate-shimmer"
+                    style={{ width: `${activePercent}%` }}
+                  />
+                  <div className="header-nav-under-glow" />
+                </div>
+              )}
             </nav>
           </div>
 

@@ -38,5 +38,47 @@ contextBridge.exposeInMainWorld('api', {
   },
   startDrag: (filePath) => {
     ipcRenderer.send('ondragstart', filePath);
-  }
+  },
+
+  // Mini Window Controls
+  miniClose: () => ipcRenderer.invoke('mini:close'),
+  miniShowMain: () => ipcRenderer.invoke('mini:show-main'),
+  miniGetDownloadsMeta: () => ipcRenderer.invoke('mini:get-downloads-meta'),
+  miniRequestHistory: () => ipcRenderer.invoke('mini:request-history'),
+  miniStartDownload: (options) => ipcRenderer.invoke('mini:start-download', options),
+
+  // Sync: mini window events
+  onMiniActiveUpdate: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('mini:active-update', handler);
+    return () => ipcRenderer.removeListener('mini:active-update', handler);
+  },
+  onMiniActiveRemoved: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('mini:active-removed', handler);
+    return () => ipcRenderer.removeListener('mini:active-removed', handler);
+  },
+  onSyncHistory: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('sync:history', handler);
+    return () => ipcRenderer.removeListener('sync:history', handler);
+  },
+
+  // Sync: main renderer pushes history to main process
+  syncPushHistory: (history) => ipcRenderer.invoke('sync:push-history', history),
+
+  // Sync: main renderer listens for request-push-history (from mini asking for fresh data)
+  onRequestPushHistory: (callback) => {
+    const handler = (_event) => callback();
+    ipcRenderer.on('request:push-history', handler);
+    return () => ipcRenderer.removeListener('request:push-history', handler);
+  },
+
+  // Mini: listen for download requests from mini window
+  onMiniDownloadRequest: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('mini:download-request', handler);
+    return () => ipcRenderer.removeListener('mini:download-request', handler);
+  },
 });
+
