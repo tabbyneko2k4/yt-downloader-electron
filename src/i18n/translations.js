@@ -103,6 +103,8 @@ export const translations = {
     cookieFirefox: "Mozilla Firefox",
     cookieBrave: "Brave Browser",
     cookieOpera: "Opera",
+    cookieNoticeTitle: "Important Browser Cookie Notice",
+    cookieNoticeDesc: "Please close the selected browser before downloading. Running browsers (especially Chrome/Edge on Windows) lock their SQLite database files, causing yt-dlp to report 'Could not copy Chrome cookie database'.",
 
     rateLimitLabel: "Download Rate Limit",
     rateLimitPlaceholder: "e.g. 5M, 500k",
@@ -949,6 +951,8 @@ export const translations = {
     cookieFirefox: "Mozilla Firefox",
     cookieBrave: "Brave Browser",
     cookieOpera: "Opera",
+    cookieNoticeTitle: "Lưu ý quan trọng về Cookie",
+    cookieNoticeDesc: "Vui lòng ĐÓNG trình duyệt đã chọn trước khi bắt đầu tải. Trình duyệt đang mở (đặc biệt là Chrome/Edge trên Windows) sẽ khóa file cơ sở dữ liệu Cookie SQLite, khiến yt-dlp báo lỗi 'Could not copy Chrome cookie database'.",
 
     rateLimitLabel: "Giới hạn tốc độ tải (Rate Limit)",
     rateLimitPlaceholder: "ví dụ: 5M, 500k",

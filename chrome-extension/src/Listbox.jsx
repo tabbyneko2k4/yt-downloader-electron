@@ -8,8 +8,22 @@ function parseOptions(optionsProp, children) {
   }
 
   const parsed = [];
-  React.Children.forEach(children, (child) => {
+
+  const processChild = (child) => {
     if (!child) return;
+
+    if (Array.isArray(child)) {
+      child.forEach(processChild);
+      return;
+    }
+
+    if (
+      child.type === React.Fragment ||
+      (child.props && child.props.children && typeof child.type === 'symbol')
+    ) {
+      React.Children.forEach(child.props.children, processChild);
+      return;
+    }
 
     if (child.type === 'option') {
       const val = child.props.value !== undefined ? child.props.value : child.props.children;
@@ -35,7 +49,9 @@ function parseOptions(optionsProp, children) {
         options: groupOptions,
       });
     }
-  });
+  };
+
+  React.Children.forEach(children, processChild);
 
   return parsed;
 }

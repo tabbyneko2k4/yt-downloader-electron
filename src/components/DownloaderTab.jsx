@@ -30,12 +30,14 @@ import {
   Cpu,
   Plus,
   Check,
-  ListPlus
+  ListPlus,
+  Subtitles
 } from 'lucide-react';
 import PlaylistInspector from './PlaylistInspector';
 import Listbox from './Listbox';
 import { detectFormatFromUrl } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
+import { getResolutionOptions, getAudioQualityOptions, getSubtitleOptions, buildDownloadOptions } from '../utils/downloadHelper';
 
 export default function DownloaderTab({
   settings,
@@ -210,41 +212,24 @@ export default function DownloaderTab({
   // Add individual item from search results to Download Queue
   const handleAddToQueue = (item) => {
     if (!item || !item.url) return;
-    const downloadId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 4);
-    const downloadData = {
-      id: downloadId,
+    const downloadData = buildDownloadOptions({
       url: item.url,
       formatType,
-      quality: formatType === 'video' ? videoQuality : (formatType === 'audio' ? audioQuality : (formatType === 'gif' ? 'gif' : 'thumbnail')),
+      videoQuality,
+      audioQuality,
       destDir: settings.defaultPath,
-      embedMetadata: settings.embedMetadata,
-      embedThumbnail: settings.embedThumbnail,
-      writeThumbnail: !!writeThumbnail,
-      writeDescription: !!writeDescription,
-
-      videoFps,
-      videoContainer,
-      audioSampleRate,
-      gifFps: formatType === 'gif' ? gifFps : null,
-      gifRes: formatType === 'gif' ? gifRes : null,
-      gifSpeed: formatType === 'gif' ? gifSpeed : null,
-      trimStart: trimStart.trim(),
-      trimEnd: trimEnd.trim(),
-
-      writeSubs: advancedOptions.writeSubs,
-      embedSubs: advancedOptions.embedSubs,
-      subLangs: advancedOptions.writeSubs ? advancedOptions.subLangs.trim() : null,
-      downloadSections: advancedOptions.downloadSections.trim() || null,
-      cookiesFromBrowser: advancedOptions.cookiesFromBrowser !== 'none' ? advancedOptions.cookiesFromBrowser : null,
-      rateLimit: advancedOptions.rateLimit.trim() || null,
-      customFormat: advancedOptions.customFormat.trim() || null,
-      customArgs: advancedOptions.customArgs.trim() || null,
-
-      mediaTitle: item.title,
-      uploader: item.uploader,
-      thumbnail: item.thumbnail,
-      duration: item.duration
-    };
+      mediaInfo: { info: item },
+      advancedOptions,
+      mediaDraft: {
+        ...mediaDraft,
+        title: item.title,
+        uploader: item.uploader,
+        thumbnail: item.thumbnail,
+        duration: item.duration,
+        embedMetadata: settings.embedMetadata,
+        embedThumbnail: settings.embedThumbnail
+      }
+    });
 
     startDownload(downloadData);
     setAddedToQueueMap((prev) => ({ ...prev, [item.url]: true }));
@@ -285,49 +270,21 @@ export default function DownloaderTab({
   const handleStartDownload = () => {
     if (!mediaInfo) return;
 
-    const selectedEntries = mediaInfo.isPlaylist && mediaInfo.info.entries
-      ? mediaInfo.info.entries.filter((_, idx) => playlistSelectedIndexes.includes(idx + 1))
-      : null;
-
-    const downloadId = Date.now().toString();
-    const downloadData = {
-      id: downloadId,
+    const downloadData = buildDownloadOptions({
       url: url.trim(),
       formatType,
-      quality: formatType === 'video' ? videoQuality : (formatType === 'audio' ? audioQuality : (formatType === 'gif' ? 'gif' : 'thumbnail')),
+      videoQuality,
+      audioQuality,
       destDir: settings.defaultPath,
-      isPlaylist: mediaInfo.isPlaylist,
-      playlistTitle: mediaInfo.isPlaylist ? mediaInfo.info.title : null,
-      playlistItems: mediaInfo.isPlaylist ? playlistSelectedIndexes.join(',') : null,
-      embedMetadata: settings.embedMetadata,
-      embedThumbnail: settings.embedThumbnail,
-      writeThumbnail: !!writeThumbnail,
-      writeDescription: !!writeDescription,
-
-      videoFps,
-      videoContainer,
-      audioSampleRate,
-      gifFps: formatType === 'gif' ? gifFps : null,
-      gifRes: formatType === 'gif' ? gifRes : null,
-      gifSpeed: formatType === 'gif' ? gifSpeed : null,
-      trimStart: trimStart.trim(),
-      trimEnd: trimEnd.trim(),
-
-      writeSubs: advancedOptions.writeSubs,
-      embedSubs: advancedOptions.embedSubs,
-      subLangs: advancedOptions.writeSubs ? advancedOptions.subLangs.trim() : null,
-      downloadSections: advancedOptions.downloadSections.trim() || null,
-      cookiesFromBrowser: advancedOptions.cookiesFromBrowser !== 'none' ? advancedOptions.cookiesFromBrowser : null,
-      rateLimit: advancedOptions.rateLimit.trim() || null,
-      customFormat: advancedOptions.customFormat.trim() || null,
-      customArgs: advancedOptions.customArgs.trim() || null,
-
-      mediaTitle: mediaInfo.info.title,
-      uploader: mediaInfo.info.uploader,
-      thumbnail: mediaInfo.info.thumbnail,
-      duration: mediaInfo.info.duration,
-      playlistEntries: selectedEntries
-    };
+      mediaInfo,
+      playlistSelectedIndexes,
+      advancedOptions,
+      mediaDraft: {
+        ...mediaDraft,
+        embedMetadata: settings.embedMetadata,
+        embedThumbnail: settings.embedThumbnail
+      }
+    });
 
     startDownload(downloadData);
     resetSearch();
@@ -891,13 +848,8 @@ export default function DownloaderTab({
                                 className="w-full"
                                 value={videoQuality}
                                 onChange={(e) => updateDraft({ videoQuality: e.target.value })}
-                              >
-                                <option value="best">{t('qualityBest')}</option>
-                                <option value="1080p">{t('quality1080p')}</option>
-                                <option value="720p">{t('quality720p')}</option>
-                                <option value="480p">{t('quality480p')}</option>
-                                <option value="360p">360p (SD)</option>
-                              </Listbox>
+                                options={getResolutionOptions(mediaInfo)}
+                              />
                             </div>
 
                             <div>
@@ -956,14 +908,8 @@ export default function DownloaderTab({
                               className="w-full"
                               value={audioQuality}
                               onChange={(e) => updateDraft({ audioQuality: e.target.value })}
-                            >
-                              <option value="mp3-320">{t('audioMp3_320')}</option>
-                              <option value="mp3-256">{t('audioMp3_256')}</option>
-                              <option value="mp3-128">{t('audioMp3_128')}</option>
-                              <option value="m4a">{t('audioM4a')}</option>
-                              <option value="flac">{t('audioFlac')}</option>
-                              <option value="wav">{t('audioWav')}</option>
-                            </Listbox>
+                              options={getAudioQualityOptions()}
+                            />
                           </div>
 
                           <div>
@@ -1053,27 +999,25 @@ export default function DownloaderTab({
 
                       {showAdvancedInResult && (
                         <div className="mt-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-4 animate-fade-in-up">
-                          {/* Asset Extraction Checkboxes */}
-                          <div>
-                            <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2">
-                              <Sliders size={14} className="text-emerald-500 dark:text-emerald-400" />
-                              <span>{t('metadataOptions')}</span>
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
-                                <input
-                                  type="checkbox"
-                                  className="accent-pink-500 rounded"
-                                  checked={!!writeThumbnail}
-                                  onChange={(e) => updateDraft({ writeThumbnail: e.target.checked })}
-                                />
-                                <span>{t('writeThumbnailOpt')}</span>
+                          {/* Subtitles Visual Controls & Multi-Select Language Selector */}
+                          <div className="p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-pink-200 dark:border-pink-500/20 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <Subtitles size={15} className="text-pink-500" />
+                                <span>{t('subtitlesSection')}</span>
                               </label>
+                              {((mediaInfo?.info?.subtitles && mediaInfo.info.subtitles.length > 0) || (mediaInfo?.info?.automatic_captions && mediaInfo.info.automatic_captions.length > 0)) && (
+                                <span className="text-[10px] font-semibold text-pink-600 dark:text-pink-300 bg-pink-500/15 border border-pink-400/30 px-2 py-0.5 rounded-full">
+                                  ✨ Đã nhận diện {(mediaInfo.info.subtitles?.length || 0) + (mediaInfo.info.automatic_captions?.length || 0)} ngôn ngữ phụ đề
+                                </span>
+                              )}
+                            </div>
 
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                               <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
                                 <input
                                   type="checkbox"
-                                  className="accent-pink-500 rounded"
+                                  className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
                                   checked={!!advancedOptions.writeSubs}
                                   onChange={(e) => {
                                     if (setAdvancedOptions) {
@@ -1082,6 +1026,61 @@ export default function DownloaderTab({
                                   }}
                                 />
                                 <span>{t('writeSubs')}</span>
+                              </label>
+
+                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
+                                  checked={!!advancedOptions.embedSubs}
+                                  onChange={(e) => {
+                                    if (setAdvancedOptions) {
+                                      setAdvancedOptions((prev) => ({ ...prev, embedSubs: e.target.checked }));
+                                    }
+                                  }}
+                                />
+                                <span>{t('embedSubs')}</span>
+                              </label>
+                            </div>
+
+                            {/* Multi-Select Subtitle Language Combobox */}
+                            <div className="pt-1">
+                              <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1.5 font-medium">
+                                {t('subLangsLabel')} (Multi-Select)
+                              </label>
+                              <Listbox
+                                multiple
+                                className="w-full"
+                                value={advancedOptions.subLangs || 'vi,en'}
+                                onChange={(e, newValues, joinedStr) => {
+                                  if (setAdvancedOptions) {
+                                    setAdvancedOptions((prev) => ({
+                                      ...prev,
+                                      subLangs: typeof e.target.value === 'string' ? e.target.value : joinedStr
+                                    }));
+                                  }
+                                }}
+                                options={getSubtitleOptions(mediaInfo)}
+                                placeholder="Chọn các ngôn ngữ phụ đề..."
+                              />
+                            </div>
+                          </div>
+
+                          {/* Asset Extraction Checkboxes */}
+                          <div>
+                            <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2">
+                              <Sliders size={14} className="text-emerald-500 dark:text-emerald-400" />
+                              <span>{t('metadataOptions')}</span>
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                <input
+                                  type="checkbox"
+                                  className="accent-pink-500 rounded"
+                                  checked={!!writeThumbnail}
+                                  onChange={(e) => updateDraft({ writeThumbnail: e.target.checked })}
+                                />
+                                <span>{t('writeThumbnailOpt')}</span>
                               </label>
 
                               <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">

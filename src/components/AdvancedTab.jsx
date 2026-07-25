@@ -29,7 +29,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
       id: 'preset-bypass',
       name: t('presetBypass'),
       desc: t('presetBypassDesc'),
-      options: { cookiesFromBrowser: 'chrome', customArgs: '--geo-bypass' }
+      options: { customArgs: '--geo-bypass' }
     },
     {
       id: 'preset-cut-1m',
@@ -224,48 +224,6 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
 
       {/* Categorized Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-        {/* Subtitles Visual Controls */}
-        <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
-            <Subtitles size={18} className="text-pink-500" />
-            <span>{t('subtitlesSection')}</span>
-          </h3>
-
-          <div className="space-y-3">
-            <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
-                checked={advancedOptions.writeSubs}
-                onChange={(e) => handleChange('writeSubs', e.target.checked)}
-              />
-              <span>{t('writeSubs')}</span>
-            </label>
-
-            <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
-                checked={advancedOptions.embedSubs}
-                onChange={(e) => handleChange('embedSubs', e.target.checked)}
-              />
-              <span>{t('embedSubs')}</span>
-            </label>
-
-            <div className="pt-1">
-              <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1.5 font-medium">
-                {t('subLangsLabel')}
-              </label>
-              <input
-                type="text"
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
-                placeholder="vi,en"
-                value={advancedOptions.subLangs}
-                onChange={(e) => handleChange('subLangs', e.target.value)}
-              />
-            </div>
-          </div>
-        </section>
 
         {/* Time Cut Section Visual Controls */}
         <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
@@ -314,6 +272,16 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
               </button>
             ))}
           </div>
+
+          {advancedOptions.cookiesFromBrowser && advancedOptions.cookiesFromBrowser !== 'none' && (
+            <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs leading-relaxed flex items-start gap-2.5 animate-fadeIn">
+              <span className="shrink-0 text-base">⚠️</span>
+              <div>
+                <strong className="font-semibold block mb-0.5">{t('cookieNoticeTitle')}</strong>
+                <span>{t('cookieNoticeDesc')}</span>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Speed Limit & Rate */}

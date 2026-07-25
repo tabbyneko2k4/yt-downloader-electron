@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect, useId, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronsUpDown, Check, Layers } from 'lucide-react';
+import { ChevronsUpDown, Check, Layers, Square, CheckSquare } from 'lucide-react';
 
 /**
  * Normalizes options prop or JSX children (<option>, <optgroup>) into a unified structure:
@@ -14,8 +14,22 @@ function parseOptions(optionsProp, children) {
   }
 
   const parsed = [];
-  React.Children.forEach(children, (child) => {
+
+  const processChild = (child) => {
     if (!child) return;
+
+    if (Array.isArray(child)) {
+      child.forEach(processChild);
+      return;
+    }
+
+    if (
+      child.type === React.Fragment ||
+      (child.props && child.props.children && typeof child.type === 'symbol')
+    ) {
+      React.Children.forEach(child.props.children, processChild);
+      return;
+    }
 
     if (child.type === 'option') {
       const val = child.props.value !== undefined ? child.props.value : child.props.children;
@@ -41,13 +55,16 @@ function parseOptions(optionsProp, children) {
         options: groupOptions,
       });
     }
-  });
+  };
+
+  React.Children.forEach(children, processChild);
 
   return parsed;
 }
 
 /**
  * Catalyst Tailwind UI Style Listbox Component with React Portal & Fixed Positioning
+ * Supports both Single Select and Multi-Select (multiple={true})
  */
 export default function Listbox({
   value,
@@ -62,6 +79,7 @@ export default function Listbox({
   name = '',
   id,
   size = 'md', // 'sm' | 'md'
+  multiple = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -74,19 +92,33 @@ export default function Listbox({
   const optionsList = parseOptions(optionsProp, children);
 
   // Flatten options for easy index calculation & keyboard navigation
-  const flatOptions = [];
-  optionsList.forEach((item) => {
-    if (item.group && Array.isArray(item.options)) {
-      item.options.forEach((opt) => flatOptions.push({ ...opt, group: item.group }));
-    } else {
-      flatOptions.push(item);
-    }
-  });
+  const flatOptions = useMemo(() => {
+    const list = [];
+    optionsList.forEach((item) => {
+      if (item.group && Array.isArray(item.options)) {
+        item.options.forEach((opt) => list.push({ ...opt, group: item.group }));
+      } else {
+        list.push(item);
+      }
+    });
+    return list;
+  }, [optionsList]);
 
-  // Find currently selected option item
-  const selectedOption = flatOptions.find(
-    (opt) => String(opt.value) === String(value)
-  );
+  // Handle Multi-select values (array or comma-separated string)
+  const selectedValues = useMemo(() => {
+    if (!multiple) return [];
+    if (Array.isArray(value)) return value.map(String);
+    if (typeof value === 'string') {
+      return value.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    return [];
+  }, [value, multiple]);
+
+  // Find currently selected option item for single select
+  const selectedOption = useMemo(() => {
+    if (multiple) return null;
+    return flatOptions.find((opt) => String(opt.value) === String(value));
+  }, [flatOptions, value, multiple]);
 
   // Update fixed portal positioning
   const updatePosition = () => {
@@ -155,23 +187,46 @@ export default function Listbox({
     if (disabled) return;
     if (!isOpen) {
       updatePosition();
-      const idx = flatOptions.findIndex((opt) => String(opt.value) === String(value));
-      setActiveIndex(idx >= 0 ? idx : 0);
+      if (!multiple) {
+        const idx = flatOptions.findIndex((opt) => String(opt.value) === String(value));
+        setActiveIndex(idx >= 0 ? idx : 0);
+      } else {
+        setActiveIndex(0);
+      }
     }
     setIsOpen(!isOpen);
   };
 
   const handleSelect = (optionValue, isOptDisabled) => {
     if (isOptDisabled) return;
-    setIsOpen(false);
 
-    if (onChange) {
-      const syntheticEvent = {
-        target: { value: optionValue, name: name || '' },
-        preventDefault: () => {},
-        stopPropagation: () => {},
-      };
-      onChange(syntheticEvent, optionValue);
+    if (!multiple) {
+      setIsOpen(false);
+      if (onChange) {
+        const syntheticEvent = {
+          target: { value: optionValue, name: name || '' },
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        };
+        onChange(syntheticEvent, optionValue);
+      }
+    } else {
+      const strVal = String(optionValue);
+      let newValues;
+      if (selectedValues.includes(strVal)) {
+        newValues = selectedValues.filter((v) => v !== strVal);
+      } else {
+        newValues = [...selectedValues, strVal];
+      }
+      const joinedStr = newValues.join(',');
+      if (onChange) {
+        const syntheticEvent = {
+          target: { value: joinedStr, name: name || '', values: newValues },
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        };
+        onChange(syntheticEvent, newValues, joinedStr);
+      }
     }
   };
 
@@ -211,6 +266,46 @@ export default function Listbox({
     }
   };
 
+  // Render button contents for Multi-Select mode
+  const renderMultiLabel = () => {
+    if (selectedValues.length === 0) {
+      return <span className="text-slate-400 dark:text-slate-500">{placeholder}</span>;
+    }
+
+    if (selectedValues.length <= 2) {
+      return (
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          {selectedValues.map((v) => {
+            const found = flatOptions.find((opt) => String(opt.value) === String(v));
+            const labelText = found ? found.label : v;
+            return (
+              <span
+                key={v}
+                className="px-2 py-0.5 text-[11px] font-bold rounded-lg bg-pink-500/15 text-pink-600 dark:text-pink-300 border border-pink-400/30 shrink-0 truncate max-w-[120px]"
+              >
+                {labelText}
+              </span>
+            );
+          })}
+        </div>
+      );
+    }
+
+    const matchedNames = selectedValues.map((v) => {
+      const found = flatOptions.find((opt) => String(opt.value) === String(v));
+      return found ? found.label.replace(/^[\p{Emoji}\S]+\s*/u, '') : v;
+    });
+
+    return (
+      <span className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 truncate">
+        <span className="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-pink-500 text-white shrink-0">
+          {selectedValues.length}
+        </span>
+        <span className="truncate">{matchedNames.join(', ')}</span>
+      </span>
+    );
+  };
+
   // Size variations
   const sizeClasses =
     size === 'sm'
@@ -236,8 +331,10 @@ export default function Listbox({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="truncate flex items-center gap-1.5">
-          {selectedOption ? (
+        <span className="truncate flex items-center gap-1.5 flex-1 min-w-0">
+          {multiple ? (
+            renderMultiLabel()
+          ) : selectedOption ? (
             <>
               {selectedOption.icon && <span className="shrink-0">{selectedOption.icon}</span>}
               <span>{selectedOption.label}</span>
@@ -261,8 +358,43 @@ export default function Listbox({
             ref={menuRef}
             role="listbox"
             style={menuStyle}
-            className={`max-h-60 overflow-y-auto rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-1.5 shadow-2xl shadow-slate-950/40 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none custom-scrollbar transition-all duration-150 animate-in fade-in-80 zoom-in-95 ${menuClassName}`}
+            className={`max-h-64 overflow-y-auto rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-1.5 shadow-2xl shadow-slate-950/40 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none custom-scrollbar transition-all duration-150 animate-in fade-in-80 zoom-in-95 ${menuClassName}`}
           >
+            {/* Quick multi-select control bar */}
+            {multiple && flatOptions.length > 0 && (
+              <div className="flex items-center justify-between px-2 py-1 mb-1 pb-1.5 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <span>Đã chọn: <strong className="text-pink-500 font-bold">{selectedValues.length}</strong></span>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    className="text-pink-500 dark:text-pink-400 hover:underline cursor-pointer font-bold"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const allVals = flatOptions.map((f) => String(f.value));
+                      const joinedStr = allVals.join(',');
+                      if (onChange) {
+                        onChange({ target: { value: joinedStr, name: name || '', values: allVals } }, allVals, joinedStr);
+                      }
+                    }}
+                  >
+                    Chọn tất cả
+                  </button>
+                  <button
+                    type="button"
+                    className="text-slate-400 hover:text-slate-200 hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onChange) {
+                        onChange({ target: { value: '', name: name || '', values: [] } }, [], '');
+                      }
+                    }}
+                  >
+                    Bỏ chọn
+                  </button>
+                </div>
+              </div>
+            )}
+
             {optionsList.length === 0 ? (
               <div className="px-3 py-2 text-xs text-slate-400 italic text-center">
                 No options available
@@ -277,7 +409,9 @@ export default function Listbox({
                         <span>{item.group}</span>
                       </div>
                       {item.options.map((opt) => {
-                        const isSelected = String(opt.value) === String(value);
+                        const isSelected = multiple
+                          ? selectedValues.includes(String(opt.value))
+                          : String(opt.value) === String(value);
                         const optFlatIndex = flatOptions.findIndex(
                           (f) => String(f.value) === String(opt.value) && f.group === item.group
                         );
@@ -299,10 +433,15 @@ export default function Listbox({
                             } ${opt.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                           >
                             <span className="truncate flex items-center gap-1.5">
+                              {multiple && (
+                                <span className="shrink-0 text-pink-500">
+                                  {isSelected ? <CheckSquare size={14} /> : <Square size={14} className="opacity-40" />}
+                                </span>
+                              )}
                               {opt.icon && <span className="shrink-0">{opt.icon}</span>}
                               <span>{opt.label}</span>
                             </span>
-                            {isSelected && (
+                            {!multiple && isSelected && (
                               <Check
                                 size={14}
                                 className="text-pink-500 dark:text-pink-400 shrink-0 ml-2 stroke-[2.5]"
@@ -316,7 +455,9 @@ export default function Listbox({
                 }
 
                 // Standard Option
-                const isSelected = String(item.value) === String(value);
+                const isSelected = multiple
+                  ? selectedValues.includes(String(item.value))
+                  : String(item.value) === String(value);
                 const optFlatIndex = flatOptions.findIndex((f) => String(f.value) === String(item.value));
                 const isActive = optFlatIndex === activeIndex;
 
@@ -336,10 +477,15 @@ export default function Listbox({
                     } ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
                   >
                     <span className="truncate flex items-center gap-1.5">
+                      {multiple && (
+                        <span className="shrink-0 text-pink-500">
+                          {isSelected ? <CheckSquare size={14} /> : <Square size={14} className="opacity-40" />}
+                        </span>
+                      )}
                       {item.icon && <span className="shrink-0">{item.icon}</span>}
                       <span>{item.label}</span>
                     </span>
-                    {isSelected && (
+                    {!multiple && isSelected && (
                       <Check
                         size={14}
                         className="text-pink-500 dark:text-pink-400 shrink-0 ml-2 stroke-[2.5]"
@@ -355,3 +501,4 @@ export default function Listbox({
     </div>
   );
 }
+

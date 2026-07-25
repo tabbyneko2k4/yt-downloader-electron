@@ -3,7 +3,8 @@ module.exports = {
   content: [
     "./index.html",
     "./mini.html",
-    "./src/**/*.{js,ts,jsx,tsx}"
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./chrome-extension/**/*.{html,js,jsx,ts,tsx}"
   ],
   darkMode: 'class',
   theme: {

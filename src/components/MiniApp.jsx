@@ -37,10 +37,12 @@ import {
   FolderCheck,
   RefreshCw,
   FileCode,
-  Zap
+  Zap,
+  Subtitles
 } from 'lucide-react';
 import { detectFormatFromUrl } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
+import { getResolutionOptions, getAudioQualityOptions, getSubtitleOptions, buildDownloadOptions } from '../utils/downloadHelper';
 import Listbox from './Listbox';
 
 export default function MiniApp() {
@@ -59,6 +61,9 @@ export default function MiniApp() {
   const [formatType, setFormatType] = useState('video'); // 'video' | 'audio' | 'thumbnail' | 'gif'
   const [quality, setQuality] = useState('best');
   const [selectedPresetId, setSelectedPresetId] = useState('');
+  const [writeSubs, setWriteSubs] = useState(false);
+  const [embedSubs, setEmbedSubs] = useState(false);
+  const [subLangs, setSubLangs] = useState('vi,en');
 
   // Analysis & Download State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -95,8 +100,8 @@ export default function MiniApp() {
     },
     {
       id: 'preset-bypass',
-      name: t('presetBypass') || '🔐 Geo-Bypass & Cookies',
-      options: { cookiesFromBrowser: 'chrome', customArgs: '--geo-bypass' }
+      name: t('presetBypass') || '🔐 Geo-Bypass',
+      options: { customArgs: '--geo-bypass' }
     },
     {
       id: 'preset-cut-1m',
@@ -373,7 +378,6 @@ export default function MiniApp() {
     const targetTitle = mediaInfo && mediaInfo.info && mediaInfo.info.title ? mediaInfo.info.title : 'Media';
 
     try {
-      const info = mediaInfo && mediaInfo.info ? mediaInfo.info : {};
       const destDir = await api.getDownloadsPath();
       const id = `mini_${Date.now()}`;
 
@@ -390,13 +394,7 @@ export default function MiniApp() {
         }
       }
 
-      const isPlaylist = !!(mediaInfo && mediaInfo.isPlaylist && !mediaInfo.isSearch);
-      const entries = (mediaInfo && mediaInfo.info && mediaInfo.info.entries) || [];
-      const selectedEntries = isPlaylist && entries.length > 0
-        ? entries.filter((_, idx) => playlistSelectedIndexes.includes(idx + 1))
-        : (info.entries || null);
-
-      const downloadOptions = {
+      const downloadOptions = buildDownloadOptions({
         id,
         url: url.trim(),
         formatType,
@@ -404,18 +402,15 @@ export default function MiniApp() {
         videoQuality: quality,
         audioQuality: quality,
         destDir,
-        isPlaylist,
-        playlistTitle: isPlaylist ? info.title : null,
-        playlistEntries: selectedEntries,
-        playlistItems: isPlaylist && playlistSelectedIndexes.length > 0 ? playlistSelectedIndexes.join(',') : null,
-        mediaTitle: info.title || 'media',
-        uploader: info.uploader || '',
-        thumbnail: info.thumbnail || '',
-        duration: info.duration || null,
-        embedMetadata: true,
-        embedThumbnail: formatType === 'audio',
-        ...presetOptions
-      };
+        mediaInfo,
+        playlistSelectedIndexes,
+        advancedOptions: {
+          ...presetOptions,
+          writeSubs: writeSubs || presetOptions.writeSubs,
+          embedSubs: embedSubs || presetOptions.embedSubs,
+          subLangs: subLangs || presetOptions.subLangs || 'vi,en'
+        }
+      });
 
       await api.miniStartDownload(downloadOptions);
 
@@ -425,7 +420,8 @@ export default function MiniApp() {
       setAnalyzeError('');
       setDownloaderStage('stage1');
 
-      const countMsg = isPlaylist ? ` (${selectedEntries.length} tracks)` : '';
+      const isPlaylist = !!(mediaInfo && mediaInfo.isPlaylist && !mediaInfo.isSearch);
+      const countMsg = isPlaylist ? ` (${downloadOptions.playlistEntries ? downloadOptions.playlistEntries.length : 0} tracks)` : '';
       showToastBanner(`Added "${targetTitle.substring(0, 20)}${targetTitle.length > 20 ? '...' : ''}"${countMsg} to queue`);
     } catch (err) {
       setAnalyzeError(err.message || 'Failed to start download.');
@@ -892,32 +888,11 @@ export default function MiniApp() {
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('qualityLabel')}:</span>
                     <Listbox
                       size="sm"
-                      className="w-32"
+                      className="w-36"
                       value={quality}
                       onChange={(e) => setQuality(e.target.value)}
-                    >
-                      {formatType === 'video' && (
-                        <>
-                          <option value="best">{t('qualityBest')}</option>
-                          <option value="1080p">1080p Full HD</option>
-                          <option value="720p">720p HD</option>
-                          <option value="480p">480p SD</option>
-                        </>
-                      )}
-                      {formatType === 'audio' && (
-                        <>
-                          <option value="mp3-320">{t('audioMp3_320')}</option>
-                          <option value="mp3-192">{t('audioMp3_256')}</option>
-                          <option value="m4a">{t('audioM4a')}</option>
-                          <option value="flac">{t('audioFlac')}</option>
-                        </>
-                      )}
-                      {formatType === 'thumbnail' && (
-                        <>
-                          <option value="best">{t('qualityBest')}</option>
-                        </>
-                      )}
-                    </Listbox>
+                      options={formatType === 'video' ? getResolutionOptions(mediaInfo) : (formatType === 'audio' ? getAudioQualityOptions() : [{ value: 'best', label: 'Tốt nhất' }])}
+                    />
                   </div>
                 </div>
 
@@ -961,6 +936,53 @@ export default function MiniApp() {
                       </optgroup>
                     )}
                   </Listbox>
+                </div>
+
+                {/* Subtitles & Multi-Select Language Selector */}
+                <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-pink-200 dark:border-pink-500/20 backdrop-blur-xl space-y-2 shadow-md transform-gpu">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
+                      <Subtitles size={13} className="text-pink-500" />
+                      <span>{t('subtitlesSection')}</span>
+                    </div>
+                    {((mediaInfo?.info?.subtitles && mediaInfo.info.subtitles.length > 0) || (mediaInfo?.info?.automatic_captions && mediaInfo.info.automatic_captions.length > 0)) && (
+                      <span className="text-[10px] font-semibold text-pink-600 dark:text-pink-300 bg-pink-500/15 border border-pink-400/30 px-1.5 py-0.5 rounded-md">
+                        ✨ {(mediaInfo.info.subtitles?.length || 0) + (mediaInfo.info.automatic_captions?.length || 0)} sub
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5">
+                    <label className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                      <input
+                        type="checkbox"
+                        className="w-3.5 h-3.5 accent-pink-500 rounded cursor-pointer"
+                        checked={writeSubs}
+                        onChange={(e) => setWriteSubs(e.target.checked)}
+                      />
+                      <span className="truncate">{t('writeSubs')}</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                      <input
+                        type="checkbox"
+                        className="w-3.5 h-3.5 accent-pink-500 rounded cursor-pointer"
+                        checked={embedSubs}
+                        onChange={(e) => setEmbedSubs(e.target.checked)}
+                      />
+                      <span className="truncate">{t('embedSubs')}</span>
+                    </label>
+                  </div>
+
+                  <Listbox
+                    multiple
+                    size="sm"
+                    className="w-full pt-1"
+                    value={subLangs}
+                    onChange={(e, newValues, joinedStr) => setSubLangs(typeof e.target.value === 'string' ? e.target.value : joinedStr)}
+                    options={getSubtitleOptions(mediaInfo)}
+                    placeholder="Chọn ngôn ngữ phụ đề..."
+                  />
                 </div>
 
                 {/* Primary Download Button */}
@@ -1155,7 +1177,8 @@ export default function MiniApp() {
                 <div className="flex items-center gap-1.5 h-full shrink-0">
                   <Listbox
                     size="sm"
-                    className="w-28 sm:w-32"
+                    className="w-28 sm:w-32 h-full"
+                    buttonClassName="h-full rounded-xl py-0"
                     value={filesSort}
                     onChange={(e) => setFilesSort(e.target.value)}
                   >
@@ -1167,7 +1190,7 @@ export default function MiniApp() {
 
                   {history.length > 0 && (
                     <button
-                      className="h-full px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 active:scale-95 text-red-600 dark:text-red-400 border border-red-500/25 flex items-center justify-center transition-all duration-200 cursor-pointer transform-gpu"
+                      className="h-full aspect-square rounded-xl bg-red-500/10 hover:bg-red-500/20 active:scale-95 text-red-600 dark:text-red-400 border border-red-500/25 flex items-center justify-center transition-all duration-200 cursor-pointer transform-gpu"
                       onClick={handleClearAllHistory}
                       title={t('clearHistoryBtn') || 'Clear History'}
                     >
@@ -1390,7 +1413,7 @@ export default function MiniApp() {
 
       {/* STAGE 3 Toast Notification Banner */}
       {toastMessage && (
-        <div className="absolute bottom-14 left-3 right-3 z-50 flex items-center justify-between p-2.5 rounded-2xl bg-slate-900/95 text-slate-100 dark:bg-slate-900/95 border border-pink-500/30 shadow-2xl shadow-pink-500/20 backdrop-blur-xl text-xs animate-fade-in-up transform-gpu">
+        <div className="absolute bottom-[72px] left-3 right-3 z-50 flex items-center justify-between p-2.5 rounded-2xl bg-slate-900/95 text-slate-100 dark:bg-slate-900/95 border border-pink-500/30 shadow-2xl shadow-pink-500/20 backdrop-blur-xl text-xs animate-fade-in-up transform-gpu">
           <div className="flex items-center gap-2 min-w-0">
             <CheckCircle2 size={15} className="text-emerald-400 shrink-0 animate-bounce" />
             <span className="truncate font-medium text-slate-100">{toastMessage}</span>

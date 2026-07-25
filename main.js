@@ -831,6 +831,9 @@ async function getVideoInfoInternal(url) {
   return new Promise((resolve, reject) => {
     const ytDlpCmd = getYtDlpCommand();
     const env = getSpawnEnv();
+
+    console.log('\n[DEBUG YT-DLP INFO EXEC]:', `${ytDlpCmd} --flat-playlist --dump-single-json "${url}"\n`);
+
     const child = spawn(ytDlpCmd, ['--flat-playlist', '--dump-single-json', url], { env });
 
     let stdoutData = '';
@@ -888,6 +891,23 @@ async function getVideoInfoInternal(url) {
               }
             });
           } else {
+            const subtitlesList = [];
+            if (info.subtitles && typeof info.subtitles === 'object') {
+              Object.keys(info.subtitles).forEach((langCode) => {
+                const langArr = info.subtitles[langCode];
+                const name = (langArr && langArr[0] && langArr[0].name) ? langArr[0].name : langCode;
+                subtitlesList.push({ code: langCode, name: name, isAuto: false });
+              });
+            }
+            const autoCaptionsList = [];
+            if (info.automatic_captions && typeof info.automatic_captions === 'object') {
+              Object.keys(info.automatic_captions).forEach((langCode) => {
+                const langArr = info.automatic_captions[langCode];
+                const name = (langArr && langArr[0] && langArr[0].name) ? langArr[0].name : langCode;
+                autoCaptionsList.push({ code: langCode, name: name, isAuto: true });
+              });
+            }
+
             resolve({
               success: true,
               isPlaylist: false,
@@ -897,6 +917,8 @@ async function getVideoInfoInternal(url) {
                 duration: info.duration,
                 uploader: info.uploader || info.channel,
                 webpage_url: info.webpage_url || url,
+                subtitles: subtitlesList,
+                automatic_captions: autoCaptionsList,
                 formats: info.formats ? info.formats.map(f => ({
                   format_id: f.format_id,
                   ext: f.ext,
@@ -904,8 +926,15 @@ async function getVideoInfoInternal(url) {
                   filesize: f.filesize || f.filesize_approx,
                   fps: f.fps,
                   vcodec: f.vcodec,
-                  acodec: f.acodec
-                })) : []
+                  acodec: f.acodec,
+                  height: f.height,
+                  width: f.width,
+                  abr: f.abr,
+                  tbr: f.tbr,
+                  format_note: f.format_note
+                })) : [],
+                height: info.height,
+                width: info.width
               }
             });
           }
@@ -1104,23 +1133,48 @@ function startLocalHttpBridge() {
       req.on('data', chunk => { body += chunk; });
       req.on('end', async () => {
         try {
-          const { action, filePath } = JSON.parse(body || '{}');
-          if (!filePath) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Missing filePath' }));
-            return;
-          }
+          const { action, filePath, id, history: newHistory } = JSON.parse(body || '{}');
 
-          if (action === 'openFolder') {
+          if (action === 'openFolder' && filePath) {
             const dir = fs.existsSync(filePath) && fs.statSync(filePath).isDirectory() ? filePath : path.dirname(filePath);
             await shell.openPath(dir);
-          } else if (action === 'openFile') {
+          } else if (action === 'openFile' && filePath) {
             await shell.openPath(filePath);
-          } else if (action === 'copyPath') {
+          } else if ((action === 'copyPath' || action === 'copyFile') && filePath) {
             const { clipboard } = require('electron');
-            clipboard.writeText(filePath);
-          } else if (action === 'delete') {
+            const absolutePath = path.resolve(filePath);
+            clipboard.writeText(absolutePath);
+            if (process.platform === 'win32' && fs.existsSync(absolutePath)) {
+              try {
+                const buffer = Buffer.concat([
+                  Buffer.from(absolutePath, 'ucs2'),
+                  Buffer.from([0, 0])
+                ]);
+                clipboard.writeBuffer('FileNameW', buffer);
+              } catch (e) { }
+            }
+          } else if (action === 'delete' && filePath) {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          } else if (action === 'deleteHistory' && id) {
+            cachedHistory = (cachedHistory || []).filter(item => item.id !== id);
+            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+          } else if (action === 'clearHistory') {
+            cachedHistory = [];
+            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+          } else if (action === 'pushHistory' && Array.isArray(newHistory)) {
+            cachedHistory = newHistory;
+            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+          } else if (action === 'startDrag' && filePath) {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              const icon = fs.existsSync(dragIconPath) ? dragIconPath : nativeImage.createFromBuffer(validPngBuffer);
+              mainWindow.webContents.startDrag({
+                file: path.resolve(filePath),
+                icon: icon
+              });
+            }
           }
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1269,25 +1323,34 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
     } else if (customFormat && customFormat.trim()) {
       args.push('-f', customFormat.trim());
     } else if (formatType === 'video') {
-      let formatSelector = 'bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best';
+      let formatSelector = 'bv*+ba/b/best';
       if (quality && quality !== 'best') {
         const height = quality.replace('p', '');
-        formatSelector = `bv*[height<=${height}][ext=mp4]+ba[ext=m4a]/b[height<=${height}][ext=mp4]/best`;
+        formatSelector = `bv*[height=${height}]+ba/bv*[height<=${height}]+ba/b[height<=${height}]/best`;
       }
       if (videoFps && videoFps !== 'auto') {
         formatSelector = `bv*[fps<=${videoFps}]+ba/best`;
       }
       args.push('-f', formatSelector);
 
-      if (videoContainer && videoContainer !== 'mp4') {
-        args.push('--remux-video', videoContainer);
-      }
+      const targetContainer = videoContainer || 'mp4';
+      args.push('--merge-output-format', targetContainer);
     } else if (formatType === 'audio') {
       args.push('-x');
+      const ffmpegArgs = [];
+
       if (quality === 'mp3-320') {
-        args.push('--audio-format', 'mp3', '--audio-quality', '0');
+        args.push('--audio-format', 'mp3', '--audio-quality', '320k');
+        ffmpegArgs.push('-b:a', '320k');
+      } else if (quality === 'mp3-256') {
+        args.push('--audio-format', 'mp3', '--audio-quality', '256k');
+        ffmpegArgs.push('-b:a', '256k');
       } else if (quality === 'mp3-192') {
-        args.push('--audio-format', 'mp3', '--audio-quality', '5');
+        args.push('--audio-format', 'mp3', '--audio-quality', '192k');
+        ffmpegArgs.push('-b:a', '192k');
+      } else if (quality === 'mp3-128') {
+        args.push('--audio-format', 'mp3', '--audio-quality', '128k');
+        ffmpegArgs.push('-b:a', '128k');
       } else if (quality === 'wav') {
         args.push('--audio-format', 'wav');
       } else if (quality === 'm4a') {
@@ -1297,11 +1360,16 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
       } else if (quality === 'opus') {
         args.push('--audio-format', 'opus');
       } else {
-        args.push('--audio-format', 'mp3');
+        args.push('--audio-format', 'mp3', '--audio-quality', '320k');
+        ffmpegArgs.push('-b:a', '320k');
       }
 
       if (audioSampleRate && audioSampleRate !== 'auto') {
-        args.push('--postprocessor-args', `ExtractAudio+ffmpeg:-ar ${audioSampleRate}`);
+        ffmpegArgs.push('-ar', audioSampleRate);
+      }
+
+      if (ffmpegArgs.length > 0) {
+        args.push('--postprocessor-args', `ExtractAudio+ffmpeg:${ffmpegArgs.join(' ')}`);
       }
     } else if (formatType === 'gif') {
       args.push('--recode-video', 'gif');
@@ -1341,7 +1409,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
 
     // Subtitles
     if (writeSubs) {
-      args.push('--write-subs');
+      args.push('--write-subs', '--write-auto-subs');
       if (subLangs) {
         args.push('--sub-langs', subLangs);
       }
@@ -1371,6 +1439,7 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
       args.push(...parsedExtraArgs);
     }
 
+    args.push('--print', 'after_move:[OUTFILE]%(filepath)s');
     args.push(url);
 
     // Create Persistent Task Log Manifest JSON file on Disk
@@ -1392,8 +1461,22 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
     const ytDlpCmd = getYtDlpCommand();
     const env = getSpawnEnv();
 
+    const fullCmdStr = `${ytDlpCmd} ${args.map(a => (a.includes(' ') ? `"${a}"` : a)).join(' ')}`;
+    console.log('\n================================================================');
+    console.log('[DEBUG YT-DLP & FFMPEG DOWNLOAD COMMAND]:');
+    console.log(fullCmdStr);
+    console.log('================================================================\n');
+
+    writeLogLine(`[START] Command: ${fullCmdStr}`);
+
+    const taskStartTime = Date.now();
     const downloadProcess = spawn(ytDlpCmd, args, { env });
     activeDownloads.set(id, downloadProcess);
+
+    // Send initial command line to UI
+    const cmdLogLine = `[COMMAND]: ${fullCmdStr}`;
+    mainWindow.webContents.send('download-log', { id, logLine: cmdLogLine, logFilePath });
+    if (miniWindow) miniWindow.webContents.send('download-log', { id, logLine: cmdLogLine, logFilePath });
 
     // Track rich meta for mini window
     activeDownloadsMeta.set(id, {
@@ -1424,6 +1507,8 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
       const lines = text.split(/[\r\n]+/);
       for (const line of lines) {
         if (!line.trim()) continue;
+
+        console.log('[yt-dlp stdout]:', line.trim());
 
         const itemMatch = line.match(/\[download\]\s+Downloading\s+(?:item|video)?\s*(\d+)\s+of\s+(\d+)/i);
         if (itemMatch) {
@@ -1475,9 +1560,16 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
     downloadProcess.stderr.on('data', (data) => {
       const text = data.toString();
       logs += text;
+      console.log('[yt-dlp stderr]:', text.trim());
       writeLogLine(`[STDERR] ${text.trim()}`);
-      mainWindow.webContents.send('download-log', { id, logLine: `[Error Log] ${text.trim()}`, logFilePath });
-      if (miniWindow) miniWindow.webContents.send('download-log', { id, logLine: `[Error Log] ${text.trim()}`, logFilePath });
+
+      let formattedLog = `[Error Log] ${text.trim()}`;
+      if (text.includes('Could not copy') && text.includes('cookie database')) {
+        formattedLog = `[⚠️ HƯỚNG DẪN XỬ LÝ LỖI COOKIE]: Chrome/Edge đang mở làm KHOÁ cơ sở dữ liệu Cookie! Hãy ĐÓNG trình duyệt hoặc chọn "Không dùng Cookie" trong Tùy chọn Nâng cao rồi thử lại.`;
+      }
+
+      mainWindow.webContents.send('download-log', { id, logLine: formattedLog, logFilePath });
+      if (miniWindow) miniWindow.webContents.send('download-log', { id, logLine: formattedLog, logFilePath });
     });
 
     downloadProcess.on('close', (code) => {
@@ -1520,43 +1612,69 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         const destinationPaths = [];
         const lines = logs.split(/[\r\n]+/);
 
-        const patterns = [
-          /(?:[Dd]estination:\s+)(.+)$/,
-          /(?:[Mm]erging\s+formats\s+into\s+)(.+)$/,
-          /(?:[Aa]dding\s+metadata\s+to\s+)(.+)$/,
-          /(?:[Aa]dding\s+thumbnail\s+to\s+)(.+)$/,
-          /(?:[Cc]orrecting\s+container\s+of\s+)(.+)$/,
-          /(?:[Ff]ixup[Mm]4a\]\s+Correcting\s+container\s+of\s+)(.+)$/,
-          /(?:[Vv]ideoConvertor\]\s+Converting\s+video\s+to\s+)(.+)$/
-        ];
-
+        // 1. First priority: parse explicit [OUTFILE] tags from --print
         for (const line of lines) {
           const cleanLine = stripAnsi(line);
-          for (const pattern of patterns) {
-            const match = cleanLine.match(pattern);
-            if (match) {
-              let filePath = match[1].trim();
-              if (filePath.startsWith('"') && filePath.endsWith('"')) filePath = filePath.slice(1, -1);
-              if (filePath.startsWith("'") && filePath.endsWith("'")) filePath = filePath.slice(1, -1);
-              filePath = filePath.replace(/[\r\n]/g, '').trim();
-              const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
-              if (!destinationPaths.includes(absolutePath)) {
-                destinationPaths.push(absolutePath);
+          const outfileMatch = cleanLine.match(/\[OUTFILE\]\s*(.+)$/);
+          if (outfileMatch) {
+            let filePath = outfileMatch[1].trim();
+            if (filePath.startsWith('"') && filePath.endsWith('"')) filePath = filePath.slice(1, -1);
+            if (filePath.startsWith("'") && filePath.endsWith("'")) filePath = filePath.slice(1, -1);
+            filePath = filePath.replace(/[\r\n]/g, '').trim();
+            const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
+            if (fs.existsSync(absolutePath) && !destinationPaths.includes(absolutePath)) {
+              destinationPaths.push(absolutePath);
+            }
+          }
+        }
+
+        // 2. Secondary fallback: parse standard yt-dlp log patterns if no [OUTFILE] found
+        if (destinationPaths.length === 0) {
+          const patterns = [
+            /(?:\[download\]\s+)(.+?)\s+has already been downloaded/,
+            /(?:[Dd]estination:\s+)(.+)$/,
+            /(?:[Mm]erging\s+formats\s+into\s+)(.+)$/,
+            /(?:[Aa]dding\s+metadata\s+to\s+)(.+)$/,
+            /(?:[Aa]dding\s+thumbnail\s+to\s+)(.+)$/,
+            /(?:[Cc]orrecting\s+container\s+of\s+)(.+)$/,
+            /(?:[Ff]ixup[Mm]4a\]\s+Correcting\s+container\s+of\s+)(.+)$/,
+            /(?:[Vv]ideoConvertor\]\s+Converting\s+video\s+to\s+)(.+)$/
+          ];
+
+          for (const line of lines) {
+            const cleanLine = stripAnsi(line);
+            for (const pattern of patterns) {
+              const match = cleanLine.match(pattern);
+              if (match) {
+                let filePath = match[1].trim();
+                if (filePath.startsWith('"') && filePath.endsWith('"')) filePath = filePath.slice(1, -1);
+                if (filePath.startsWith("'") && filePath.endsWith("'")) filePath = filePath.slice(1, -1);
+                filePath = filePath.replace(/[\r\n]/g, '').trim();
+                const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(finalDestDir, filePath);
+                if (fs.existsSync(absolutePath) && !destinationPaths.includes(absolutePath)) {
+                  destinationPaths.push(absolutePath);
+                }
               }
             }
           }
         }
 
-        // Scan folder for files if missing or incomplete
-        try {
-          const filesInDir = fs.readdirSync(finalDestDir);
-          const allMediaFiles = filesInDir
-            .filter(f => !f.endsWith('.log') && !f.endsWith('.json'))
-            .map(f => path.join(finalDestDir, f));
-          if (allMediaFiles.length > 0) {
-            destinationPaths.push(...allMediaFiles);
-          }
-        } catch (e) { }
+        // 3. Final fallback: scan folder ONLY for files created or modified during this task execution
+        if (destinationPaths.length === 0) {
+          try {
+            const filesInDir = fs.readdirSync(finalDestDir);
+            for (const f of filesInDir) {
+              if (f.endsWith('.log') || f.endsWith('.json')) continue;
+              const fullPath = path.join(finalDestDir, f);
+              try {
+                const stat = fs.statSync(fullPath);
+                if (stat.isFile() && stat.mtimeMs >= taskStartTime - 5000) {
+                  destinationPaths.push(fullPath);
+                }
+              } catch (e) { }
+            }
+          } catch (e) { }
+        }
 
         const uniqueFiles = Array.from(new Set(destinationPaths)).filter(fp => {
           try { return fs.existsSync(fp) && fs.statSync(fp).isFile(); } catch (e) { return false; }
@@ -1587,10 +1705,15 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         writeLogLine(`[ERROR] Process exited with code ${code}`);
         saveTaskLogManifest(finalDestDir, options, 'error');
 
+        const isCookieLock = logs.includes('Could not copy') && logs.includes('cookie database');
         const dict = NOTIF_TRANSLATIONS[currentSettings.language || 'en'] || NOTIF_TRANSLATIONS.en;
+        const failureStatus = isCookieLock
+          ? '⚠️ Lỗi Cookie DB Lock: Hãy đóng trình duyệt Chrome/Edge rồi thử lại'
+          : dict.errCodeStatus(code);
+
         showDownloadNotification({
           title: dict.errorTitle,
-          status: dict.errCodeStatus(code),
+          status: failureStatus,
           mediaTitle: options.mediaTitle || options.playlistTitle || dict.mediaTitleDefault,
           uploader: options.uploader,
           thumbnail: options.thumbnail,
