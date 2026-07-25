@@ -265,6 +265,17 @@ export default function App() {
     return () => { if (unsub) unsub(); };
   }, []);
 
+  // Listen for tab navigation commands (e.g. notification click)
+  useEffect(() => {
+    if (!window.api || !window.api.onNavigateTab) return;
+    const unsub = window.api.onNavigateTab((tabKey) => {
+      if (tabKey) {
+        setActiveTab(tabKey);
+      }
+    });
+    return () => { if (unsub) unsub(); };
+  }, []);
+
   // Process next queue task automatically
   useEffect(() => {
     const maxConcurrent = settings.maxConcurrentDownloads || 3;

@@ -80,5 +80,13 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('mini:download-request', handler);
     return () => ipcRenderer.removeListener('mini:download-request', handler);
   },
+
+  // Desktop Notifications & Tab Navigation
+  onNavigateTab: (callback) => {
+    const handler = (_event, tab) => callback(tab);
+    ipcRenderer.on('navigate-to-tab', handler);
+    return () => ipcRenderer.removeListener('navigate-to-tab', handler);
+  },
+  showNotification: (options) => ipcRenderer.invoke('show-notification', options)
 });
 

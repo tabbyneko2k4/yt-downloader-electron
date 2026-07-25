@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage, Tray } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeImage, Tray, Notification } = require('electron');
 
 // Vô hiệu hóa GPU acceleration & GPU sub-process để tránh lỗi crash GPU helper (exit_code=-1073741515 / 0xC0000135 DLL Not Found)
 app.disableHardwareAcceleration();
@@ -264,6 +264,9 @@ function createTray() {
 
 
 app.whenReady().then(() => {
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.yt.downloader');
+  }
   createWindow();
   createTray();
 
@@ -361,6 +364,92 @@ ipcMain.handle('mini:start-download', (event, options) => {
   // Relay to main window to handle via its queue system
   if (mainWindow) {
     mainWindow.webContents.send('mini:download-request', options);
+  }
+});
+
+// Helper to download thumbnail locally for Toast Notification icon
+async function downloadThumbnailTemp(url) {
+  if (!url || typeof url !== 'string') return null;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (fs.existsSync(url)) return url;
+    return null;
+  }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const tempPath = path.join(userDataPath, `thumb_notif_${Date.now()}.jpg`);
+    fs.writeFileSync(tempPath, buffer);
+    setTimeout(() => {
+      try { if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); } catch (e) {}
+    }, 15000);
+    return tempPath;
+  } catch (err) {
+    console.error('Failed to fetch notification thumbnail:', err.message);
+    return null;
+  }
+}
+
+// Desktop Notification System with App Name, Title, Uploader, Status & Thumbnail
+async function showDownloadNotification({
+  title,
+  status,
+  mediaTitle,
+  uploader,
+  thumbnail,
+  isError = false,
+  tab = 'downloads',
+  body: customBody
+}) {
+  try {
+    if (Notification && Notification.isSupported()) {
+      let iconFilePath = null;
+      if (thumbnail) {
+        iconFilePath = await downloadThumbnailTemp(thumbnail);
+      }
+
+      const defaultAppIcon = path.join(__dirname, 'icon', 'icon.png');
+      if (!iconFilePath && fs.existsSync(defaultAppIcon)) {
+        iconFilePath = defaultAppIcon;
+      }
+
+      const appName = 'Media Downloader';
+      const notifTitle = title
+        ? `${appName} • ${title}`
+        : `${appName} • ${isError ? '❌ Tải xuống thất bại' : '✅ Tải xuống hoàn tất'}`;
+
+      const nameStr = mediaTitle || 'Tệp Media';
+      const uploaderStr = uploader || 'Không rõ nghệ sĩ';
+      const statusStr = status || (isError ? 'Thất bại' : 'Hoàn tất (100%)');
+
+      const notifBody = customBody || `🎬 Tiêu đề: ${nameStr}\n👤 Nghệ sĩ: ${uploaderStr}\n📌 Trạng thái: ${statusStr}`;
+
+      const notification = new Notification({
+        title: notifTitle,
+        body: notifBody,
+        icon: iconFilePath || undefined
+      });
+
+      notification.on('click', () => {
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) mainWindow.restore();
+          mainWindow.show();
+          mainWindow.focus();
+          mainWindow.webContents.send('navigate-to-tab', tab);
+        }
+      });
+
+      notification.show();
+    }
+  } catch (err) {
+    console.error('Failed to show notification:', err);
+  }
+}
+
+ipcMain.handle('show-notification', async (_event, options) => {
+  if (options && typeof options === 'object') {
+    await showDownloadNotification(options);
   }
 });
 
@@ -1097,10 +1186,31 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
           downloadedFiles: uniqueFiles
         });
 
+        showDownloadNotification({
+          title: 'Tải xuống hoàn tất ✅',
+          status: 'Hoàn tất (100%)',
+          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          uploader: options.uploader,
+          thumbnail: options.thumbnail,
+          isError: false,
+          tab: 'downloads'
+        });
+
         resolve({ success: true, destDir: finalDestDir, files: uniqueFiles, logFilePath, taskLogFilePath, logs });
       } else {
         writeLogLine(`[ERROR] Process exited with code ${code}`);
         saveTaskLogManifest(finalDestDir, options, 'error');
+
+        showDownloadNotification({
+          title: 'Tải xuống thất bại ❌',
+          status: `Lỗi (Mã lỗi ${code})`,
+          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          uploader: options.uploader,
+          thumbnail: options.thumbnail,
+          isError: true,
+          tab: 'downloads'
+        });
+
         reject(new Error(`Quá trình tải kết thúc với mã lỗi ${code}`));
       }
     });
@@ -1112,6 +1222,15 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
         pausedDownloads.delete(id);
         resolve({ success: false, cancelled: true, logFilePath, taskLogFilePath });
       } else {
+        showDownloadNotification({
+          title: 'Tải xuống thất bại ❌',
+          status: `Lỗi: ${err.message || 'Lỗi hệ thống'}`,
+          mediaTitle: options.mediaTitle || options.playlistTitle || 'Tệp Media',
+          uploader: options.uploader,
+          thumbnail: options.thumbnail,
+          isError: true,
+          tab: 'downloads'
+        });
         reject(err);
       }
     });
