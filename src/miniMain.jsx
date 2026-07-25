@@ -17,16 +17,35 @@ function MiniRoot() {
   });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('media_downloader_settings');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.theme && parsed.theme !== 'system') {
-          document.documentElement.setAttribute('data-theme', parsed.theme);
-        }
+    const applyTheme = (themeMode) => {
+      let mode = themeMode || 'system';
+      if (!themeMode) {
+        try {
+          const saved = localStorage.getItem('media_downloader_settings');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.theme) mode = parsed.theme;
+          }
+        } catch (e) {}
       }
-    } catch (e) {}
 
+      let resolved = mode;
+      if (mode === 'system') {
+        resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', resolved);
+      document.documentElement.classList.toggle('dark', resolved === 'dark');
+    };
+
+    // Apply theme on initial load
+    applyTheme();
+
+    // Listen for OS theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = () => applyTheme();
+    mediaQuery.addEventListener('change', listener);
+
+    // Sync settings with Main Window via IPC
     if (window.api && window.api.onSyncSettings) {
       const unsub = window.api.onSyncSettings((newSettings) => {
         if (!newSettings) return;
@@ -34,16 +53,16 @@ function MiniRoot() {
           setLanguage(newSettings.language);
         }
         if (newSettings.theme) {
-          const themeMode = newSettings.theme;
-          let resolved = themeMode;
-          if (themeMode === 'system') {
-            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          document.documentElement.setAttribute('data-theme', resolved);
+          applyTheme(newSettings.theme);
         }
       });
-      return unsub;
+      return () => {
+        mediaQuery.removeEventListener('change', listener);
+        if (typeof unsub === 'function') unsub();
+      };
     }
+
+    return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
   return (

@@ -2638,30 +2638,8 @@ select optgroup,
     grid-template-columns: 1fr !important;
   }
 
-  .app-header {
-    padding: 0 4px;
-  }
-
   .app-header-title {
     display: none !important; /* Hide app title on ultra-narrow window to save space */
-  }
-
-  .header-left {
-    gap: 2px;
-  }
-
-  .logo-icon {
-    width: 22px;
-    height: 22px;
-  }
-
-  .header-right {
-    gap: 2px;
-  }
-
-  .window-control-btn {
-    width: 26px;
-    height: 26px;
   }
 
   .burger-dropdown-menu {
@@ -2782,9 +2760,15 @@ select optgroup,
   padding: 6px 8px;
 }
 
-/* ==========================================================================
-   Mini App Component Styles (React Mini Window Pop-up)
-   ========================================================================== */
+#mini-root,
+html:has(#mini-root),
+body:has(#mini-root) {
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
 
 .mini-app-container {
   display: flex;
