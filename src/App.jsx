@@ -144,34 +144,66 @@ export default function App() {
     });
   };
 
-  // Downloads History State
-  const [downloadsHistory, setDownloadsHistory] = useState(() => {
-    const saved = localStorage.getItem('media_downloader_history');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [];
-  });
+  // Downloads History State backed by User Documents JSON Database
+  const [downloadsHistory, setDownloadsHistory] = useState([]);
 
-  const saveHistory = (newHistory) => {
+  useEffect(() => {
+    if (window.api && window.api.loadDownloadsDb) {
+      window.api.loadDownloadsDb().then((data) => {
+        if (Array.isArray(data)) {
+          setDownloadsHistory(data);
+        }
+      });
+    } else {
+      const saved = localStorage.getItem('media_downloader_history');
+      if (saved) {
+        try { setDownloadsHistory(JSON.parse(saved)); } catch (e) {}
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!window.api || !window.api.onSyncDownloadsDb) return;
+    const unsub = window.api.onSyncDownloadsDb((dbItems) => {
+      if (Array.isArray(dbItems)) {
+        setDownloadsHistory(dbItems);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const saveHistory = async (newHistory) => {
     setDownloadsHistory(newHistory);
     localStorage.setItem('media_downloader_history', JSON.stringify(newHistory));
-    // Sync to mini window via main process
+    if (window.api && window.api.saveDownloadsDb) {
+      await window.api.saveDownloadsDb(newHistory);
+    }
     if (window.api && window.api.syncPushHistory) {
       window.api.syncPushHistory(newHistory);
     }
   };
 
-  const clearAllHistory = () => {
+  const clearAllHistory = async () => {
     if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử đã tải?')) {
-      saveHistory([]);
+      if (window.api && window.api.clearDownloadsDb) {
+        const updated = await window.api.clearDownloadsDb();
+        setDownloadsHistory(updated);
+      } else {
+        saveHistory([]);
+      }
     }
   };
 
   const deleteHistoryItem = async (id, filePath) => {
-    const updated = downloadsHistory.filter((item) => item.id !== id);
-    saveHistory(updated);
+    if (window.api && window.api.deleteDownloadDbItem) {
+      const updated = await window.api.deleteDownloadDbItem(id);
+      setDownloadsHistory(updated);
+    } else {
+      const updated = downloadsHistory.filter((item) => item.id !== id);
+      saveHistory(updated);
+    }
   };
+
 
   // Queue & Downloads Management States
   const [activeDownloads, setActiveDownloads] = useState([]);
@@ -369,6 +401,7 @@ export default function App() {
             thumbnail: options.thumbnail,
             duration: options.duration,
             formatType: options.formatType,
+            sourceUrl: options.url,
             filePath: result.destDir,
             folderPath: result.destDir,
             isPlaylist: options.isPlaylist,
@@ -379,7 +412,12 @@ export default function App() {
             logFilePath: result.logFilePath,
             downloadedAt: Date.now()
           };
-          saveHistory([historyItem, ...downloadsHistory]);
+          if (window.api && window.api.addDownloadDbItem) {
+            const updated = await window.api.addDownloadDbItem(historyItem);
+            setDownloadsHistory(updated);
+          } else {
+            saveHistory([historyItem, ...downloadsHistory]);
+          }
           return;
         }
 
@@ -387,40 +425,40 @@ export default function App() {
           const downloadedFile = result.files && result.files.length > 0 ? result.files[0] : null;
 
           if (options.isPlaylistItem && options.groupId) {
-            setDownloadsHistory((prevHistory) => {
-              const existingIndex = prevHistory.findIndex((item) => item.id === options.groupId);
-              const trackFile = downloadedFile || result.destDir;
+            const trackFile = downloadedFile || result.destDir;
+            const existingIndex = downloadsHistory.findIndex((item) => item.id === options.groupId);
 
-              if (existingIndex >= 0) {
-                const existingMaster = { ...prevHistory[existingIndex] };
-                const currentFiles = existingMaster.downloadedFiles || [];
-                if (trackFile && !currentFiles.includes(trackFile)) {
-                  existingMaster.downloadedFiles = [...currentFiles, trackFile];
-                }
-                const updated = [...prevHistory];
-                updated[existingIndex] = existingMaster;
-                localStorage.setItem('downloads_history', JSON.stringify(updated));
-                return updated;
-              } else {
-                const masterPlaylistHistory = {
-                  id: options.groupId,
-                  title: options.playlistTitle || options.mediaTitle || 'Playlist',
-                  uploader: options.uploader,
-                  thumbnail: options.thumbnail,
-                  formatType: options.formatType,
-                  filePath: result.destDir,
-                  folderPath: result.destDir,
-                  isPlaylist: true,
-                  entriesCount: options.playlistTotalItems || options.playlistEntries?.length || 1,
-                  playlistEntries: options.playlistEntries || [],
-                  downloadedFiles: trackFile ? [trackFile] : [],
-                  downloadedAt: Date.now()
-                };
-                const updated = [masterPlaylistHistory, ...prevHistory];
-                localStorage.setItem('downloads_history', JSON.stringify(updated));
-                return updated;
+            let masterPlaylistHistory;
+            if (existingIndex >= 0) {
+              masterPlaylistHistory = { ...downloadsHistory[existingIndex] };
+              const currentFiles = masterPlaylistHistory.downloadedFiles || [];
+              if (trackFile && !currentFiles.includes(trackFile)) {
+                masterPlaylistHistory.downloadedFiles = [...currentFiles, trackFile];
               }
-            });
+            } else {
+              masterPlaylistHistory = {
+                id: options.groupId,
+                title: options.playlistTitle || options.mediaTitle || 'Playlist',
+                uploader: options.uploader,
+                thumbnail: options.thumbnail,
+                formatType: options.formatType,
+                sourceUrl: options.url,
+                filePath: result.destDir,
+                folderPath: result.destDir,
+                isPlaylist: true,
+                entriesCount: options.playlistTotalItems || options.playlistEntries?.length || 1,
+                playlistEntries: options.playlistEntries || [],
+                downloadedFiles: trackFile ? [trackFile] : [],
+                downloadedAt: Date.now()
+              };
+            }
+
+            if (window.api && window.api.addDownloadDbItem) {
+              const updated = await window.api.addDownloadDbItem(masterPlaylistHistory);
+              setDownloadsHistory(updated);
+            } else {
+              saveHistory([masterPlaylistHistory, ...downloadsHistory]);
+            }
           } else {
             const historyItem = {
               id: options.id,
@@ -429,6 +467,7 @@ export default function App() {
               thumbnail: options.thumbnail,
               duration: options.duration,
               formatType: options.formatType,
+              sourceUrl: options.url,
               filePath: downloadedFile || result.destDir,
               folderPath: result.destDir,
               isPlaylist: options.isPlaylist,
@@ -438,9 +477,15 @@ export default function App() {
               downloadedAt: Date.now()
             };
 
-            saveHistory([historyItem, ...downloadsHistory]);
+            if (window.api && window.api.addDownloadDbItem) {
+              const updated = await window.api.addDownloadDbItem(historyItem);
+              setDownloadsHistory(updated);
+            } else {
+              saveHistory([historyItem, ...downloadsHistory]);
+            }
           }
         }
+
       }
     } catch (err) {
       setActiveDownloads((prev) => prev.filter((d) => d.id !== options.id));

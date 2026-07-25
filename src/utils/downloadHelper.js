@@ -57,9 +57,8 @@ export function getResolutionOptions(mediaInfo) {
   }
 
   const nativeOptions = ALL_RESOLUTIONS.filter(r => r.numHeight <= maxRes);
-  const higherOptions = ALL_RESOLUTIONS.filter(r => r.numHeight > maxRes);
 
-  const result = [
+  return [
     {
       group: `Gốc hỗ trợ tối đa (${maxRes}p)`,
       options: [
@@ -68,15 +67,6 @@ export function getResolutionOptions(mediaInfo) {
       ]
     }
   ];
-
-  if (higherOptions.length > 0) {
-    result.push({
-      group: '─── Chất lượng cao hơn / Upscale ───',
-      options: higherOptions.map(r => ({ value: r.value, label: `${r.label} (Upscale)` }))
-    });
-  }
-
-  return result;
 }
 
 /**

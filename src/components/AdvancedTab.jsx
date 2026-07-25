@@ -1,43 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Terminal, Bookmark, RotateCcw, Copy, Eye, Plus, Trash2, Subtitles, Clock, Cookie, Zap, Code, FileCode, Check } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
   const { t } = useTranslation();
   const [copiedCmd, setCopiedCmd] = useState(false);
-  const [customPresets, setCustomPresets] = useState(() => {
-    const saved = localStorage.getItem('media_downloader_custom_presets');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [presetsDb, setPresetsDb] = useState([]);
   const [newPresetName, setNewPresetName] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
 
-  const builtinPresets = [
-    {
-      id: 'preset-speed',
-      name: t('presetSpeedBoost'),
-      desc: t('presetSpeedBoostDesc'),
-      options: { rateLimit: '10M', customArgs: '--no-mtime' }
-    },
-    {
-      id: 'preset-subs',
-      name: t('presetSubs'),
-      desc: t('presetSubsDesc'),
-      options: { writeSubs: true, embedSubs: true, subLangs: 'vi,en' }
-    },
-    {
-      id: 'preset-bypass',
-      name: t('presetBypass'),
-      desc: t('presetBypassDesc'),
-      options: { customArgs: '--geo-bypass' }
-    },
-    {
-      id: 'preset-cut-1m',
-      name: t('presetCut'),
-      desc: t('presetCutDesc'),
-      options: { downloadSections: '*00:00:00-00:01:00' }
+  useEffect(() => {
+    if (window.api && window.api.loadPresetsDb) {
+      window.api.loadPresetsDb().then((presets) => {
+        if (Array.isArray(presets)) {
+          setPresetsDb(presets);
+        }
+      });
+    } else {
+      const saved = localStorage.getItem('media_downloader_custom_presets');
+      if (saved) {
+        try { setPresetsDb(JSON.parse(saved)); } catch (e) {}
+      }
     }
-  ];
+  }, []);
+
+  useEffect(() => {
+    if (!window.api || !window.api.onSyncPresetsDb) return;
+    const unsub = window.api.onSyncPresetsDb((presets) => {
+      if (Array.isArray(presets)) {
+        setPresetsDb(presets);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const handleChange = (field, value) => {
     setAdvancedOptions((prev) => ({
@@ -66,7 +61,7 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
     }));
   };
 
-  const handleSaveCustomPreset = () => {
+  const handleSaveCustomPreset = async () => {
     if (!newPresetName.trim()) return;
     const newPreset = {
       id: `custom-${Date.now()}`,
@@ -74,19 +69,26 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
       desc: t('customPresetDesc') || 'Cấu hình tùy chỉnh cá nhân',
       options: { ...advancedOptions }
     };
-    const updated = [...customPresets, newPreset];
-    setCustomPresets(updated);
+    const updated = [...presetsDb, newPreset];
+    setPresetsDb(updated);
     localStorage.setItem('media_downloader_custom_presets', JSON.stringify(updated));
+    if (window.api && window.api.savePresetsDb) {
+      await window.api.savePresetsDb(updated);
+    }
     setNewPresetName('');
     setShowSaveModal(false);
   };
 
-  const handleDeleteCustomPreset = (e, presetId) => {
+  const handleDeletePreset = async (e, presetId) => {
     e.stopPropagation();
-    const updated = customPresets.filter((p) => p.id !== presetId);
-    setCustomPresets(updated);
+    const updated = presetsDb.filter((p) => p.id !== presetId);
+    setPresetsDb(updated);
     localStorage.setItem('media_downloader_custom_presets', JSON.stringify(updated));
+    if (window.api && window.api.savePresetsDb) {
+      await window.api.savePresetsDb(updated);
+    }
   };
+
 
   const generateCmdPreview = () => {
     const args = ['yt-dlp', '"[URL_MEDIA]"'];
@@ -175,43 +177,31 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Built-in Presets */}
-          {builtinPresets.map((preset) => (
+          {presetsDb.map((preset) => (
             <div
               key={preset.id}
               onClick={() => handleApplyPreset(preset.options)}
-              className="group p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 hover:border-sky-400/50 text-left transition-all duration-200 cursor-pointer shadow-sm hover:-translate-y-0.5 flex flex-col justify-between"
-            >
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-pink-500 dark:group-hover:text-sky-300 mb-1 transition-colors">
-                  {preset.name}
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {preset.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {/* Saved Custom Presets */}
-          {customPresets.map((preset) => (
-            <div
-              key={preset.id}
-              onClick={() => handleApplyPreset(preset.options)}
-              className="group p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-300 dark:border-purple-400/40 hover:border-pink-400 text-left transition-all duration-200 cursor-pointer shadow-sm hover:-translate-y-0.5 flex flex-col justify-between"
+              className={`group p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer shadow-sm hover:-translate-y-0.5 flex flex-col justify-between ${
+                preset.id.startsWith('custom-')
+                  ? 'bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-300 dark:border-purple-400/40 hover:border-pink-400'
+                  : 'bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 hover:border-sky-400/50'
+              }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-1.5">
-                  <h4 className="text-xs font-bold text-purple-600 dark:text-purple-300 group-hover:text-pink-500 dark:group-hover:text-pink-300 mb-1 transition-colors break-words">
-                    ⭐ {preset.name}
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-pink-500 dark:group-hover:text-sky-300 mb-1 transition-colors break-words">
+                    {preset.id.startsWith('custom-') ? `⭐ ${preset.name}` : preset.name}
                   </h4>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteCustomPreset(e, preset.id)}
-                    className="text-rose-500 hover:text-rose-600 p-1 hover:bg-rose-500/15 rounded-md transition-colors shrink-0"
-                    title={t('delete') || 'Xóa'}
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {preset.id.startsWith('custom-') && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeletePreset(e, preset.id)}
+                      className="text-rose-500 hover:text-rose-600 p-1 hover:bg-rose-500/15 rounded-md transition-colors shrink-0"
+                      title={t('delete') || 'Xóa'}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   {preset.desc}

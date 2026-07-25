@@ -50,9 +50,8 @@ export function getResolutionOptions(mediaInfo) {
   }
 
   const nativeOptions = ALL_RESOLUTIONS.filter(r => r.numHeight <= maxRes);
-  const higherOptions = ALL_RESOLUTIONS.filter(r => r.numHeight > maxRes);
 
-  const result = [
+  return [
     {
       group: `Gốc hỗ trợ tối đa (${maxRes}p)`,
       options: [
@@ -61,15 +60,6 @@ export function getResolutionOptions(mediaInfo) {
       ]
     }
   ];
-
-  if (higherOptions.length > 0) {
-    result.push({
-      group: '─── Chất lượng cao hơn / Upscale ───',
-      options: higherOptions.map(r => ({ value: r.value, label: `${r.label} (Upscale)` }))
-    });
-  }
-
-  return result;
 }
 
 export function getAudioQualityOptions() {
@@ -93,6 +83,52 @@ export function getAudioQualityOptions() {
       ]
     }
   ];
+}
+
+export function getSubtitleOptions(mediaInfo) {
+  const manualSubs = mediaInfo?.info?.subtitles || [];
+  const autoSubs = mediaInfo?.info?.automatic_captions || [];
+
+  if (manualSubs.length === 0 && autoSubs.length === 0) {
+    return [
+      {
+        group: 'Ngôn ngữ phổ biến',
+        options: [
+          { value: 'vi', label: '🇻🇳 Tiếng Việt (vi)' },
+          { value: 'en', label: '🇺🇸 English (en)' },
+          { value: 'ja', label: '🇯🇵 Japanese (ja)' },
+          { value: 'ko', label: '🇰🇷 Korean (ko)' },
+          { value: 'zh-Hans', label: '🇨🇳 Tiếng Trung (zh-Hans)' },
+          { value: 'es', label: '🇪🇸 Tây Ban Nha (es)' },
+          { value: 'fr', label: '🇫🇷 Tiếng Pháp (fr)' },
+          { value: 'de', label: '🇩🇪 Tiếng Đức (de)' }
+        ]
+      }
+    ];
+  }
+
+  const result = [];
+  if (manualSubs.length > 0) {
+    result.push({
+      group: `Phụ đề chính thức từ video (${manualSubs.length})`,
+      options: manualSubs.map((s) => ({
+        value: s.code,
+        label: `💬 ${s.name} (${s.code})`
+      }))
+    });
+  }
+
+  if (autoSubs.length > 0) {
+    result.push({
+      group: `Phụ đề tự động (${autoSubs.length})`,
+      options: autoSubs.map((s) => ({
+        value: s.code,
+        label: `🤖 ${s.name}`
+      }))
+    });
+  }
+
+  return result;
 }
 
 export function buildDownloadOptions({
@@ -138,6 +174,16 @@ export function buildDownloadOptions({
     // Video/Audio params
     videoFps: mediaDraft.videoFps || 'auto',
     videoContainer: mediaDraft.videoContainer || 'mp4',
+
+    // Advanced options
+    writeSubs: !!advancedOptions.writeSubs,
+    embedSubs: !!advancedOptions.embedSubs,
+    subLangs: advancedOptions.writeSubs ? (advancedOptions.subLangs || 'vi,en').trim() : null,
+    downloadSections: (advancedOptions.downloadSections || '').trim() || null,
+    cookiesFromBrowser: advancedOptions.cookiesFromBrowser && advancedOptions.cookiesFromBrowser !== 'none' ? advancedOptions.cookiesFromBrowser : null,
+    rateLimit: (advancedOptions.rateLimit || '').trim() || null,
+    customFormat: (advancedOptions.customFormat || '').trim() || null,
+    customArgs: (advancedOptions.customArgs || '').trim() || null,
 
     // Media metadata display
     mediaTitle: mediaInfo?.info?.title || mediaDraft.title || 'Video từ Chrome Extension',

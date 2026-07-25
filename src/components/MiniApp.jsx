@@ -37,13 +37,13 @@ import {
   FolderCheck,
   RefreshCw,
   FileCode,
-  Zap,
-  Subtitles
+  Zap
 } from 'lucide-react';
-import { detectFormatFromUrl } from '../utils/formatDetector';
+import { detectFormatFromUrl, isAutoDetectableUrl, isPlaylistWithSingleVideoUrl, stripPlaylistParam } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
-import { getResolutionOptions, getAudioQualityOptions, getSubtitleOptions, buildDownloadOptions } from '../utils/downloadHelper';
+import { getResolutionOptions, getAudioQualityOptions, buildDownloadOptions } from '../utils/downloadHelper';
 import Listbox from './Listbox';
+import PlaylistChoiceModal from './PlaylistChoiceModal';
 
 export default function MiniApp() {
   const { t } = useTranslation();
@@ -61,9 +61,6 @@ export default function MiniApp() {
   const [formatType, setFormatType] = useState('video'); // 'video' | 'audio' | 'thumbnail' | 'gif'
   const [quality, setQuality] = useState('best');
   const [selectedPresetId, setSelectedPresetId] = useState('');
-  const [writeSubs, setWriteSubs] = useState(false);
-  const [embedSubs, setEmbedSubs] = useState(false);
-  const [subLangs, setSubLangs] = useState('vi,en');
 
   // Analysis & Download State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -81,8 +78,11 @@ export default function MiniApp() {
   const [filesSort, setFilesSort] = useState('newest');
   const [expandedFolders, setExpandedFolders] = useState({});
 
-  // Bottom Toast Banner State (Stage 3 feedback)
+  // Toast message state
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Playlist Choice Modal State
+  const [pendingPlaylistUrl, setPendingPlaylistUrl] = useState(null);
 
   // Custom & Built-in Presets
   const [customPresets, setCustomPresets] = useState([]);
@@ -92,11 +92,6 @@ export default function MiniApp() {
       id: 'preset-speed',
       name: t('presetSpeedBoost') || '🚀 Speed Boost',
       options: { rateLimit: '10M', customArgs: '--no-mtime' }
-    },
-    {
-      id: 'preset-subs',
-      name: t('presetSubs') || '💬 Subtitles (Vi+En)',
-      options: { writeSubs: true, embedSubs: true, subLangs: 'vi,en' }
     },
     {
       id: 'preset-bypass',
@@ -110,15 +105,27 @@ export default function MiniApp() {
     }
   ], [t]);
 
-  // Load Presets & History on mount
+  // Load Presets & History on mount from User Documents JSON Database
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('media_downloader_custom_presets');
-      if (saved) {
-        setCustomPresets(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error('Failed to load custom presets from localStorage', e);
+    if (api && api.loadPresetsDb) {
+      api.loadPresetsDb().then((presets) => {
+        if (Array.isArray(presets)) setCustomPresets(presets);
+      }).catch(() => {});
+    } else {
+      try {
+        const saved = localStorage.getItem('media_downloader_custom_presets');
+        if (saved) setCustomPresets(JSON.parse(saved));
+      } catch (e) {}
+    }
+
+    if (api && api.loadDownloadsDb) {
+      api.loadDownloadsDb().then((hist) => {
+        if (Array.isArray(hist)) setHistory(hist);
+      }).catch(() => {});
+    } else if (api && api.miniRequestHistory) {
+      api.miniRequestHistory().then((hist) => {
+        if (Array.isArray(hist)) setHistory(hist);
+      }).catch(() => {});
     }
 
     if (api && api.miniGetDownloadsMeta) {
@@ -129,14 +136,6 @@ export default function MiniApp() {
             map[m.id] = m;
           });
           setActiveDownloads(map);
-        }
-      }).catch(() => { });
-    }
-
-    if (api && api.miniRequestHistory) {
-      api.miniRequestHistory().then((hist) => {
-        if (Array.isArray(hist)) {
-          setHistory(hist);
         }
       }).catch(() => { });
     }
@@ -161,6 +160,22 @@ export default function MiniApp() {
         }
       }).catch(() => { });
     }
+  }, []);
+
+  useEffect(() => {
+    if (!api) return;
+    const unsubDl = api.onSyncDownloadsDb ? api.onSyncDownloadsDb((dbItems) => {
+      if (Array.isArray(dbItems)) setHistory(dbItems);
+    }) : null;
+
+    const unsubPreset = api.onSyncPresetsDb ? api.onSyncPresetsDb((presets) => {
+      if (Array.isArray(presets)) setCustomPresets(presets);
+    }) : null;
+
+    return () => {
+      if (unsubDl) unsubDl();
+      if (unsubPreset) unsubPreset();
+    };
   }, []);
 
   // Initialize selected playlist indexes when mediaInfo is loaded
@@ -305,7 +320,25 @@ export default function MiniApp() {
 
   const handlePasteClipboard = async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      let text = '';
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+          text = await navigator.clipboard.readText();
+        } catch (e) {
+          console.warn('navigator.clipboard.readText failed:', e);
+        }
+      }
+      if (!text) {
+        const textarea = document.createElement('textarea');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        if (document.execCommand('paste')) {
+          text = textarea.value;
+        }
+        document.body.removeChild(textarea);
+      }
       if (text && text.trim()) {
         const clean = text.trim();
         setUrl(clean);
@@ -320,24 +353,36 @@ export default function MiniApp() {
     }
   };
 
-  const triggerAnalyze = async (overrideUrl = null) => {
+  const triggerAnalyze = async (overrideUrl = null, forceMode = null) => {
     const rawUrl = (overrideUrl !== null ? overrideUrl : url).trim();
     if (!rawUrl) return;
+
+    if (!forceMode && isPlaylistWithSingleVideoUrl(rawUrl)) {
+      setPendingPlaylistUrl(rawUrl);
+      return;
+    }
+
+    let urlToAnalyze = rawUrl;
+    if (forceMode === 'single') {
+      urlToAnalyze = stripPlaylistParam(rawUrl);
+      setUrl(urlToAnalyze);
+      applyAutoFormatRule(urlToAnalyze);
+    }
 
     setIsAnalyzing(true);
     setAnalyzeError('');
 
     try {
-      let queryToSend = rawUrl;
-      const isDirectUrl = /^https?:\/\//i.test(rawUrl);
+      let queryToSend = urlToAnalyze;
+      const isDirectUrl = /^https?:\/\//i.test(urlToAnalyze);
       if (!isDirectUrl) {
-        queryToSend = `ytsearch20:${rawUrl}`;
+        queryToSend = `ytsearch20:${urlToAnalyze}`;
       }
 
       const res = api ? await api.getVideoInfo(queryToSend) : null;
       if (res && res.success) {
         setMediaInfo(res);
-        if (rawUrl.includes('soundcloud.com') && formatType !== 'audio') {
+        if (urlToAnalyze.includes('soundcloud.com') && formatType !== 'audio') {
           setFormatType('audio');
           setQuality('mp3-192');
         }
@@ -350,6 +395,13 @@ export default function MiniApp() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handlePlaylistChoice = (choice) => {
+    const rawUrl = pendingPlaylistUrl;
+    setPendingPlaylistUrl(null);
+    if (!rawUrl) return;
+    triggerAnalyze(rawUrl, choice);
   };
 
   // Playlist selection handlers
@@ -405,10 +457,7 @@ export default function MiniApp() {
         mediaInfo,
         playlistSelectedIndexes,
         advancedOptions: {
-          ...presetOptions,
-          writeSubs: writeSubs || presetOptions.writeSubs,
-          embedSubs: embedSubs || presetOptions.embedSubs,
-          subLangs: subLangs || presetOptions.subLangs || 'vi,en'
+          ...presetOptions
         }
       });
 
@@ -504,24 +553,37 @@ export default function MiniApp() {
     ? activeKeys.reduce((acc, id) => acc + (activeDownloads[id]?.percent || 0), 0) / activeKeys.length
     : 0;
 
-  // History Save & Sync Handler
-  const saveHistory = (newHistory) => {
+  // History Save & Sync Handler backed by User Documents JSON Database
+  const saveHistory = async (newHistory) => {
     setHistory(newHistory);
     localStorage.setItem('media_downloader_history', JSON.stringify(newHistory));
+    if (api && api.saveDownloadsDb) {
+      await api.saveDownloadsDb(newHistory);
+    }
     if (api && api.syncPushHistory) {
       api.syncPushHistory(newHistory);
     }
   };
 
-  const handleDeleteHistoryItem = (id) => {
-    const updated = history.filter((item) => item.id !== id);
-    saveHistory(updated);
+  const handleDeleteHistoryItem = async (id) => {
+    if (api && api.deleteDownloadDbItem) {
+      const updated = await api.deleteDownloadDbItem(id);
+      setHistory(updated);
+    } else {
+      const updated = history.filter((item) => item.id !== id);
+      saveHistory(updated);
+    }
     showToastBanner(t('deletedFileAlert') || 'Deleted item from history');
   };
 
-  const handleClearAllHistory = () => {
+  const handleClearAllHistory = async () => {
     if (confirm(t('confirmClearHistory') || 'Are you sure you want to clear all history?')) {
-      saveHistory([]);
+      if (api && api.clearDownloadsDb) {
+        const updated = await api.clearDownloadsDb();
+        setHistory(updated);
+      } else {
+        saveHistory([]);
+      }
       showToastBanner(t('clearHistoryBtn') || 'History cleared');
     }
   };
@@ -938,52 +1000,6 @@ export default function MiniApp() {
                   </Listbox>
                 </div>
 
-                {/* Subtitles & Multi-Select Language Selector */}
-                <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-pink-200 dark:border-pink-500/20 backdrop-blur-xl space-y-2 shadow-md transform-gpu">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
-                      <Subtitles size={13} className="text-pink-500" />
-                      <span>{t('subtitlesSection')}</span>
-                    </div>
-                    {((mediaInfo?.info?.subtitles && mediaInfo.info.subtitles.length > 0) || (mediaInfo?.info?.automatic_captions && mediaInfo.info.automatic_captions.length > 0)) && (
-                      <span className="text-[10px] font-semibold text-pink-600 dark:text-pink-300 bg-pink-500/15 border border-pink-400/30 px-1.5 py-0.5 rounded-md">
-                        ✨ {(mediaInfo.info.subtitles?.length || 0) + (mediaInfo.info.automatic_captions?.length || 0)} sub
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5">
-                    <label className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
-                      <input
-                        type="checkbox"
-                        className="w-3.5 h-3.5 accent-pink-500 rounded cursor-pointer"
-                        checked={writeSubs}
-                        onChange={(e) => setWriteSubs(e.target.checked)}
-                      />
-                      <span className="truncate">{t('writeSubs')}</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
-                      <input
-                        type="checkbox"
-                        className="w-3.5 h-3.5 accent-pink-500 rounded cursor-pointer"
-                        checked={embedSubs}
-                        onChange={(e) => setEmbedSubs(e.target.checked)}
-                      />
-                      <span className="truncate">{t('embedSubs')}</span>
-                    </label>
-                  </div>
-
-                  <Listbox
-                    multiple
-                    size="sm"
-                    className="w-full pt-1"
-                    value={subLangs}
-                    onChange={(e, newValues, joinedStr) => setSubLangs(typeof e.target.value === 'string' ? e.target.value : joinedStr)}
-                    options={getSubtitleOptions(mediaInfo)}
-                    placeholder="Chọn ngôn ngữ phụ đề..."
-                  />
-                </div>
 
                 {/* Primary Download Button */}
                 <button
@@ -1507,6 +1523,15 @@ export default function MiniApp() {
           <span>{t('miniNavMainApp')}</span>
         </button>
       </nav>
+
+      {/* Playlist & Single Video Choice Modal */}
+      {pendingPlaylistUrl && (
+        <PlaylistChoiceModal
+          rawUrl={pendingPlaylistUrl}
+          onChoose={handlePlaylistChoice}
+          onClose={() => handlePlaylistChoice('single')}
+        />
+      )}
     </div>
   );
 }

@@ -115,6 +115,35 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('navigate-to-tab', handler);
     return () => ipcRenderer.removeListener('navigate-to-tab', handler);
   },
-  showNotification: (options) => ipcRenderer.invoke('show-notification', options)
+  showNotification: (options) => ipcRenderer.invoke('show-notification', options),
+
+  // JSON Database (User Documents/YTDownloader)
+  getDbPath: () => ipcRenderer.invoke('db:get-path'),
+  loadOptionsDb: () => ipcRenderer.invoke('db:load-options'),
+  saveOptionsDb: (data) => ipcRenderer.invoke('db:save-options', data),
+  loadPresetsDb: () => ipcRenderer.invoke('db:load-presets'),
+  savePresetsDb: (data) => ipcRenderer.invoke('db:save-presets', data),
+  loadDownloadsDb: () => ipcRenderer.invoke('db:load-downloads'),
+  saveDownloadsDb: (data) => ipcRenderer.invoke('db:save-downloads', data),
+  addDownloadDbItem: (item) => ipcRenderer.invoke('db:add-download', item),
+  deleteDownloadDbItem: (id) => ipcRenderer.invoke('db:delete-download', id),
+  clearDownloadsDb: () => ipcRenderer.invoke('db:clear-downloads'),
+
+  onSyncDownloadsDb: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('db:sync-downloads', handler);
+    return () => ipcRenderer.removeListener('db:sync-downloads', handler);
+  },
+  onSyncPresetsDb: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('db:sync-presets', handler);
+    return () => ipcRenderer.removeListener('db:sync-presets', handler);
+  },
+  onSyncOptionsDb: (callback) => {
+    const handler = (_event, value) => callback(value);
+    ipcRenderer.on('db:sync-options', handler);
+    return () => ipcRenderer.removeListener('db:sync-options', handler);
+  }
 });
+
 

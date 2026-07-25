@@ -159,6 +159,7 @@ let mainWindow;
 let tray = null;
 let miniWindow = null;
 let cachedDraft = null;
+let cachedHistory = null;
 let isQuitting = false;
 const activeDownloads = new Map();
 const cancelledDownloads = new Set();
@@ -294,6 +295,7 @@ function createTray() {
 
 
 app.whenReady().then(() => {
+  loadDownloadsDb();
   if (process.platform === 'win32') {
     app.setAppUserModelId('com.yt.downloader');
   }
@@ -1072,6 +1074,9 @@ function startLocalHttpBridge() {
     if (req.method === 'GET' && urlObj.pathname === '/api/progress') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       const activeList = Array.from(activeDownloadsMeta.entries()).map(([id, meta]) => ({ id, ...meta }));
+      if (cachedHistory === null) {
+        cachedHistory = loadDownloadsDb();
+      }
       res.end(JSON.stringify({
         activeDownloads: activeList,
         history: cachedHistory || []
@@ -1156,17 +1161,21 @@ function startLocalHttpBridge() {
           } else if (action === 'delete' && filePath) {
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
           } else if (action === 'deleteHistory' && id) {
-            cachedHistory = (cachedHistory || []).filter(item => item.id !== id);
-            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
-            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+            if (cachedHistory === null) cachedHistory = loadDownloadsDb();
+            cachedHistory = cachedHistory.filter(item => item.id !== id);
+            saveDownloadsDb(cachedHistory);
+            if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && !miniWindow.isDestroyed() && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
           } else if (action === 'clearHistory') {
             cachedHistory = [];
-            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
-            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+            saveDownloadsDb(cachedHistory);
+            if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && !miniWindow.isDestroyed() && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
           } else if (action === 'pushHistory' && Array.isArray(newHistory)) {
             cachedHistory = newHistory;
-            if (mainWindow && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
-            if (miniWindow && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
+            saveDownloadsDb(cachedHistory);
+            if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) mainWindow.webContents.send('sync:history', cachedHistory);
+            if (miniWindow && !miniWindow.isDestroyed() && miniWindow.webContents) miniWindow.webContents.send('sync:history', cachedHistory);
           } else if (action === 'startDrag' && filePath) {
             if (mainWindow && !mainWindow.isDestroyed()) {
               const icon = fs.existsSync(dragIconPath) ? dragIconPath : nativeImage.createFromBuffer(validPngBuffer);
@@ -1700,6 +1709,26 @@ ipcMain.handle('yt-dlp:download', async (event, options) => {
           tab: 'downloads'
         });
 
+        const downloadedFile = uniqueFiles && uniqueFiles.length > 0 ? uniqueFiles[0] : finalDestDir;
+        const historyItem = {
+          id: options.id || id,
+          title: options.isPlaylist ? (options.playlistTitle || options.mediaTitle) : (options.mediaTitle || 'Media File'),
+          uploader: options.uploader || 'N/A',
+          thumbnail: options.thumbnail || '',
+          duration: options.duration || null,
+          formatType: options.formatType || 'video',
+          sourceUrl: options.url || '',
+          filePath: downloadedFile,
+          folderPath: finalDestDir,
+          isPlaylist: !!options.isPlaylist,
+          playlistEntries: options.playlistEntries || null,
+          downloadedFiles: uniqueFiles || [],
+          entriesCount: options.isPlaylist ? (uniqueFiles.length || options.playlistEntries?.length || 1) : 1,
+          downloadedAt: Date.now()
+        };
+
+        addDownloadItemToDbInternal(historyItem);
+
         resolve({ success: true, destDir: finalDestDir, files: uniqueFiles, logFilePath, taskLogFilePath, logs });
       } else {
         writeLogLine(`[ERROR] Process exited with code ${code}`);
@@ -1873,7 +1902,14 @@ ipcMain.handle('yt-dlp:cancel', async (event, id) => {
 ipcMain.handle('shell:open-folder', async (event, dirPath) => {
   if (!dirPath) return false;
   try {
-    await shell.openPath(dirPath);
+    let target = dirPath;
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) {
+      target = path.dirname(target);
+    }
+    if (!fs.existsSync(target)) {
+      fs.mkdirSync(target, { recursive: true });
+    }
+    await shell.openPath(target);
     return true;
   } catch (e) {
     console.error('Failed to open folder:', e);
@@ -1929,3 +1965,354 @@ ipcMain.handle('file:delete', async (event, filePath) => {
     return false;
   }
 });
+
+// ==========================================
+// USER DOCUMENTS JSON DATABASE MANAGEMENT
+// ==========================================
+function getDbDir() {
+  try {
+    const docsPath = app.getPath('documents');
+    const dbDir = path.join(docsPath, 'YTDownloader');
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    return dbDir;
+  } catch (err) {
+    console.error('Failed to get or create Documents/YTDownloader directory:', err);
+    return path.join(userDataPath, 'database');
+  }
+}
+
+const OPTIONS_DB_PATH = () => path.join(getDbDir(), 'select_options.json');
+const PRESETS_DB_PATH = () => path.join(getDbDir(), 'presets.json');
+const DOWNLOADS_DB_PATH = () => path.join(getDbDir(), 'downloads_db.json');
+
+const DEFAULT_SELECT_OPTIONS = {
+  formatType: [
+    { value: 'best', label: 'Best Quality (Video + Audio)' },
+    { value: 'audio', label: 'Audio Only' },
+    { value: 'video_only', label: 'Video Only' },
+    { value: 'custom', label: 'Custom yt-dlp Format' }
+  ],
+  videoContainer: [
+    { value: 'mp4', label: 'MP4 (.mp4)' },
+    { value: 'mkv', label: 'MKV (.mkv)' },
+    { value: 'webm', label: 'WebM (.webm)' },
+    { value: 'avi', label: 'AVI (.avi)' },
+    { value: 'mov', label: 'MOV (.mov)' }
+  ],
+  qualityPresets: [
+    { value: 'best', label: 'Chất lượng cao nhất (Best)' },
+    { value: '2160p', label: '4K (2160p)' },
+    { value: '1440p', label: '2K (1440p)' },
+    { value: '1080p', label: 'Full HD (1080p)' },
+    { value: '720p', label: 'HD (720p)' },
+    { value: '480p', label: 'SD (480p)' },
+    { value: '360p', label: 'Low (360p)' }
+  ],
+  audioFormat: [
+    { value: 'mp3', label: 'MP3 (.mp3)' },
+    { value: 'm4a', label: 'M4A (.m4a)' },
+    { value: 'wav', label: 'WAV (.wav)' },
+    { value: 'flac', label: 'FLAC (.flac)' },
+    { value: 'aac', label: 'AAC (.aac)' },
+    { value: 'opus', label: 'Opus (.opus)' }
+  ],
+  audioSampleRate: [
+    { value: 'original', label: 'Gốc (Original)' },
+    { value: '44100', label: '44.1 kHz (CD Quality)' },
+    { value: '48000', label: '48.0 kHz (Studio Quality)' },
+    { value: '96000', label: '96.0 kHz (Hi-Res Audio)' }
+  ],
+  subLangs: [
+    { value: 'vi', label: 'Tiếng Việt (vi)' },
+    { value: 'en', label: 'English (en)' },
+    { value: 'ja', label: 'Japanese (ja)' },
+    { value: 'zh', label: 'Chinese (zh)' },
+    { value: 'vi,en', label: 'Tiếng Việt & English (vi,en)' },
+    { value: 'all', label: 'Tất cả ngôn ngữ (all)' }
+  ],
+  cookiesFromBrowser: [
+    { value: 'none', label: 'Không dùng Cookie (Mặc định)' },
+    { value: 'chrome', label: 'Google Chrome' },
+    { value: 'firefox', label: 'Mozilla Firefox' },
+    { value: 'edge', label: 'Microsoft Edge' },
+    { value: 'opera', label: 'Opera' },
+    { value: 'brave', label: 'Brave Browser' },
+    { value: 'vivaldi', label: 'Vivaldi' }
+  ],
+  rateLimit: [
+    { value: '', label: 'Không giới hạn tốc độ' },
+    { value: '500K', label: '500 KB/s' },
+    { value: '1M', label: '1 MB/s' },
+    { value: '2M', label: '2 MB/s' },
+    { value: '5M', label: '5 MB/s' },
+    { value: '10M', label: '10 MB/s' }
+  ],
+  gifFps: [
+    { value: '10', label: '10 FPS' },
+    { value: '15', label: '15 FPS (Tiêu chuẩn)' },
+    { value: '24', label: '24 FPS (Mượt mà)' },
+    { value: '30', label: '30 FPS (Cao)' }
+  ],
+  gifRes: [
+    { value: '480p', label: '480p' },
+    { value: '720p', label: '720p HD' },
+    { value: '1080p', label: '1080p Full HD' },
+    { value: 'original', label: 'Kích thước gốc' }
+  ],
+  gifSpeed: [
+    { value: '0.5', label: '0.5x (Chậm)' },
+    { value: '1.0', label: '1.0x (Bình thường)' },
+    { value: '1.5', label: '1.5x (Nhanh)' },
+    { value: '2.0', label: '2.0x (Tốc độ kép)' }
+  ]
+};
+
+const DEFAULT_PRESETS = [
+  {
+    id: 'preset-speed',
+    name: 'Tăng Tốc Độ Tải',
+    desc: 'Bật tốc độ tải cao 10M và bỏ qua ghi thời gian mtime',
+    options: { rateLimit: '10M', customArgs: '--no-mtime' }
+  },
+  {
+    id: 'preset-subs',
+    name: 'Tải Phụ Đề Đa Ngôn Ngữ',
+    desc: 'Tự động tải file phụ đề Tiếng Việt + Tiếng Anh và nhúng vào video',
+    options: { writeSubs: true, embedSubs: true, subLangs: 'vi,en' }
+  },
+  {
+    id: 'preset-bypass',
+    name: 'Bỏ Qua Chặn Vùng Miền',
+    desc: 'Tự động sử dụng tham số --geo-bypass',
+    options: { customArgs: '--geo-bypass' }
+  },
+  {
+    id: 'preset-cut-1m',
+    name: 'Cắt 1 Phút Đầu Video',
+    desc: 'Chỉ tải từ phút 00:00 đến 01:00',
+    options: { downloadSections: '*00:00:00-00:01:00' }
+  }
+];
+
+function loadSelectOptionsDb() {
+  const filePath = OPTIONS_DB_PATH();
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(content);
+    }
+  } catch (err) {
+    console.error('Error reading select_options.json:', err);
+  }
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(DEFAULT_SELECT_OPTIONS, null, 2), 'utf-8');
+  } catch (err) {}
+  return DEFAULT_SELECT_OPTIONS;
+}
+
+function saveSelectOptionsDb(optionsData) {
+  const filePath = OPTIONS_DB_PATH();
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(optionsData, null, 2), 'utf-8');
+    notifyDbSync('options', optionsData);
+    return true;
+  } catch (err) {
+    console.error('Error saving select_options.json:', err);
+    return false;
+  }
+}
+
+function loadPresetsDb() {
+  const filePath = PRESETS_DB_PATH();
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(content);
+    }
+  } catch (err) {
+    console.error('Error reading presets.json:', err);
+  }
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(DEFAULT_PRESETS, null, 2), 'utf-8');
+  } catch (err) {}
+  return DEFAULT_PRESETS;
+}
+
+function savePresetsDb(presetsData) {
+  const filePath = PRESETS_DB_PATH();
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(presetsData, null, 2), 'utf-8');
+    notifyDbSync('presets', presetsData);
+    return true;
+  } catch (err) {
+    console.error('Error saving presets.json:', err);
+    return false;
+  }
+}
+
+function loadDownloadsDb() {
+  const filePath = DOWNLOADS_DB_PATH();
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      if (Array.isArray(data)) {
+        cachedHistory = data;
+        return data;
+      }
+    }
+  } catch (err) {
+    console.error('Error reading downloads_db.json:', err);
+  }
+  try {
+    fs.writeFileSync(filePath, JSON.stringify([], null, 2), 'utf-8');
+  } catch (err) {}
+  cachedHistory = [];
+  return [];
+}
+
+function saveDownloadsDb(downloadsData) {
+  if (!Array.isArray(downloadsData)) return false;
+  cachedHistory = downloadsData;
+  const filePath = DOWNLOADS_DB_PATH();
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(downloadsData, null, 2), 'utf-8');
+    notifyDbSync('downloads', downloadsData);
+    return true;
+  } catch (err) {
+    console.error('Error saving downloads_db.json:', err);
+    return false;
+  }
+}
+
+function notifyDbSync(type, data) {
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.webContents) {
+    mainWindow.webContents.send(`db:sync-${type}`, data);
+    if (type === 'downloads') {
+      mainWindow.webContents.send('sync:history', data);
+    }
+  }
+  if (miniWindow && !miniWindow.isDestroyed() && miniWindow.webContents) {
+    miniWindow.webContents.send(`db:sync-${type}`, data);
+    if (type === 'downloads') {
+      miniWindow.webContents.send('sync:history', data);
+    }
+  }
+}
+
+function enrichDownloadDetails(destDir, isPlaylist = false, downloadedFiles = []) {
+  let subPaths = [];
+  let thumbnailPath = null;
+  let hasSub = false;
+  let hasThumbnail = false;
+  let playlistDir = isPlaylist ? destDir : null;
+
+  try {
+    const validFiles = Array.isArray(downloadedFiles) ? downloadedFiles.filter(f => typeof f === 'string' && f.trim()) : [];
+    
+    // Extract base stems of all downloaded video/audio files
+    const stems = validFiles.map(filePath => {
+      const baseName = path.basename(filePath);
+      const ext = path.extname(baseName);
+      return baseName.slice(0, baseName.length - ext.length);
+    }).filter(stem => stem.length > 0);
+
+    const checkDir = (validFiles.length > 0 && fs.existsSync(path.dirname(validFiles[0])))
+      ? path.dirname(validFiles[0])
+      : destDir;
+
+    if (fs.existsSync(checkDir)) {
+      const entries = fs.readdirSync(checkDir);
+      for (const entry of entries) {
+        const fullPath = path.join(checkDir, entry);
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.isFile()) {
+            const ext = path.extname(entry).toLowerCase();
+            
+            // Subtitles/Thumbnails must belong to the downloaded video stem
+            const belongsToTask = stems.length === 0 || stems.some(stem => entry.startsWith(stem));
+
+            if (belongsToTask) {
+              if (['.srt', '.vtt', '.ass', '.lrc'].includes(ext)) {
+                hasSub = true;
+                if (!subPaths.includes(fullPath)) subPaths.push(fullPath);
+              } else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+                if (!hasThumbnail) {
+                  hasThumbnail = true;
+                  thumbnailPath = fullPath;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.error('Error enriching download details:', err);
+  }
+
+  return {
+    hasSub,
+    subPaths,
+    hasThumbnail,
+    thumbnailPath,
+    playlistDir
+  };
+}
+
+function addDownloadItemToDbInternal(rawItem) {
+  try {
+    const currentDb = loadDownloadsDb();
+    const targetDir = rawItem.folderPath || rawItem.filePath || (rawItem.downloadedFiles && rawItem.downloadedFiles[0] ? path.dirname(rawItem.downloadedFiles[0]) : '');
+    const enrich = enrichDownloadDetails(targetDir, rawItem.isPlaylist, rawItem.downloadedFiles);
+
+    const fullItem = {
+      ...rawItem,
+      sourceUrl: rawItem.sourceUrl || rawItem.url || rawItem.originalOptions?.url || '',
+      playlistDir: enrich.playlistDir || rawItem.playlistDir || rawItem.folderPath || null,
+      hasSub: enrich.hasSub || rawItem.hasSub || false,
+      subPaths: enrich.subPaths.length > 0 ? enrich.subPaths : (rawItem.subPaths || []),
+      hasThumbnail: enrich.hasThumbnail || rawItem.hasThumbnail || false,
+      thumbnailPath: enrich.thumbnailPath || rawItem.thumbnailPath || null,
+      downloadedAt: rawItem.downloadedAt || Date.now()
+    };
+
+    const existingIdx = currentDb.findIndex(i => i.id === fullItem.id);
+    if (existingIdx >= 0) {
+      currentDb[existingIdx] = { ...currentDb[existingIdx], ...fullItem };
+    } else {
+      currentDb.unshift(fullItem);
+    }
+
+    saveDownloadsDb(currentDb);
+    return currentDb;
+  } catch (err) {
+    console.error('Error adding download item to DB internal:', err);
+    return [];
+  }
+}
+
+ipcMain.handle('db:get-path', async () => getDbDir());
+ipcMain.handle('db:load-options', async () => loadSelectOptionsDb());
+ipcMain.handle('db:save-options', async (event, data) => saveSelectOptionsDb(data));
+ipcMain.handle('db:load-presets', async () => loadPresetsDb());
+ipcMain.handle('db:save-presets', async (event, data) => savePresetsDb(data));
+ipcMain.handle('db:load-downloads', async () => loadDownloadsDb());
+ipcMain.handle('db:save-downloads', async (event, data) => saveDownloadsDb(data));
+ipcMain.handle('db:add-download', async (event, rawItem) => addDownloadItemToDbInternal(rawItem));
+
+ipcMain.handle('db:delete-download', async (event, id) => {
+  const currentDb = loadDownloadsDb();
+  const updated = currentDb.filter(item => item.id !== id);
+  saveDownloadsDb(updated);
+  return updated;
+});
+
+ipcMain.handle('db:clear-downloads', async () => {
+  saveDownloadsDb([]);
+  return [];
+});
+

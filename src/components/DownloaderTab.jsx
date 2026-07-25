@@ -35,9 +35,10 @@ import {
 } from 'lucide-react';
 import PlaylistInspector from './PlaylistInspector';
 import Listbox from './Listbox';
-import { detectFormatFromUrl } from '../utils/formatDetector';
+import { detectFormatFromUrl, isAutoDetectableUrl, isPlaylistWithSingleVideoUrl, stripPlaylistParam } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
 import { getResolutionOptions, getAudioQualityOptions, getSubtitleOptions, buildDownloadOptions } from '../utils/downloadHelper';
+import PlaylistChoiceModal from './PlaylistChoiceModal';
 
 export default function DownloaderTab({
   settings,
@@ -59,10 +60,29 @@ export default function DownloaderTab({
   const [detectedPlatform, setDetectedPlatform] = useState(null);
 
   // Search & Queue states
-  const [searchPlatform, setSearchPlatform] = useState('auto'); // 'youtube' | 'soundcloud' | 'auto'
+  const [activeTab, setActiveTab] = useState('url'); // 'url' | 'search'
+  const [searchPlatform, setSearchPlatform] = useState('youtube'); // 'youtube' | 'soundcloud'
+  const [pendingPlaylistUrl, setPendingPlaylistUrl] = useState(null);
   const [addedToQueueMap, setAddedToQueueMap] = useState({});
   const [batchAdded, setBatchAdded] = useState(false);
   const [showAdvancedInResult, setShowAdvancedInResult] = useState(false);
+  const [optionsDb, setOptionsDb] = useState(null);
+
+  useEffect(() => {
+    if (window.api && window.api.loadOptionsDb) {
+      window.api.loadOptionsDb().then((data) => {
+        if (data) setOptionsDb(data);
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!window.api || !window.api.onSyncOptionsDb) return;
+    const unsub = window.api.onSyncOptionsDb((data) => {
+      if (data) setOptionsDb(data);
+    });
+    return () => unsub();
+  }, []);
 
   // Extract draft properties
   const {
@@ -137,25 +157,37 @@ export default function DownloaderTab({
   };
 
   // Analyze URL or Search Query handler
-  const handleAnalyze = async (overrideUrl = null, overridePlatform = null) => {
+  const handleAnalyze = async (overrideUrl = null, overridePlatform = null, forceMode = null) => {
     const rawTarget = (overrideUrl !== null ? overrideUrl : url).trim();
     if (!rawTarget) return;
 
-    const activePlat = overridePlatform || searchPlatform;
-    const isDirectUrl = /^https?:\/\//i.test(rawTarget);
+    if (!forceMode && isPlaylistWithSingleVideoUrl(rawTarget)) {
+      setPendingPlaylistUrl(rawTarget);
+      return;
+    }
 
-    let queryToSend = rawTarget;
+    let targetToAnalyze = rawTarget;
+    if (forceMode === 'single') {
+      targetToAnalyze = stripPlaylistParam(rawTarget);
+      updateDraft({ url: targetToAnalyze });
+      applyAutoFormatRule(targetToAnalyze);
+    }
+
+    const activePlat = overridePlatform || searchPlatform;
+    const isDirectUrl = /^https?:\/\//i.test(targetToAnalyze);
+
+    let queryToSend = targetToAnalyze;
     if (!isDirectUrl) {
       if (activePlat === 'soundcloud') {
-        queryToSend = `scsearch20:${rawTarget}`;
+        queryToSend = `scsearch20:${targetToAnalyze}`;
       } else {
-        queryToSend = `ytsearch20:${rawTarget}`;
+        queryToSend = `ytsearch20:${targetToAnalyze}`;
       }
     }
 
     setIsAnalyzing(true);
     setAnalyzeError('');
-    applyAutoFormatRule(rawTarget);
+    applyAutoFormatRule(targetToAnalyze);
 
     try {
       if (window.api && window.api.getVideoInfo) {
@@ -203,10 +235,17 @@ export default function DownloaderTab({
         });
       }
     } catch (err) {
-      setAnalyzeError(err.message || t('downloadError'));
+      setAnalyzeError(err.message || 'Error analyzing link');
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handlePlaylistChoice = (choice) => {
+    const rawUrl = pendingPlaylistUrl;
+    setPendingPlaylistUrl(null);
+    if (!rawUrl) return;
+    handleAnalyze(rawUrl, null, choice);
   };
 
   // Add individual item from search results to Download Queue
@@ -1162,6 +1201,15 @@ export default function DownloaderTab({
             </section>
           </div>
         )
+      )}
+
+      {/* Playlist & Single Video Choice Modal */}
+      {pendingPlaylistUrl && (
+        <PlaylistChoiceModal
+          rawUrl={pendingPlaylistUrl}
+          onChoose={handlePlaylistChoice}
+          onClose={() => handlePlaylistChoice('single')}
+        />
       )}
     </div>
   );

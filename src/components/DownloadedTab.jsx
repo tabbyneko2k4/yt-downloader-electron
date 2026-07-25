@@ -19,7 +19,9 @@ import {
   FolderCheck,
   RefreshCw,
   FileCode,
-  GripVertical
+  GripVertical,
+  Globe,
+  Subtitles
 } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import Listbox from './Listbox';
@@ -189,7 +191,27 @@ export default function DownloadedTab({
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs"
+              onClick={async () => {
+                let baseDir = settings?.defaultPath;
+                if (!baseDir && window.api && window.api.getDownloadsPath) {
+                  baseDir = await window.api.getDownloadsPath();
+                }
+                let targetPath = baseDir || '';
+                if (targetPath && !targetPath.includes('Media Download')) {
+                  targetPath = targetPath.replace(/[/\\]$/, '') + '/Media Download';
+                }
+                handleOpenFolder(targetPath || '');
+              }}
+              title={t('openDownloadFolder') || 'Mở thư mục tải xuống của ứng dụng (Media Download)'}
+            >
+              <FolderOpen size={14} />
+              <span>{t('openDownloadFolder') || 'Mở thư mục download'}</span>
+            </button>
+
             <button
               type="button"
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95"
@@ -411,6 +433,97 @@ export default function DownloadedTab({
                       >
                         <Trash2 size={14} />
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Rich JSON Database Metadata Section */}
+                  <div className="pt-2.5 border-t border-slate-200/70 dark:border-slate-800/70 text-[11px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                    {/* Source URL (Tải ở đâu) */}
+                    <div className="flex items-center gap-1.5 overflow-hidden text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
+                      <Globe size={13} className="text-sky-500 shrink-0" />
+                      <span className="truncate flex-1 font-mono text-[10px]" title={item.sourceUrl || item.url || 'Web Direct'}>
+                        {item.sourceUrl || item.url ? (item.sourceUrl || item.url) : 'Nguồn: Web Direct'}
+                      </span>
+                      {(item.sourceUrl || item.url) && (
+                        <button
+                          type="button"
+                          className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-sky-400 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(item.sourceUrl || item.url);
+                            alert('Đã sao chép link nguồn!');
+                          }}
+                          title="Sao chép link nguồn"
+                        >
+                          <Copy size={11} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* File / Folder Path (Đường dẫn tệp/Playlist) */}
+                    <div className="flex items-center gap-1.5 overflow-hidden text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
+                      <FolderOpen size={13} className="text-emerald-500 shrink-0" />
+                      <span className="truncate flex-1 font-mono text-[10px]" title={item.playlistDir || item.folderPath || item.filePath}>
+                        {item.isPlaylist ? (item.playlistDir || item.folderPath || 'Thư mục Playlist') : (item.filePath || 'Đường dẫn tệp')}
+                      </span>
+                      <button
+                        type="button"
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-emerald-400 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenFolder(item.playlistDir || item.folderPath || item.filePath);
+                        }}
+                        title="Mở thư mục"
+                      >
+                        <FolderOpen size={11} />
+                      </button>
+                    </div>
+
+                    {/* Subtitle File Status & Path */}
+                    <div className="flex items-center justify-between gap-1.5 text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <Subtitles size={13} className={item.hasSub || (item.subPaths && item.subPaths.length > 0) ? "text-purple-500" : "text-slate-400 opacity-50"} />
+                        <span className="font-semibold text-[11px] truncate">
+                          {item.hasSub || (item.subPaths && item.subPaths.length > 0) ? `Có Sub (${item.subPaths?.length || 1})` : 'Không có Sub'}
+                        </span>
+                      </div>
+                      {(item.hasSub || (item.subPaths && item.subPaths.length > 0)) && (
+                        <button
+                          type="button"
+                          className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-500/15 text-purple-600 dark:text-purple-300 hover:bg-purple-500/25 rounded transition-colors shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const subFile = item.subPaths && item.subPaths[0] ? item.subPaths[0] : (item.folderPath || item.filePath);
+                            handleOpenFile(subFile);
+                          }}
+                          title={item.subPaths && item.subPaths[0] ? item.subPaths[0] : 'Mở file sub'}
+                        >
+                          Mở Sub
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Thumbnail File Status & Path */}
+                    <div className="flex items-center justify-between gap-1.5 text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <ImageIcon size={13} className={item.hasThumbnail || item.thumbnailPath ? "text-pink-500" : "text-slate-400 opacity-50"} />
+                        <span className="font-semibold text-[11px] truncate">
+                          {item.hasThumbnail || item.thumbnailPath ? 'Có Thumbnail' : 'Không Thumbnail'}
+                        </span>
+                      </div>
+                      {(item.hasThumbnail || item.thumbnailPath) && (
+                        <button
+                          type="button"
+                          className="px-1.5 py-0.5 text-[10px] font-semibold bg-pink-500/15 text-pink-600 dark:text-pink-300 hover:bg-pink-500/25 rounded transition-colors shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenFile(item.thumbnailPath || item.thumbnail);
+                          }}
+                          title={item.thumbnailPath || 'Xem thumbnail'}
+                        >
+                          Xem Ảnh
+                        </button>
+                      )}
                     </div>
                   </div>
 

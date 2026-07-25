@@ -37,9 +37,10 @@ import {
   CheckSquare,
   Square
 } from 'lucide-react';
-import { detectFormatFromUrl } from './utils/formatDetector';
+import { detectFormatFromUrl, isAutoDetectableUrl, isPlaylistWithSingleVideoUrl, stripPlaylistParam } from './utils/formatDetector';
 import { getResolutionOptions, getAudioQualityOptions, buildDownloadOptions } from './utils/downloadHelper';
 import Listbox from './Listbox';
+import PlaylistChoiceModal from './PlaylistChoiceModal';
 
 const API_BASE = 'http://127.0.0.1:38472';
 
@@ -86,8 +87,21 @@ export default function Popup() {
   const [filesSort, setFilesSort] = useState('newest');
   const [expandedFolders, setExpandedFolders] = useState({});
 
+  // Playlist Choice Modal State
+  const [pendingPlaylistUrl, setPendingPlaylistUrl] = useState(null);
+
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Custom Presets
+  const [customPresets, setCustomPresets] = useState([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('media_downloader_custom_presets');
+      if (saved) setCustomPresets(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
 
   // Built-in Presets
   const builtinPresets = useMemo(() => [
@@ -95,11 +109,6 @@ export default function Popup() {
       id: 'preset-speed',
       name: '🚀 Speed Boost (10M Limit)',
       options: { rateLimit: '10M', customArgs: '--no-mtime' }
-    },
-    {
-      id: 'preset-subs',
-      name: '💬 Phụ đề (Vi+En)',
-      options: { writeSubs: true, embedSubs: true, subLangs: 'vi,en' }
     },
     {
       id: 'preset-bypass',
@@ -160,7 +169,8 @@ export default function Popup() {
           const tab = tabs[0];
           setActiveTabInfo(tab);
 
-          if (isValidMediaUrl(tab.url)) {
+          if (isValidMediaUrl(tab.url) && isAutoDetectableUrl(tab.url)) {
+            setActiveTabInfo(tab);
             setUrl(tab.url);
             applyAutoFormatRule(tab.url);
           }
@@ -248,13 +258,31 @@ export default function Popup() {
 
   const handlePasteClipboard = async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      let text = '';
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+          text = await navigator.clipboard.readText();
+        } catch (e) {
+          console.warn('navigator.clipboard.readText failed, trying DOM fallback:', e);
+        }
+      }
+      if (!text) {
+        const textarea = document.createElement('textarea');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        if (document.execCommand('paste')) {
+          text = textarea.value;
+        }
+        document.body.removeChild(textarea);
+      }
       if (text && text.trim()) {
         const clean = text.trim();
         setUrl(clean);
         applyAutoFormatRule(clean);
         setAnalyzeError('');
-        if (isValidMediaUrl(clean)) {
+        if (/^https?:\/\//i.test(clean) || isValidMediaUrl(clean)) {
           triggerAnalyze(clean);
         }
       }
@@ -264,24 +292,36 @@ export default function Popup() {
   };
 
   const handleDownloadActiveTab = () => {
-    if (activeTabInfo && activeTabInfo.url && isValidMediaUrl(activeTabInfo.url)) {
+    if (activeTabInfo && activeTabInfo.url && isValidMediaUrl(activeTabInfo.url) && isAutoDetectableUrl(activeTabInfo.url)) {
       setUrl(activeTabInfo.url);
       applyAutoFormatRule(activeTabInfo.url);
       triggerAnalyze(activeTabInfo.url);
     }
   };
 
-  const triggerAnalyze = async (overrideUrl = null) => {
+  const triggerAnalyze = async (overrideUrl = null, forceMode = null) => {
     const rawUrl = (overrideUrl !== null ? overrideUrl : url).trim();
     if (!rawUrl) return;
+
+    if (!forceMode && isPlaylistWithSingleVideoUrl(rawUrl)) {
+      setPendingPlaylistUrl(rawUrl);
+      return;
+    }
+
+    let urlToAnalyze = rawUrl;
+    if (forceMode === 'single') {
+      urlToAnalyze = stripPlaylistParam(rawUrl);
+      setUrl(urlToAnalyze);
+      applyAutoFormatRule(urlToAnalyze);
+    }
 
     setIsAnalyzing(true);
     setAnalyzeError('');
 
     try {
-      let queryToSend = rawUrl;
-      if (!isValidMediaUrl(rawUrl)) {
-        queryToSend = `ytsearch20:${rawUrl}`;
+      let queryToSend = urlToAnalyze;
+      if (!isValidMediaUrl(urlToAnalyze)) {
+        queryToSend = `ytsearch20:${urlToAnalyze}`;
       }
 
       const res = await fetch(`${API_BASE}/api/extract`, {
@@ -293,7 +333,7 @@ export default function Popup() {
 
       if (res.ok && data.success) {
         setMediaInfo(data);
-        if (rawUrl.includes('soundcloud.com') && formatType !== 'audio') {
+        if (urlToAnalyze.includes('soundcloud.com') && formatType !== 'audio') {
           setFormatType('audio');
           setQuality('mp3-192');
         }
@@ -306,6 +346,13 @@ export default function Popup() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handlePlaylistChoice = (choice) => {
+    const rawUrl = pendingPlaylistUrl;
+    setPendingPlaylistUrl(null);
+    if (!rawUrl) return;
+    triggerAnalyze(rawUrl, choice);
   };
 
   // Playlist selection handlers
@@ -338,8 +385,15 @@ export default function Popup() {
 
       let presetOptions = {};
       if (selectedPresetId) {
-        const found = builtinPresets.find((p) => p.id === selectedPresetId);
-        if (found) presetOptions = found.options;
+        const foundBuiltin = builtinPresets.find((p) => p.id === selectedPresetId);
+        if (foundBuiltin) {
+          presetOptions = foundBuiltin.options;
+        } else {
+          const foundCustom = customPresets.find((p) => p.id === selectedPresetId);
+          if (foundCustom && foundCustom.options) {
+            presetOptions = foundCustom.options;
+          }
+        }
       }
 
       const downloadOptions = buildDownloadOptions({
@@ -351,7 +405,9 @@ export default function Popup() {
         audioQuality: quality,
         mediaInfo,
         playlistSelectedIndexes,
-        advancedOptions: presetOptions
+        advancedOptions: {
+          ...presetOptions
+        }
       });
 
       const res = await fetch(`${API_BASE}/api/download`, {
@@ -674,7 +730,7 @@ export default function Popup() {
                 </div>
 
                 {/* Active Tab Quick Action Banner (Chrome Extension Feature) */}
-                {activeTabInfo && isValidMediaUrl(activeTabInfo.url) && (
+                {activeTabInfo && isValidMediaUrl(activeTabInfo.url) && isAutoDetectableUrl(activeTabInfo.url) && (
                   <div className="w-full p-2.5 rounded-xl bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-sky-500/15 border border-pink-500/30 backdrop-blur-md space-y-1.5 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-pink-600 dark:text-pink-400 truncate">
@@ -946,8 +1002,18 @@ export default function Popup() {
                         </option>
                       ))}
                     </optgroup>
+                    {customPresets.length > 0 && (
+                      <optgroup label="Preset Tự tạo">
+                        {customPresets.map((preset) => (
+                          <option key={preset.id} value={preset.id}>
+                            ⭐ {preset.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </Listbox>
                 </div>
+
 
                 {/* Primary Download Button */}
                 <button
@@ -1473,6 +1539,15 @@ export default function Popup() {
           <span>Desktop</span>
         </button>
       </nav>
+
+      {/* Playlist & Single Video Choice Modal */}
+      {pendingPlaylistUrl && (
+        <PlaylistChoiceModal
+          rawUrl={pendingPlaylistUrl}
+          onChoose={handlePlaylistChoice}
+          onClose={() => handlePlaylistChoice('single')}
+        />
+      )}
     </div>
   );
 }
