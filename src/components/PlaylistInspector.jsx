@@ -71,32 +71,30 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
   };
 
   return (
-    <div className="playlist-inspector-container">
+    <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-4 animate-fade-in-up">
       {/* Top Header & Selection Controls */}
-      <div className="playlist-inspector-header">
-        <div className="playlist-header-left">
-          <Music size={18} color="#c084fc" />
-          <h4 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', margin: 0 }}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Music size={18} className="text-purple-500 shrink-0" />
+          <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100">
             {t('playlistDetails', { total: entries.length })}
           </h4>
-          <span style={{ background: 'rgba(139, 92, 246, 0.25)', color: '#e9d5ff', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+          <span className="bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300 px-2.5 py-0.5 rounded-full text-xs font-bold">
             {t('selectedCount', { selected: selectedIndexes.length, total: entries.length })}
           </span>
         </div>
 
-        <div className="playlist-header-actions">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '12px', flex: 1 }}
+            className="flex-1 sm:flex-none py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer text-center"
             onClick={handleSelectAll}
           >
             {t('selectAll')}
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '12px', flex: 1 }}
+            className="flex-1 sm:flex-none py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer text-center"
             onClick={handleDeselectAll}
           >
             {t('deselectAll')}
@@ -105,24 +103,22 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
       </div>
 
       {/* Filter & Sort Controls */}
-      <div className="playlist-filter-row">
-        <div className="playlist-search-box">
-          <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            className="text-input"
-            style={{ paddingLeft: '30px', padding: '6px 10px 6px 30px', fontSize: '12px', width: '100%' }}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
             placeholder={t('searchPlaylistPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="playlist-sort-box">
-          <ArrowUpDown size={14} color="#94a3b8" />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <ArrowUpDown size={14} className="text-slate-400" />
           <select
-            className="custom-select playlist-sort-select"
-            style={{ fontSize: '12px' }}
+            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -136,9 +132,9 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
       </div>
 
       {/* Scrollable Track Items Table */}
-      <div className="playlist-tracks-scrollable">
+      <div className="max-h-64 overflow-y-auto space-y-1.5 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
         {processedEntries.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+          <div className="py-6 text-center text-slate-400 text-xs italic">
             {t('noPlaylistMatch')}
           </div>
         ) : (
@@ -147,38 +143,42 @@ export default function PlaylistInspector({ entries, selectedIndexes, setSelecte
             return (
               <div
                 key={item.originalIndex}
-                className={`playlist-track-row ${isSelected ? 'selected' : ''}`}
+                className={`flex items-center gap-2.5 p-2 rounded-xl transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? 'bg-purple-500/15 border border-purple-400/50 text-purple-600 dark:text-purple-200 font-bold scale-[1.01]'
+                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800/60 text-slate-600 dark:text-slate-400'
+                }`}
                 onClick={() => handleToggleItem(item.originalIndex)}
               >
                 {/* Checkbox */}
                 <input
                   type="checkbox"
-                  style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
+                  className="w-4 h-4 accent-pink-500 rounded cursor-pointer shrink-0"
                   checked={isSelected}
                   onChange={() => {}}
                 />
 
                 {/* Index / Thumb */}
-                <div className="playlist-track-thumb">
+                <div className="w-9 h-6 rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-800">
                   {item.thumbnail ? (
-                    <img src={item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>#{item.originalIndex}</span>
+                    <span className="text-[10px] text-slate-400">#{item.originalIndex}</span>
                   )}
                 </div>
 
                 {/* Title & Uploader */}
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: isSelected ? 'var(--text-main)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div className="overflow-hidden flex-1 min-w-0">
+                  <div className={`text-xs truncate ${isSelected ? 'font-bold text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'}`}>
                     #{item.originalIndex}. {item.title || 'Track'}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="text-[10px] text-slate-400 truncate">
                     {item.uploader || 'Web'}
                   </div>
                 </div>
 
                 {/* Duration */}
-                <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'right', fontFamily: 'monospace' }}>
+                <div className="text-[11px] text-slate-400 font-mono text-right shrink-0">
                   {formatDuration(item.duration)}
                 </div>
               </div>

@@ -1,9 +1,38 @@
 import React, { useState } from 'react';
-import { Folder, HardDrive, Check, Move, Globe, Sun, Moon, Monitor, Palette, Info, ShieldCheck, Cpu, LogOut } from 'lucide-react';
+import {
+  Folder,
+  HardDrive,
+  Check,
+  Move,
+  Globe,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
+  Info,
+  ShieldCheck,
+  Cpu,
+  LogOut,
+  Sliders,
+  AlertTriangle,
+  FileText,
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  ArrowLeft,
+  Settings as SettingsIcon
+} from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function SettingsTab({ settings, updateSettings }) {
   const { t, language, setLanguage, LANGUAGES } = useTranslation();
+
+  // Desktop active tab state
+  const [activeSubTab, setActiveSubTab] = useState('appearance');
+
+  // Mobile navigation stage state: null = Mobile Menu list stage, string = Detail section stage
+  const [mobileSelectedSection, setMobileSelectedSection] = useState(null);
+
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSelectDirectory = async () => {
@@ -28,22 +57,232 @@ export default function SettingsTab({ settings, updateSettings }) {
 
   const currentTheme = settings.theme || 'system';
 
-  return (
-    <div style={{ maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <section className="card fade-in-up">
-        <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <HardDrive size={20} color="#8b5cf6" />
-          <span>{t('settingsTitle')}</span>
-        </h2>
+  // 5 Separated Modular Sections
+  const subTabs = [
+    {
+      id: 'appearance',
+      label: 'Giao diện & Ngôn ngữ',
+      desc: 'Ngôn ngữ ứng dụng, theme màu sáng/tối',
+      icon: Palette,
+      color: '#ec4899'
+    },
+    {
+      id: 'storage',
+      label: 'Thư mục & Tải xuống',
+      desc: 'Đường dẫn lưu, chế độ kéo thả playlist, metadata',
+      icon: Folder,
+      color: '#8b5cf6'
+    },
+    {
+      id: 'general',
+      label: 'Cài đặt chung',
+      desc: 'Hành động khi đóng, số luồng tải, Chrome extension',
+      icon: SettingsIcon,
+      color: '#3b82f6'
+    },
+    {
+      id: 'about',
+      label: t('aboutTitle') || 'Giới thiệu',
+      desc: 'Thông tin phiên bản, tác giả & thư viện cốt lõi',
+      icon: Info,
+      color: '#10b981'
+    },
+    {
+      id: 'disclaimer',
+      label: t('disclaimerTitle') || 'Tuyên bố miễn trừ',
+      desc: 'Quy định pháp lý, bản quyền & mục đích sử dụng',
+      icon: AlertTriangle,
+      color: '#f59e0b'
+    }
+  ];
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* 0. Interface Language Selection */}
-          <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Globe size={16} color="#a78bfa" />
+  // Mobile Navigation Stage Handlers
+  const handleOpenMobileSection = (id) => {
+    setActiveSubTab(id);
+    setMobileSelectedSection(id);
+  };
+
+  const handleBackToMobileMenu = () => {
+    setMobileSelectedSection(null);
+  };
+
+  return (
+    <div className="relative z-10 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-slate-800 dark:text-slate-100 font-sans select-none animate-fade-in-up">
+      {/* ========================================================================= */}
+      {/* MOBILE VIEW (Stage 0: Menu List vs Stage 1: Detail Section with Back button) */}
+      {/* ========================================================================= */}
+      <div className="block md:hidden">
+        {/* STAGE 0: Mobile Hub Menu List */}
+        {mobileSelectedSection === null ? (
+          <div className="space-y-4 animate-fade-in-up">
+            <div className="p-4 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-1">
+              <h2 className="text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <SettingsIcon size={18} className="text-purple-500" />
+                <span>Cài Đặt & Giới Thiệu</span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Chọn danh mục cài đặt để tùy chỉnh ứng dụng
+              </p>
+            </div>
+
+            {/* List of 5 Modular Settings Sections for Mobile */}
+            <div className="space-y-2.5">
+              {subTabs.map((tab) => {
+                const IconComp = tab.icon;
+                return (
+                  <div
+                    key={tab.id}
+                    onClick={() => handleOpenMobileSection(tab.id)}
+                    className="p-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 hover:border-pink-400/50 shadow-sm active:scale-98 transition-all cursor-pointer flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div
+                        className="p-2.5 rounded-2xl shrink-0"
+                        style={{ backgroundColor: `${tab.color}15`, border: `1px solid ${tab.color}30` }}
+                      >
+                        <IconComp size={20} color={tab.color} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                          {tab.label}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          {tab.desc}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-400 shrink-0" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* STAGE 1: Mobile Detail Section View (With Top Navigation Back Bar) */
+          <div className="space-y-4 animate-fade-in-up">
+            {/* Top Navigation Back Bar */}
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-md">
+              <button
+                type="button"
+                onClick={handleBackToMobileMenu}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
+              >
+                <ArrowLeft size={15} />
+                <span>Quay lại menu</span>
+              </button>
+
+              <span className="text-xs font-extrabold text-pink-600 dark:text-pink-300">
+                {subTabs.find((t) => t.id === mobileSelectedSection)?.label}
+              </span>
+            </div>
+
+            {/* Render Selected Detail Content */}
+            <DetailSectionContent
+              sectionId={mobileSelectedSection}
+              settings={settings}
+              updateSettings={updateSettings}
+              language={language}
+              setLanguage={setLanguage}
+              LANGUAGES={LANGUAGES}
+              themeOptions={themeOptions}
+              currentTheme={currentTheme}
+              handleSelectDirectory={handleSelectDirectory}
+              handleSave={handleSave}
+              savedSuccess={savedSuccess}
+              t={t}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* DESKTOP VIEW (PC Layout: Side Vertical Tabs + Content Panel) */}
+      {/* ========================================================================= */}
+      <div className="hidden md:flex flex-row gap-6">
+        {/* Desktop Vertical Sidebar Tabs */}
+        <aside className="flex flex-col gap-2 w-64 shrink-0 p-3.5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl self-start">
+          <div className="px-3 py-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            Danh Mục Cấu Hình
+          </div>
+
+          {subTabs.map((tab) => {
+            const IconComp = tab.icon;
+            const isSelected = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveSubTab(tab.id)}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border border-pink-400/60 text-pink-600 dark:text-pink-200 shadow-md scale-[1.02]'
+                    : 'bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <IconComp size={18} color={tab.color} />
+                  <span>{tab.label}</span>
+                </div>
+                <ChevronRight size={14} className={isSelected ? 'text-pink-500' : 'text-slate-400 opacity-50'} />
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* Desktop Main Content Panel */}
+        <main className="flex-1 space-y-6">
+          <DetailSectionContent
+            sectionId={activeSubTab}
+            settings={settings}
+            updateSettings={updateSettings}
+            language={language}
+            setLanguage={setLanguage}
+            LANGUAGES={LANGUAGES}
+            themeOptions={themeOptions}
+            currentTheme={currentTheme}
+            handleSelectDirectory={handleSelectDirectory}
+            handleSave={handleSave}
+            savedSuccess={savedSuccess}
+            t={t}
+          />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// Helper Component rendering content for each individual separated section
+function DetailSectionContent({
+  sectionId,
+  settings,
+  updateSettings,
+  language,
+  setLanguage,
+  LANGUAGES,
+  themeOptions,
+  currentTheme,
+  handleSelectDirectory,
+  handleSave,
+  savedSuccess,
+  t
+}) {
+  return (
+    <section className="p-4 sm:p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-6 animate-fade-in-up">
+      {/* SECTION 1: APPEARANCE & LANGUAGE */}
+      {sectionId === 'appearance' && (
+        <div className="space-y-6">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <Palette size={20} className="text-pink-500" />
+            <span>Giao diện & Ngôn ngữ</span>
+          </h2>
+
+          {/* Language Selection */}
+          <div className="space-y-2.5">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Globe size={16} className="text-purple-400" />
               <span>{t('languageLabel')}</span>
             </label>
-            <div className="settings-lang-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px', marginTop: '10px' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {LANGUAGES.map((l) => {
                 const isSelected = (settings.language || language) === l.code;
                 return (
@@ -53,34 +292,27 @@ export default function SettingsTab({ settings, updateSettings }) {
                       updateSettings({ language: l.code });
                       setLanguage(l.code);
                     }}
-                    style={{
-                      padding: '10px 14px',
-                      borderRadius: '10px',
-                      border: isSelected ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                      background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
+                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center gap-2.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
                   >
-                    <span style={{ fontSize: '18px' }}>{l.flag}</span>
-                    <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: 'var(--text-main)' }}>
-                      {l.name}
-                    </span>
+                    <span className="text-lg">{l.flag}</span>
+                    <span>{l.name}</span>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* 0.5. Theme Selection */}
-          <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Palette size={16} color="#ec4899" />
+          {/* Theme Mode Selection */}
+          <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Palette size={16} className="text-pink-500" />
               <span>{t('themeLabel')}</span>
             </label>
-            <div className="settings-theme-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '10px' }}>
+            <div className="grid grid-cols-3 gap-2.5">
               {themeOptions.map((opt) => {
                 const IconComp = opt.icon;
                 const isSelected = currentTheme === opt.id;
@@ -88,45 +320,47 @@ export default function SettingsTab({ settings, updateSettings }) {
                   <div
                     key={opt.id}
                     onClick={() => updateSettings({ theme: opt.id })}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: isSelected ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                      background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
+                    className={`p-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
                   >
-                    <IconComp size={18} color={opt.color} />
-                    <span style={{ fontSize: '13px', fontWeight: isSelected ? '700' : '500', color: 'var(--text-main)' }}>
-                      {opt.name}
-                    </span>
+                    <IconComp size={16} color={opt.color} />
+                    <span>{opt.name}</span>
                   </div>
                 );
               })}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* 1. Default Directory Selection */}
-          <div>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>
+      {/* SECTION 2: STORAGE & DOWNLOADS */}
+      {sectionId === 'storage' && (
+        <div className="space-y-6">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <Folder size={20} className="text-purple-500" />
+            <span>Thư mục & Lưu trữ</span>
+          </h2>
+
+          {/* Directory Storage Path */}
+          <div className="space-y-2">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 block">
               {t('storageFolderLabel')}
             </label>
-            <div className="settings-folder-row" style={{ display: 'flex', gap: '10px' }}>
+            <div className="flex gap-2">
               <input
                 type="text"
-                className="text-input"
-                style={{ flex: 1, padding: '8px 12px', fontSize: '13px' }}
+                className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
                 value={settings.defaultPath || ''}
                 placeholder={t('selectFolderPlaceholder')}
                 readOnly
               />
               <button
-                className="btn btn-secondary"
+                type="button"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
                 onClick={handleSelectDirectory}
-                style={{ padding: '8px 14px', fontSize: '13px' }}
               >
                 <Folder size={15} />
                 <span>{t('changeFolderBtn')}</span>
@@ -134,63 +368,90 @@ export default function SettingsTab({ settings, updateSettings }) {
             </div>
           </div>
 
-          {/* 2. Drag & Drop Mode Settings for Playlists */}
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Move size={15} color="#3b82f6" />
+          {/* Drag Mode for Playlists */}
+          <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Move size={15} className="text-sky-500" />
               <span>{t('dragModeLabel')}</span>
             </label>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {t('dragModeDesc')}
             </p>
 
-            <div className="settings-drag-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div
                 onClick={() => updateSettings({ playlistDragMode: 'folder' })}
-                style={{
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: (settings.playlistDragMode || 'folder') === 'folder' ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                  background: (settings.playlistDragMode || 'folder') === 'folder' ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
-                  cursor: 'pointer'
-                }}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${
+                  (settings.playlistDragMode || 'folder') === 'folder'
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                }`}
               >
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                  {t('dragModeFolder')}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  {t('dragModeFolderDesc')}
-                </div>
+                <div className="font-bold mb-1">{t('dragModeFolder')}</div>
+                <div className="text-[11px] opacity-75">{t('dragModeFolderDesc')}</div>
               </div>
 
               <div
                 onClick={() => updateSettings({ playlistDragMode: 'files' })}
-                style={{
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: settings.playlistDragMode === 'files' ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                  background: settings.playlistDragMode === 'files' ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
-                  cursor: 'pointer'
-                }}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${
+                  settings.playlistDragMode === 'files'
+                    ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                }`}
               >
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                  {t('dragModeFiles')}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                  {t('dragModeFilesDesc')}
-                </div>
+                <div className="font-bold mb-1">{t('dragModeFiles')}</div>
+                <div className="text-[11px] opacity-75">{t('dragModeFilesDesc')}</div>
               </div>
             </div>
           </div>
 
-          {/* 2.5 Close Window Action Settings */}
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <LogOut size={15} color="#ef4444" />
+          {/* Default Metadata Checkboxes */}
+          <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 block">
+              {t('defaultMetadataLabel')}
+            </label>
+
+            <div className="space-y-2">
+              <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="accent-pink-500 rounded"
+                  checked={settings.embedMetadata}
+                  onChange={(e) => updateSettings({ embedMetadata: e.target.checked })}
+                />
+                <span>{t('embedMetadataCheck')}</span>
+              </label>
+
+              <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="accent-pink-500 rounded"
+                  checked={settings.embedThumbnail}
+                  onChange={(e) => updateSettings({ embedThumbnail: e.target.checked })}
+                />
+                <span>{t('embedThumbnailCheck')}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 3: GENERAL PREFERENCES */}
+      {sectionId === 'general' && (
+        <div className="space-y-6">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <SettingsIcon size={20} className="text-sky-500" />
+            <span>Cài đặt chung</span>
+          </h2>
+
+          {/* Close Window Action */}
+          <div className="space-y-2.5">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <LogOut size={15} className="text-rose-500" />
               <span>{t('closeSettingLabel') || 'Khi đóng cửa sổ chính'}</span>
             </label>
 
-            <div className="settings-close-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '10px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
                 { id: 'ask', name: t('closeSettingAsk') || 'Luôn hỏi tôi', dontAsk: false, action: 'ask' },
                 { id: 'minimize', name: t('closeSettingMinimize') || 'Thu nhỏ khay hệ thống', dontAsk: true, action: 'minimize' },
@@ -203,17 +464,11 @@ export default function SettingsTab({ settings, updateSettings }) {
                   <div
                     key={opt.id}
                     onClick={() => updateSettings({ closeAction: opt.action, dontAskClose: opt.dontAsk })}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: isSelected ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                      background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'var(--bg-secondary)',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: isSelected ? '700' : '500',
-                      color: 'var(--text-main)',
-                      textAlign: 'center'
-                    }}
+                    className={`p-3 rounded-2xl border text-xs text-center font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold shadow-sm scale-105'
+                        : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
                   >
                     {opt.name}
                   </div>
@@ -222,14 +477,13 @@ export default function SettingsTab({ settings, updateSettings }) {
             </div>
           </div>
 
-          {/* 3. Concurrent Downloads Limit */}
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'block', marginBottom: '6px' }}>
+          {/* Max Concurrent Downloads */}
+          <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 block">
               {t('maxConcurrentLabel')}
             </label>
             <select
-              className="custom-select settings-select"
-              style={{ width: '250px', fontSize: '13px' }}
+              className="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:border-pink-500"
               value={settings.maxConcurrentDownloads || 2}
               onChange={(e) => updateSettings({ maxConcurrentDownloads: parseInt(e.target.value, 10) })}
             >
@@ -240,166 +494,169 @@ export default function SettingsTab({ settings, updateSettings }) {
             </select>
           </div>
 
-          {/* 4. Default Metadata & Thumbnail Checkboxes */}
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)' }}>
-              {t('defaultMetadataLabel')}
+          {/* Chrome Extension Settings */}
+          <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Globe size={16} className="text-emerald-500" />
+              <span>Chrome Extension Integration</span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+            <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.embedMetadata}
-                onChange={(e) => updateSettings({ embedMetadata: e.target.checked })}
-              />
-              <span>{t('embedMetadataCheck')}</span>
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-              <input
-                type="checkbox"
-                checked={settings.embedThumbnail}
-                onChange={(e) => updateSettings({ embedThumbnail: e.target.checked })}
-              />
-              <span>{t('embedThumbnailCheck')}</span>
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-              <input
-                type="checkbox"
-                checked={settings.showFooterDisclaimer !== false}
-                onChange={(e) => updateSettings({ showFooterDisclaimer: e.target.checked })}
-              />
-              <span>{t('showFooterDisclaimerCheck')}</span>
-            </label>
-          </div>
-
-          {/* 5. Chrome Extension Integration Settings */}
-          <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Globe size={16} color="#10b981" />
-              <span>Chrome Extension</span>
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-              <input
-                type="checkbox"
+                className="accent-pink-500 rounded"
                 checked={settings.autoOpenMiniWindowOnExtension !== false}
                 onChange={(e) => updateSettings({ autoOpenMiniWindowOnExtension: e.target.checked })}
               />
               <span>Tự động hiển thị Mini-Window khi nhận lệnh tải từ Chrome Extension</span>
             </label>
           </div>
-
-          {/* Save Button */}
-          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              className="btn btn-primary"
-              onClick={handleSave}
-              style={{ padding: '10px 20px', fontSize: '13px' }}
-            >
-              <Check size={16} />
-              <span>{t('saveSettingsBtn')}</span>
-            </button>
-
-            {savedSuccess && (
-              <span style={{ color: '#10b981', fontSize: '13px', fontWeight: '600' }} className="fade-in-up">
-                {t('settingsSavedSuccess')}
-              </span>
-            )}
-          </div>
         </div>
-      </section>
+      )}
 
-      {/* About Section */}
-      <section className="card fade-in-up">
-        <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Info size={20} color="#ec4899" />
-          <span>{t('aboutTitle') || 'Giới thiệu về ứng dụng'}</span>
-        </h2>
+      {/* SECTION 4: ABOUT / APP INFO */}
+      {sectionId === 'about' && (
+        <div className="space-y-6">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <Info size={20} className="text-emerald-500" />
+            <span>{t('aboutTitle') || 'Giới thiệu về ứng dụng'}</span>
+          </h2>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', background: 'var(--bg-secondary)', padding: '18px 20px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flex: 1 }}>
-            <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '44px', height: '44px', minWidth: '44px', marginTop: '2px' }}>
+          {/* Logo & General Info Card */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <svg className="logo-icon w-12 h-12 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
-                fill="url(#about-logo-grad)"
+                fill="url(#about-logo-grad-sub-stage)"
               />
               <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
               <defs>
-                <linearGradient id="about-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
+                <linearGradient id="about-logo-grad-sub-stage" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
                   <stop stopColor="#ec4899" />
                   <stop offset="0.5" stopColor="#8b5cf6" />
                   <stop offset="1" stopColor="#3b82f6" />
                 </linearGradient>
               </defs>
             </svg>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span>{t('aboutAppName')}</span>
-                <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', border: '1px solid rgba(236, 72, 153, 0.3)' }}>
+
+            <div className="space-y-1.5 flex-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-base font-bold text-slate-800 dark:text-slate-100">{t('aboutAppName')}</span>
+                <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-pink-500/15 border border-pink-400/40 text-pink-600 dark:text-pink-300">
                   {t('aboutVersion')}
                 </span>
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px', maxWidth: '620px', lineHeight: '1.5' }}>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t('aboutDesc')}
               </p>
-              <div style={{ fontSize: '12px', color: 'var(--text-main)', marginTop: '8px', display: 'flex', gap: '18px', flexWrap: 'wrap' }}>
-                <span><strong>Author:</strong> Tabby Neko</span>
-                <span><strong>License:</strong> ISC</span>
+              <div className="text-xs text-slate-700 dark:text-slate-300 pt-1 flex items-center gap-4 flex-wrap">
+                <span><strong>Tác giả:</strong> Tabby Neko</span>
+                <span><strong>Giấy phép:</strong> ISC License</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* devDependencies Badges List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Cpu size={14} color="#8b5cf6" />
-            <span>{t('aboutTech')}</span>
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {[
-              { name: 'electron', ver: '^31.0.0' },
-              { name: 'react', ver: '^19.2.8' },
-              { name: 'react-dom', ver: '^19.2.8' },
-              { name: 'vite', ver: '^5.4.21' },
-              { name: '@vitejs/plugin-react', ver: '^4.7.0' },
-              { name: 'electron-builder', ver: '^26.15.3' },
-              { name: 'lucide-react', ver: '^1.26.0' }
-            ].map((dep) => (
-              <span
-                key={dep.name}
-                style={{
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  padding: '5px 10px',
-                  borderRadius: '8px',
-                  background: 'rgba(139, 92, 246, 0.12)',
-                  color: 'var(--text-main)',
-                  border: '1px solid rgba(139, 92, 246, 0.25)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span style={{ color: '#c084fc' }}>{dep.name}</span>
-                <span style={{ opacity: 0.75, fontSize: '10px', color: 'var(--text-muted)' }}>{dep.ver}</span>
-              </span>
-            ))}
+          {/* Tech Stack List */}
+          <div className="space-y-2.5">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Cpu size={15} className="text-purple-500" />
+              <span>{t('aboutTech')}</span>
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { name: 'electron', ver: '^31.0.0' },
+                { name: 'react', ver: '^19.2.8' },
+                { name: 'react-dom', ver: '^19.2.8' },
+                { name: 'vite', ver: '^5.4.21' },
+                { name: '@vitejs/plugin-react', ver: '^4.7.0' },
+                { name: 'electron-builder', ver: '^26.15.3' },
+                { name: 'lucide-react', ver: '^1.26.0' },
+                { name: 'yt-dlp', ver: 'latest build' },
+                { name: 'ffmpeg', ver: 'binary core' }
+              ].map((dep) => (
+                <span
+                  key={dep.name}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-400/25 text-slate-800 dark:text-slate-200 flex items-center gap-2"
+                >
+                  <span className="text-purple-600 dark:text-purple-300 font-mono">{dep.name}</span>
+                  <span className="text-[10px] text-slate-400">{dep.ver}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* License Details Footer Box */}
+          <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-3">
+            <ShieldCheck size={20} className="text-emerald-500 shrink-0" />
+            <span className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <strong className="text-slate-800 dark:text-slate-100">{t('aboutLicense')}: </strong>
+              {t('aboutLicenseText')}
+            </span>
           </div>
         </div>
+      )}
 
-        {/* License Details Footer Box */}
-        <div style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(0, 0, 0, 0.04)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <ShieldCheck size={18} color="#10b981" style={{ minWidth: '18px' }} />
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            <strong style={{ color: 'var(--text-main)' }}>{t('aboutLicense')}: </strong>
-            {t('aboutLicenseText')}
-          </span>
+      {/* SECTION 5: DISCLAIMER */}
+      {sectionId === 'disclaimer' && (
+        <div className="space-y-6">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-800">
+            <AlertTriangle size={20} className="text-amber-500" />
+            <span>{t('disclaimerTitle') || 'Tuyên bố miễn trừ trách nhiệm'}</span>
+          </h2>
+
+          <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-400/30 flex items-start gap-3">
+              <AlertTriangle size={20} className="text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-amber-700 dark:text-amber-300">
+                  Mục đích Giáo dục & Lưu trữ Cá nhân
+                </h4>
+                <p className="text-xs opacity-90">
+                  Ứng dụng Media Downloader được phát triển hoàn toàn vì mục đích học tập, nghiên cứu công nghệ truyền thông và hỗ trợ người dùng sao lưu nội dung cá nhân thuộc quyền sở hữu của mình.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+              <h4 className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-xs sm:text-sm">
+                <ShieldCheck size={16} className="text-emerald-500" />
+                <span>Quy định bản quyền & Trách nhiệm pháp lý</span>
+              </h4>
+              <ul className="list-disc list-inside space-y-2 text-xs text-slate-500 dark:text-slate-400 pl-1">
+                <li>
+                  <strong>Tác quyền nội dung:</strong> Bản quyền của tất cả các tệp âm thanh, video, hình ảnh thuộc về tác giả hoặc đơn vị phát hành nội dung gốc.
+                </li>
+                <li>
+                  <strong>Trách nhiệm người dùng:</strong> Người dùng tự chịu mọi trách nhiệm pháp lý nếu sử dụng ứng dụng này để tải xuống, phát tán hoặc kinh doanh các nội dung vi phạm Điều khoản dịch vụ (ToS) của nền tảng gốc hoặc vi phạm Luật Bản quyền hiện hành.
+                </li>
+                <li>
+                  <strong>Không chứa mã độc / Không lưu dữ liệu:</strong> Ứng dụng không thu thập thông tin cá nhân, không lưu trữ tệp tin trên máy chủ trung gian và hoạt động hoàn toàn cục bộ trên máy tính của bạn.
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
-      </section>
-    </div>
+      )}
+
+      {/* Global Save Button Row for Preferences */}
+      {(sectionId === 'appearance' || sectionId === 'storage' || sectionId === 'general') && (
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center gap-3">
+          <button
+            type="button"
+            className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+            onClick={handleSave}
+          >
+            <Check size={16} />
+            <span>{t('saveSettingsBtn')}</span>
+          </button>
+
+          {savedSuccess && (
+            <span className="text-xs font-bold text-emerald-500 dark:text-emerald-400 animate-fade-in-up">
+              {t('settingsSavedSuccess')}
+            </span>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
-

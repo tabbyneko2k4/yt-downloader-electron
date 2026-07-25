@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { Play, Pause, X, Terminal, Download, Loader2, ChevronDown, ChevronUp, CheckCircle2, Clock, ListMusic, RotateCcw, AlertTriangle } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  X,
+  Terminal,
+  Download,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Clock,
+  ListMusic,
+  RotateCcw,
+  AlertTriangle
+} from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function DownloadQueueManager({
@@ -30,43 +44,49 @@ export default function DownloadQueueManager({
   const totalTasksCount = activeDownloads.length + downloadQueue.length + pausedDownloads.length + failedDownloads.length;
 
   return (
-    <div className="under-taskbar-wrapper">
+    <div className="relative z-20 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 my-3 select-none animate-fade-in-up">
       {/* Sleek Under-Taskbar Main Bar */}
-      <div className="under-taskbar-dl-bar fade-in-up">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-sky-200 dark:border-pink-500/30 shadow-light-glow dark:shadow-xl">
         {/* Left: Thumbnail & Title Info */}
-        <div className="under-taskbar-dl-left">
-          <span className="draft-pulse-dot" style={{ backgroundColor: isFailedOnly ? '#ef4444' : undefined }} />
-          <div className="draft-thumb-small">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <span
+            className={`w-2.5 h-2.5 rounded-full shrink-0 animate-pulse ${
+              isFailedOnly ? 'bg-rose-500' : isPaused ? 'bg-amber-500' : isQueued ? 'bg-sky-500' : 'bg-emerald-400'
+            }`}
+          />
+          <div className="w-12 h-9 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-800 shadow-sm">
             {currentActive.thumbnail ? (
-              <img src={currentActive.thumbnail} alt="thumb" />
+              <img src={currentActive.thumbnail} alt="thumb" className="w-full h-full object-cover" />
             ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.1)', color: isFailedOnly ? '#fca5a5' : '#c084fc' }}>
-                {isFailedOnly ? <AlertTriangle size={14} /> : <Download size={14} />}
+              <div className="text-pink-400">
+                {isFailedOnly ? <AlertTriangle size={15} className="text-rose-400" /> : <Download size={15} />}
               </div>
             )}
           </div>
 
-          <div style={{ overflow: 'hidden' }}>
-            <div className="under-taskbar-dl-title">
-              {currentActive.isPlaylistItem ? `${currentActive.playlistTitle} • #${currentActive.playlistIndex}. ${currentActive.mediaTitle}` : (currentActive.playlistTitle || currentActive.mediaTitle || currentActive.url)}
+          <div className="overflow-hidden min-w-0 flex-1">
+            <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+              {currentActive.isPlaylistItem
+                ? `${currentActive.playlistTitle} • #${currentActive.playlistIndex}. ${currentActive.mediaTitle}`
+                : currentActive.playlistTitle || currentActive.mediaTitle || currentActive.url}
             </div>
-            <div className="under-taskbar-dl-sub">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2 flex-wrap mt-0.5">
               {isFailedOnly ? (
-                <span style={{ color: '#ef4444' }}>{t('downloadFailed')}</span>
+                <span className="text-rose-500 font-bold">{t('downloadFailed')}</span>
               ) : isPaused ? (
-                <span style={{ color: '#f59e0b' }}>{t('downloadPaused')}</span>
+                <span className="text-amber-500 font-bold">{t('downloadPaused')}</span>
               ) : isQueued ? (
-                <span style={{ color: '#3b82f6' }}>{t('downloadQueued')}</span>
+                <span className="text-sky-500 font-bold">{t('downloadQueued')}</span>
               ) : (
-                <span>{t('downloadActive', { count: activeDownloads.length })}</span>
+                <span className="text-emerald-500 font-bold">{t('downloadActive', { count: activeDownloads.length })}</span>
               )}
               {failedDownloads.length > 0 && (
-                <span style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, 0.2)', padding: '1px 6px', borderRadius: '8px', fontSize: '10px' }}>
+                <span className="bg-rose-500/15 border border-rose-400/30 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-md text-[10px] font-bold">
                   {t('errorCount', { count: failedDownloads.length })}
                 </span>
               )}
               {totalTasksCount > 1 && (
-                <span style={{ color: '#94a3b8', background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: '8px' }}>
+                <span className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md text-[10px]">
                   {t('moreItems', { count: totalTasksCount - 1 })}
                 </span>
               )}
@@ -75,24 +95,28 @@ export default function DownloadQueueManager({
         </div>
 
         {/* Center: Live Progress Bar & Info */}
-        <div className="under-taskbar-progress-container">
-          <div style={{ flex: 1 }}>
-            <div className="progress-bar-track" style={{ height: '7px' }}>
-              <div className="progress-bar-fill" style={{ width: `${currentActive.percent || 0}%`, background: isFailedOnly ? '#ef4444' : undefined }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
-              <span>{currentActive.percent ? `${currentActive.percent.toFixed(1)}%` : (isFailedOnly ? 'Failed' : '...')}</span>
-              <span>{currentActive.speed || (currentActive.eta ? `${currentActive.eta}` : '')}</span>
-            </div>
+        <div className="flex-1 min-w-[180px] sm:max-w-xs">
+          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${
+                isFailedOnly
+                  ? 'bg-rose-500'
+                  : 'bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500'
+              }`}
+              style={{ width: `${currentActive.percent || 0}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">
+            <span>{currentActive.percent ? `${currentActive.percent.toFixed(1)}%` : isFailedOnly ? 'Lỗi' : '...'}</span>
+            <span>{currentActive.speed || (currentActive.eta ? `${currentActive.eta}` : '')}</span>
           </div>
         </div>
 
         {/* Right: Actions & Dropdown Toggle */}
-        <div className="under-taskbar-actions">
-          {/* Dropdown Toggle Button */}
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
           <button
             type="button"
-            className="btn-toggle-drawer"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
             onClick={() => setIsExpanded(!isExpanded)}
             title={isExpanded ? t('collapseBtn') : t('detailBtn')}
           >
@@ -104,58 +128,67 @@ export default function DownloadQueueManager({
 
       {/* Expanded Accordion Drawer */}
       {isExpanded && (
-        <div className="under-taskbar-details-drawer fade-in-up">
+        <div className="mt-2 p-3 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-2xl space-y-2.5 animate-fade-in-up">
           {/* Active Downloads List */}
           {activeDownloads.map((dl) => (
-            <div key={dl.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(30, 41, 59, 0.45)', borderRadius: '10px', padding: '10px 12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+            <div
+              key={dl.id}
+              className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 space-y-2"
+            >
               {/* Task Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', maxWidth: '65%' }}>
-                  <Download size={15} color="#ec4899" />
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {dl.isPlaylistItem ? `${dl.playlistTitle} • #${dl.playlistIndex}. ${dl.mediaTitle}` : (dl.playlistTitle || dl.mediaTitle || dl.url)}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 overflow-hidden max-w-[65%]">
+                  <Download size={15} className="text-pink-500 shrink-0" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                    {dl.isPlaylistItem ? `${dl.playlistTitle} • #${dl.playlistIndex}. ${dl.mediaTitle}` : dl.playlistTitle || dl.mediaTitle || dl.url}
                   </span>
-                  <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', padding: '1px 6px', borderRadius: '4px' }}>
+                  <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded">
                     {dl.formatType?.toUpperCase()}
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '700', color: '#ec4899' }}>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs font-bold text-pink-500">
                     ⚡ ({dl.percent ? dl.percent.toFixed(1) : 0}%)
                   </span>
                   {openLogModal && (
                     <button
+                      type="button"
                       onClick={() => openLogModal(dl)}
-                      style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--border-color)', color: '#94a3b8', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
+                      className="p-1 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                       title={t('viewCliLog')}
                     >
-                      <Terminal size={11} />
+                      <Terminal size={12} />
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => pauseDownload(dl.id)}
-                    style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#f59e0b', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
+                    className="p-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-amber-600 dark:text-amber-300 transition-colors cursor-pointer"
                     title={t('pause')}
                   >
-                    <Pause size={11} />
+                    <Pause size={12} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => cancelDownload(dl.id)}
-                    style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '3px 6px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer' }}
+                    className="p-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-rose-600 dark:text-rose-300 transition-colors cursor-pointer"
                     title={t('cancelTask')}
                   >
-                    <X size={11} />
+                    <X size={12} />
                   </button>
                 </div>
               </div>
 
               {/* Individual Live Progress Bar */}
-              <div className="progress-bar-track" style={{ height: '5px' }}>
-                <div className="progress-bar-fill" style={{ width: `${dl.percent || 0}%` }} />
+              <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 rounded-full transition-all duration-300"
+                  style={{ width: `${dl.percent || 0}%` }}
+                />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
+              <div className="flex justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
                 <span>{dl.speed || dl.totalSize || '...'}</span>
                 <span>{dl.eta || ''}</span>
               </div>
@@ -164,24 +197,27 @@ export default function DownloadQueueManager({
 
           {/* Failed Downloads Group */}
           {failedDownloads.map((f) => (
-            <div key={f.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                <AlertTriangle size={14} color="#ef4444" />
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#fca5a5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {f.isPlaylistItem ? `${f.playlistTitle} • #${f.playlistIndex}. ${f.mediaTitle}` : (f.playlistTitle || f.mediaTitle)}
+            <div
+              key={f.id}
+              className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-rose-500/15 border border-rose-400/30 text-xs font-medium"
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                <AlertTriangle size={15} className="text-rose-500 shrink-0" />
+                <div className="overflow-hidden">
+                  <div className="font-bold text-rose-600 dark:text-rose-300 truncate">
+                    {f.isPlaylistItem ? `${f.playlistTitle} • #${f.playlistIndex}. ${f.mediaTitle}` : f.playlistTitle || f.mediaTitle}
                   </div>
-                  <div style={{ fontSize: '10px', color: '#ef4444' }}>
+                  <div className="text-[10px] text-rose-500 dark:text-rose-400 truncate">
                     ⚠️ {f.errorMessage || 'Error'}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="flex items-center gap-1.5 shrink-0">
                 {retryDownload && (
                   <button
-                    className="btn btn-primary"
-                    style={{ padding: '3px 8px', fontSize: '11px', background: 'linear-gradient(135deg, #ef4444 0%, #ec4899 100%)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    type="button"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-[11px] shadow-sm cursor-pointer active:scale-95"
                     onClick={() => retryDownload(f)}
                     title={t('retry')}
                   >
@@ -191,12 +227,12 @@ export default function DownloadQueueManager({
                 )}
                 {removeFailedTask && (
                   <button
-                    className="btn btn-secondary"
-                    style={{ padding: '3px 6px', fontSize: '10px' }}
+                    type="button"
+                    className="p-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 transition-colors cursor-pointer"
                     onClick={() => removeFailedTask(f.id)}
                     title={t('ignore')}
                   >
-                    <X size={11} />
+                    <X size={12} />
                   </button>
                 )}
               </div>
@@ -205,11 +241,16 @@ export default function DownloadQueueManager({
 
           {/* Paused Tasks Group */}
           {pausedDownloads.map((p) => (
-            <div key={p.id} className="dl-parent-item" style={{ borderColor: 'rgba(245, 158, 11, 0.4)' }}>
-              <span style={{ color: '#f59e0b', fontSize: '12px' }}>⏸️ {p.playlistTitle || p.mediaTitle} ({t('downloadPaused')})</span>
+            <div
+              key={p.id}
+              className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-xs font-semibold"
+            >
+              <span className="text-amber-600 dark:text-amber-300 truncate">
+                ⏸️ {p.playlistTitle || p.mediaTitle} ({t('downloadPaused')})
+              </span>
               <button
-                className="btn btn-primary"
-                style={{ padding: '2px 8px', fontSize: '11px' }}
+                type="button"
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-400 to-pink-500 text-slate-950 font-bold text-[11px] cursor-pointer active:scale-95"
                 onClick={() => resumeDownload(p)}
               >
                 {t('resume')}
@@ -219,18 +260,21 @@ export default function DownloadQueueManager({
 
           {/* Queued Tasks Group */}
           {downloadQueue.map((q, idx) => (
-            <div key={q.id} className="dl-child-playlist-item" style={{ opacity: 0.7, margin: 0, borderRadius: '8px', borderLeft: '2px solid #3b82f6' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                <Clock size={13} color="#64748b" />
-                <span style={{ fontSize: '12px', color: '#cbd5e1', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                  #{idx + 1}. {q.isPlaylistItem ? `${q.playlistTitle} • #${q.playlistIndex}. ${q.mediaTitle}` : (q.playlistTitle || q.mediaTitle)}
+            <div
+              key={q.id}
+              className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border-l-4 border-l-sky-500 border border-slate-200 dark:border-slate-800 text-xs"
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                <Clock size={13} className="text-slate-400 shrink-0" />
+                <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                  #{idx + 1}. {q.isPlaylistItem ? `${q.playlistTitle} • #${q.playlistIndex}. ${q.mediaTitle}` : q.playlistTitle || q.mediaTitle}
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>{t('waiting')}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] text-slate-400">{t('waiting')}</span>
                 <button
-                  className="btn btn-danger"
-                  style={{ padding: '2px 6px', fontSize: '10px' }}
+                  type="button"
+                  className="p-1 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25 transition-colors cursor-pointer"
                   onClick={() => cancelQueuedTask(q.id)}
                   title={t('cancelTask')}
                 >

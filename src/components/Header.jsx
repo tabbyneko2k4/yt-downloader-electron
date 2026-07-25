@@ -5,6 +5,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 export default function Header({ activeTab, setActiveTab, downloadsCount, activeDownloads = [], downloadQueue = [], settings, updateSettings }) {
   const { t, language, setLanguage, LANGUAGES } = useTranslation();
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
   const handleMinimize = () => {
     if (window.api && window.api.minimizeWindow) window.api.minimizeWindow();
@@ -156,21 +157,72 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
               <Globe size={14} className="header-globe-icon" />
             </button>
 
-            {/* Minimal Quick Theme Icon Button */}
+            {/* Quick Theme Style Dropdown Selector */}
             {updateSettings && (
-              <button
-                className="window-control-btn header-quick-btn no-drag"
-                onClick={toggleTheme}
-                title={`${t('themeLabel')}: ${currentTheme === 'system' ? t('themeSystem') : currentTheme === 'dark' ? t('themeDark') : t('themeLight')}`}
-              >
-                {currentTheme === 'dark' ? (
-                  <Moon size={14} color="#c084fc" />
-                ) : currentTheme === 'light' ? (
-                  <Sun size={14} color="#f59e0b" />
-                ) : (
-                  <Monitor size={14} color="#3b82f6" />
+              <div className="relative no-drag">
+                <button
+                  type="button"
+                  className="window-control-btn header-quick-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-white/80 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium transition-all shadow-sm"
+                  onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                  title={`${t('themeLabel')}: ${currentTheme === 'system' ? t('themeSystem') : currentTheme === 'dark' ? t('themeDark') : t('themeLight')}`}
+                >
+                  {currentTheme === 'dark' ? (
+                    <Moon size={14} color="#c084fc" />
+                  ) : currentTheme === 'light' ? (
+                    <Sun size={14} color="#f59e0b" />
+                  ) : (
+                    <Monitor size={14} color="#3b82f6" />
+                  )}
+                  <span className="hidden sm:inline-block text-[11px] font-semibold">
+                    {currentTheme === 'dark' ? 'Dark Cyber' : currentTheme === 'light' ? 'Light Soft' : 'Auto System'}
+                  </span>
+                </button>
+
+                {/* Dropdown Menu Popover */}
+                {isThemeDropdownOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-pink-500/30 shadow-2xl p-1.5 z-50 animate-fade-in-up space-y-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Theme Style Mode
+                    </div>
+
+                    {[
+                      { id: 'system', label: t('themeSystem'), desc: 'Theo hệ thống OS', icon: Monitor, color: '#3b82f6' },
+                      { id: 'dark', label: 'Dark Kawaii Cyber', desc: 'Giao diện Tối Neon', icon: Moon, color: '#c084fc' },
+                      { id: 'light', label: 'Light Soft Pastel', desc: 'Giao diện Sáng Pastel', icon: Sun, color: '#f59e0b' }
+                    ].map((mode) => {
+                      const IconComp = mode.icon;
+                      const isSelected = currentTheme === mode.id;
+                      return (
+                        <button
+                          key={mode.id}
+                          type="button"
+                          onClick={() => {
+                            updateSettings({ theme: mode.id });
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-sky-500/15 to-pink-500/15 border border-pink-400/50 text-pink-600 dark:text-pink-300 font-bold'
+                              : 'hover:bg-slate-100 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300 text-xs'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <IconComp size={15} color={mode.color} />
+                            <div>
+                              <div className="text-xs">{mode.label}</div>
+                              <div className="text-[10px] text-slate-400">{mode.desc}</div>
+                            </div>
+                          </div>
+                          {isSelected && <span className="text-xs text-pink-500">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
+              </div>
             )}
 
             <button className="window-control-btn btn-min" onClick={handleMinimize} title={t('minTitle')}>

@@ -1,5 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import { Search, FolderOpen, Trash2, Copy, FileText, ArrowUpDown, Film, Music, Image as ImageIcon, Play, CheckCircle2, Terminal, AlertCircle, X, ChevronDown, ChevronUp, FolderCheck, RefreshCw, FileCode, GripVertical } from 'lucide-react';
+import {
+  Search,
+  FolderOpen,
+  Trash2,
+  Copy,
+  FileText,
+  ArrowUpDown,
+  Film,
+  Music,
+  Image as ImageIcon,
+  Play,
+  CheckCircle2,
+  Terminal,
+  AlertCircle,
+  X,
+  ChevronDown,
+  ChevronUp,
+  FolderCheck,
+  RefreshCw,
+  FileCode,
+  GripVertical
+} from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function DownloadedTab({
@@ -127,10 +148,12 @@ export default function DownloadedTab({
         if (res.data.missingIndexes && res.data.missingIndexes.length > 0) {
           taskData.playlistItems = res.data.missingIndexes.join(',');
         }
-        alert(t('logRestoreSuccess', {
-          title: taskData.mediaTitle || taskData.playlistTitle,
-          count: res.data.missingIndexes ? res.data.missingIndexes.length : '...'
-        }));
+        alert(
+          t('logRestoreSuccess', {
+            title: taskData.mediaTitle || taskData.playlistTitle,
+            count: res.data.missingIndexes ? res.data.missingIndexes.length : '...'
+          })
+        );
         resumeDownload(taskData);
       }
     } catch (err) {
@@ -152,176 +175,171 @@ export default function DownloadedTab({
   };
 
   return (
-    <div style={{ maxWidth: '950px', margin: '0 auto' }}>
-      {/* Sticky Top Toolbar: Header Actions & Search / Filter Bar */}
-      <section className="card downloaded-sticky-toolbar">
-        <div className="downloaded-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FolderCheck size={20} color="#10b981" />
-            <h2 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+    <div className="relative z-10 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 text-slate-800 dark:text-slate-100 font-sans select-none animate-fade-in-up">
+      {/* Sticky Top Toolbar Card */}
+      <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-600 dark:text-emerald-400">
+              <FolderCheck size={20} />
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
               {t('downloadedTitle')} ({filteredHistory.length})
             </h2>
           </div>
 
-          <div className="downloaded-header-actions" style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              className="btn btn-secondary"
+              type="button"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95"
               onClick={handleImportLogFileToResume}
-              style={{ padding: '6px 12px', fontSize: '12px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
               title={t('importLogBtn')}
             >
               <FileCode size={14} />
-              <span className="downloaded-action-btn-text">{t('importLogBtn')}</span>
+              <span>{t('importLogBtn')}</span>
             </button>
 
             {downloadsHistory.length > 0 && (
               <button
-                className="btn btn-danger"
+                type="button"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95"
                 onClick={() => {
                   if (confirm(t('confirmClearHistory'))) {
                     clearAllHistory();
                   }
                 }}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
               >
                 <Trash2 size={14} />
-                <span className="downloaded-action-btn-text">{t('clearHistoryBtn')}</span>
+                <span>{t('clearHistoryBtn')}</span>
               </button>
             )}
           </div>
         </div>
 
         {/* Search, Filter & Sort Controls */}
-        <div className="downloaded-search-filter-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2">
           {/* Search Bar */}
-          <div className="downloaded-search-box" style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <div className="relative flex-1 min-w-[200px]">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              className="text-input"
-              style={{ width: '100%', paddingLeft: '36px', padding: '8px 12px 8px 36px', fontSize: '13px' }}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500 transition-colors"
               placeholder={t('searchHistoryPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Type Filter Buttons */}
-          <div className="downloaded-filter-types" style={{ display: 'flex', gap: '6px' }}>
-            {[
-              { id: 'all', label: t('filterAll') },
-              { id: 'video', label: t('filterVideo') },
-              { id: 'audio', label: t('filterAudio') },
-              { id: 'gif', label: t('filterGif') },
-              { id: 'playlist', label: t('filterPlaylist') }
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className="filter-type-btn"
-                onClick={() => setFilterType(f.id)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  border: filterType === f.id ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                  background: filterType === f.id ? 'rgba(139, 92, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                  color: filterType === f.id ? '#fff' : '#94a3b8',
-                  cursor: 'pointer'
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          {/* Type Filter Buttons & Sort Dropdown */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {[
+                { id: 'all', label: t('filterAll') },
+                { id: 'video', label: t('filterVideo') },
+                { id: 'audio', label: t('filterAudio') },
+                { id: 'gif', label: t('filterGif') },
+                { id: 'playlist', label: t('filterPlaylist') }
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilterType(f.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                    filterType === f.id
+                      ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-sm font-bold scale-105'
+                      : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Sort Dropdown */}
-          <div className="downloaded-sort-box" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <ArrowUpDown size={14} color="#94a3b8" />
-            <select
-              className="custom-select downloaded-sort-select"
-              style={{ fontSize: '12px' }}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="newest">{t('sortNewest')}</option>
-              <option value="oldest">{t('sortOldest')}</option>
-              <option value="title-asc">{t('sortTitleAsc')}</option>
-              <option value="title-desc">{t('sortTitleDesc')}</option>
-            </select>
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-1.5 ml-auto md:ml-0">
+              <ArrowUpDown size={14} className="text-slate-400 shrink-0" />
+              <select
+                className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="newest">{t('sortNewest')}</option>
+                <option value="oldest">{t('sortOldest')}</option>
+                <option value="title-asc">{t('sortTitleAsc')}</option>
+                <option value="title-desc">{t('sortTitleDesc')}</option>
+              </select>
+            </div>
           </div>
         </div>
       </section>
 
       {/* History List Container */}
-      <section className="card downloaded-history-container">
-
-        {/* History List Rendering */}
+      <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl">
         {filteredHistory.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-            <FolderOpen size={40} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.5 }} />
-            <p style={{ fontSize: '14px' }}>{t('noHistory')}</p>
+          <div className="py-12 px-4 text-center text-slate-400 space-y-3 animate-fade-in-up">
+            <FolderOpen size={44} className="mx-auto text-slate-400 opacity-40" />
+            <p className="text-sm font-medium">{t('noHistory')}</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="space-y-3">
             {filteredHistory.map((item) => {
               const isExpanded = expandedFolders[item.id];
-              const displayThumb = item.thumbnail || (item.playlistEntries && item.playlistEntries[0] ? item.playlistEntries[0].thumbnail : '') || 'https://via.placeholder.com/160x90?text=Media';
+              const displayThumb =
+                item.thumbnail ||
+                (item.playlistEntries && item.playlistEntries[0] ? item.playlistEntries[0].thumbnail : '') ||
+                'https://via.placeholder.com/160x90?text=Media';
 
               return (
                 <div
                   key={item.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, item)}
-                  style={{
-                    background: item.isCancelled ? 'rgba(239, 68, 68, 0.08)' : 'rgba(15, 23, 42, 0.65)',
-                    border: item.isCancelled ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '14px',
-                    transition: 'border-color 0.2s ease',
-                    cursor: 'grab'
-                  }}
+                  className={`group rounded-2xl border transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3.5 space-y-3 shadow-sm hover:shadow-md ${
+                    item.isCancelled
+                      ? 'bg-rose-500/10 border-rose-400/30'
+                      : 'bg-slate-50/80 dark:bg-slate-950/70 border-slate-200 dark:border-slate-800/80 hover:border-pink-400/50'
+                  }`}
                   title={t('dragHint')}
                 >
-                  <div className="downloaded-item-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                    <div className="downloaded-item-main-info" style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+                    {/* Info Column */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       {/* Drag Handle Icon */}
-                      <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                      <div className="text-slate-400 hover:text-pink-500 cursor-grab flex items-center justify-center shrink-0 transition-colors">
                         <GripVertical size={16} />
                       </div>
 
-                      {/* Single Cover Image Thumbnail */}
-                      <div style={{ width: '80px', height: '50px', borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative', flexShrink: 0 }}>
+                      {/* Cover Thumbnail Image */}
+                      <div className="w-20 h-12 rounded-xl overflow-hidden bg-slate-950 relative shrink-0 shadow-sm">
                         <img
                           src={displayThumb}
                           alt=""
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                          className="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-300"
                         />
-                        <span style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.85)', color: '#fff', fontSize: '9px', fontWeight: '700', padding: '1px 5px', borderRadius: '3px', textTransform: 'uppercase' }}>
+                        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-950/85 text-[9px] font-bold text-slate-100 uppercase backdrop-blur-sm border border-slate-800">
                           {item.isPlaylist ? 'PLAYLIST' : item.formatType}
                         </span>
                       </div>
 
-                      {/* Meta Info */}
-                      <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {/* Title & Metadata */}
+                      <div className="overflow-hidden flex-1 min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-pink-500 dark:group-hover:text-sky-300 transition-colors">
                           {item.title}
                         </h4>
 
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '3px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2">
                           <span>{item.uploader || 'Web Media'}</span>
                           <span>•</span>
                           <span>{formatDate(item.downloadedAt)}</span>
 
                           {item.isPlaylist && (
-                            <span style={{ background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
+                            <span className="bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
                               📁 Playlist ({t('itemsCount', { count: item.entriesCount || item.playlistEntries?.length || 1 })})
                             </span>
                           )}
 
                           {item.isCancelled && (
-                            <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '1px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' }}>
+                            <span className="bg-rose-500/20 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full text-[11px] font-semibold">
                               {t('cancelledStatus')}
                             </span>
                           )}
@@ -329,154 +347,155 @@ export default function DownloadedTab({
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="downloaded-item-actions" style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-                        {item.originalOptions && (
-                          <button
-                            className="btn btn-primary"
-                            style={{ padding: '5px 8px', fontSize: '11px' }}
-                            onClick={() => resumeDownload(item.originalOptions)}
-                            title={t('importLogBtn')}
-                          >
-                            <RefreshCw size={12} />
-                            <span className="downloaded-action-btn-text">{t('resume')}</span>
-                          </button>
-                        )}
-
+                    {/* Action Buttons Column */}
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                      {item.originalOptions && (
                         <button
-                          className="btn btn-secondary"
-                          style={{ padding: '5px 8px', fontSize: '11px' }}
-                          onClick={() => handleOpenFolder(item.folderPath || item.filePath)}
-                          title={t('openFolder')}
+                          type="button"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95"
+                          onClick={() => resumeDownload(item.originalOptions)}
+                          title={t('importLogBtn')}
                         >
-                          <FolderOpen size={13} />
-                          <span className="downloaded-action-btn-text">{t('openFolder')}</span>
-                        </button>
-
-                        {!item.isPlaylist && (
-                          <button
-                            className="btn btn-secondary"
-                            style={{ padding: '5px 8px', fontSize: '11px' }}
-                            onClick={() => handleOpenFile(item.filePath)}
-                            title={t('openFile')}
-                          >
-                            <Play size={13} />
-                            <span className="downloaded-action-btn-text">{t('openFile')}</span>
-                          </button>
-                        )}
-
-                        {item.logFilePath && (
-                          <button
-                            className="btn btn-secondary"
-                            style={{ padding: '5px 8px', fontSize: '11px' }}
-                            onClick={() => handleOpenFile(item.logFilePath)}
-                            title="Log file"
-                          >
-                            <FileText size={13} />
-                            <span className="downloaded-action-btn-text">.log</span>
-                          </button>
-                        )}
-
-                        <button
-                          className="btn btn-danger"
-                          style={{ padding: '5px 8px', fontSize: '11px' }}
-                          onClick={() => deleteHistoryItem(item.id, item.filePath)}
-                          title={t('deleteItem')}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-
-                      {item.isPlaylist && (
-                        <button
-                          onClick={() => toggleExpandFolder(item.id)}
-                          style={{ background: 'transparent', border: 'none', color: '#c084fc', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}
-                        >
-                          <span>{isExpanded ? t('collapseBtn') : t('detailBtn')}</span>
-                          {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                          <RefreshCw size={13} />
+                          <span>{t('resume')}</span>
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
+                        onClick={() => handleOpenFolder(item.folderPath || item.filePath)}
+                        title={t('openFolder')}
+                      >
+                        <FolderOpen size={13} />
+                        <span>{t('openFolder')}</span>
+                      </button>
+
+                      {!item.isPlaylist && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
+                          onClick={() => handleOpenFile(item.filePath)}
+                          title={t('openFile')}
+                        >
+                          <Play size={13} />
+                          <span>{t('openFile')}</span>
+                        </button>
+                      )}
+
+                      {item.logFilePath && (
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60 text-xs font-semibold transition-all cursor-pointer"
+                          onClick={() => handleOpenFile(item.logFilePath)}
+                          title="Log file"
+                        >
+                          <FileText size={13} />
+                          <span>.log</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="p-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 transition-all cursor-pointer"
+                        onClick={() => deleteHistoryItem(item.id, item.filePath)}
+                        title={t('deleteItem')}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
+
+                    {item.isPlaylist && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandFolder(item.id)}
+                        className="text-purple-600 dark:text-purple-300 text-xs font-semibold flex items-center gap-1 hover:text-pink-500 transition-colors cursor-pointer"
+                      >
+                        <span>{isExpanded ? t('collapseBtn') : t('detailBtn')}</span>
+                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </button>
+                    )}
+                  </div>
 
                   {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER */}
                   {item.isPlaylist && isExpanded && (
-                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 animate-fade-in-up">
                       {item.playlistEntries && item.playlistEntries.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', background: 'var(--bg-secondary)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
-                          <div className="playlist-drawer-sticky-header">
+                        <div className="max-h-60 overflow-y-auto bg-slate-100/90 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-2 py-1">
                             <span>📁 {t('playlistTitle')}</span>
-                            <span style={{ fontSize: '11px', opacity: 0.8 }}>
+                            <span className="text-[11px] opacity-75">
                               {item.playlistEntries.length} {t('tracks') || 'items'}
                             </span>
                           </div>
                           {item.playlistEntries.map((entry, idx) => {
-                            const trackFilePath = item.downloadedFiles && item.downloadedFiles[idx] ? item.downloadedFiles[idx] : null;
+                            const trackFilePath =
+                              item.downloadedFiles && item.downloadedFiles[idx] ? item.downloadedFiles[idx] : null;
 
                             return (
                               <div
                                 key={idx}
-                                className="playlist-child-track-row"
                                 draggable
                                 onDragStart={(e) => handleTrackDragStart(e, trackFilePath, item.folderPath)}
-                                style={{
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  padding: '6px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(255,255,255,0.03)',
-                                  border: '1px solid rgba(255,255,255,0.04)',
-                                  cursor: 'grab'
-                                }}
+                                className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 hover:border-pink-400/40 transition-colors cursor-grab"
                                 title={t('dragHint')}
                               >
-                                <div style={{ color: '#475569', cursor: 'grab', display: 'flex', justifyContent: 'center' }}>
-                                  <GripVertical size={14} />
-                                </div>
-
-                                <div style={{ width: '32px', height: '32px', borderRadius: '4px', overflow: 'hidden', background: '#1e293b' }}>
-                                  <img src={entry.thumbnail || item.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                </div>
-
-                                <div style={{ overflow: 'hidden' }}>
-                                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    #{idx + 1}. {entry.title || 'Track'}
+                                <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                                  <div className="text-slate-400 hover:text-pink-500 cursor-grab flex items-center justify-center shrink-0">
+                                    <GripVertical size={14} />
                                   </div>
-                                  <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {entry.uploader || item.uploader || 'Web'}
+
+                                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-slate-950 shrink-0">
+                                    <img
+                                      src={entry.thumbnail || item.thumbnail}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+
+                                  <div className="overflow-hidden flex-1 min-w-0">
+                                    <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                      #{idx + 1}. {entry.title || 'Track'}
+                                    </div>
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                      {entry.uploader || item.uploader || 'Web'}
+                                    </div>
                                   </div>
                                 </div>
 
-                                <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono shrink-0">
                                   {formatDuration(entry.duration)}
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                                <div className="flex items-center gap-1 shrink-0">
                                   <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '3px 6px', fontSize: '10px' }}
-                                    onClick={() => (trackFilePath ? handleOpenFile(trackFilePath) : handleOpenFolder(item.folderPath))}
+                                    type="button"
+                                    className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                                    onClick={() =>
+                                      trackFilePath ? handleOpenFile(trackFilePath) : handleOpenFolder(item.folderPath)
+                                    }
                                     title={t('openFile')}
                                   >
-                                    <Play size={11} />
+                                    <Play size={12} />
                                   </button>
 
                                   <button
-                                    className="btn btn-secondary"
-                                    style={{ padding: '3px 6px', fontSize: '10px' }}
+                                    type="button"
+                                    className="p-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                                     onClick={() => handleCopyFile(trackFilePath || item.folderPath)}
                                     title={t('copyPath')}
                                   >
-                                    <Copy size={11} />
+                                    <Copy size={12} />
                                   </button>
 
                                   {trackFilePath && (
                                     <button
-                                      className="btn btn-danger"
-                                      style={{ padding: '3px 6px', fontSize: '10px' }}
+                                      type="button"
+                                      className="p-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
                                       onClick={() => handleDeleteIndividualFile(trackFilePath)}
                                       title={t('deleteItem')}
                                     >
-                                      <Trash2 size={11} />
+                                      <Trash2 size={12} />
                                     </button>
                                   )}
                                 </div>
@@ -485,8 +504,8 @@ export default function DownloadedTab({
                           })}
                         </div>
                       ) : (
-                        <div style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
-                          Folder: <code style={{ color: '#a7f3d0' }}>{item.folderPath}</code>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          Folder: <code className="text-emerald-600 dark:text-emerald-300">{item.folderPath}</code>
                         </div>
                       )}
                     </div>

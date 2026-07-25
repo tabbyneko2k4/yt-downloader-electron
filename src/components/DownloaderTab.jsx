@@ -1,5 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Film, Music, Image as ImageIcon, Download, Play, AlertTriangle, Terminal, Clock, Clipboard, ArrowLeft, Globe, SlidersHorizontal, Scissors, Sliders, Volume2, Gauge, CheckCircle2, ChevronDown, ChevronUp, PauseCircle, Loader2, Sparkles, FileText, X, Zap, Layers, Cpu, Plus, Check, ListPlus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Search,
+  Film,
+  Music,
+  Image as ImageIcon,
+  Download,
+  Play,
+  AlertTriangle,
+  Terminal,
+  Clock,
+  Clipboard,
+  ArrowLeft,
+  Globe,
+  SlidersHorizontal,
+  Scissors,
+  Sliders,
+  Volume2,
+  Gauge,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  PauseCircle,
+  Loader2,
+  Sparkles,
+  FileText,
+  X,
+  Zap,
+  Layers,
+  Cpu,
+  Plus,
+  Check,
+  ListPlus
+} from 'lucide-react';
 import PlaylistInspector from './PlaylistInspector';
 import { detectFormatFromUrl } from '../utils/formatDetector';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -249,17 +281,9 @@ export default function DownloaderTab({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const toggleExpandActiveTask = (id) => {
-    setExpandedActiveTasks((prev) => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-
   const handleStartDownload = () => {
     if (!mediaInfo) return;
 
-    // Filter ONLY selected entries when downloading playlist
     const selectedEntries = mediaInfo.isPlaylist && mediaInfo.info.entries
       ? mediaInfo.info.entries.filter((_, idx) => playlistSelectedIndexes.includes(idx + 1))
       : null;
@@ -279,7 +303,6 @@ export default function DownloaderTab({
       writeThumbnail: !!writeThumbnail,
       writeDescription: !!writeDescription,
 
-      // Inline Media Tuning options
       videoFps,
       videoContainer,
       audioSampleRate,
@@ -289,7 +312,6 @@ export default function DownloaderTab({
       trimStart: trimStart.trim(),
       trimEnd: trimEnd.trim(),
 
-      // Apply Advanced CLI Options
       writeSubs: advancedOptions.writeSubs,
       embedSubs: advancedOptions.embedSubs,
       subLangs: advancedOptions.writeSubs ? advancedOptions.subLangs.trim() : null,
@@ -306,7 +328,6 @@ export default function DownloaderTab({
       playlistEntries: selectedEntries
     };
 
-    // Launch download & auto-collapse
     startDownload(downloadData);
     resetSearch();
   };
@@ -329,26 +350,15 @@ export default function DownloaderTab({
     { name: 'Streamable', color: '#60a5fa' },
     { name: 'Bandcamp FLAC', color: '#818cf8' },
     { name: 'Reddit Media', color: '#fb923c' },
-    { name: 'Threads', color: '#e879f9' },
-    { name: 'KakaoTV', color: '#fef08a' },
-    { name: 'VKontakte', color: '#93c5fd' },
-    { name: 'Weibo Video', color: '#fca5a5' },
-    { name: 'Rutube', color: '#f87171' },
-    { name: 'PeerTube', color: '#c084fc' },
-    { name: 'Mixcloud', color: '#38bdf8' },
-    { name: 'LinkedIn Video', color: '#60a5fa' },
-    { name: 'Niconico', color: '#fbcfe8' },
-    { name: '9GAG Video', color: '#fde047' },
-    { name: 'BitChute', color: '#a7f3d0' }
+    { name: 'Threads', color: '#e879f9' }
   ];
 
-  const dustParticles = React.useMemo(() => {
+  const dustParticles = useMemo(() => {
     return dustServices.map((service, i) => {
-      const top = 4 + ((i * 3.3) % 90);
-      const duration = 22 + (i % 8) * 4;
-      const delay = -((i * 4.3) % 30);
-      const opacity = 0.16 + ((i % 5) * 0.04);
-      const fontSize = 11 + (i % 3);
+      const top = 4 + ((i * 4.8) % 90);
+      const duration = 20 + (i % 8) * 4;
+      const delay = -((i * 4.3) % 25);
+      const opacity = 0.25 + ((i % 5) * 0.05);
 
       return {
         id: i,
@@ -358,82 +368,97 @@ export default function DownloaderTab({
           top: `${top}%`,
           animationDuration: `${duration}s`,
           animationDelay: `${delay}s`,
-          fontSize: `${fontSize}px`,
           color: service.color,
-          '--particle-opacity': opacity
+          opacity: opacity
         }
       };
     });
   }, []);
 
-  const quickPlatforms = [
-    { id: 'youtube', name: 'YouTube Search', cls: 'youtube', hint: 'lofi chill', isSearch: true },
-    { id: 'soundcloud', name: 'SoundCloud Search', cls: 'soundcloud', hint: 'chill lofi track', isSearch: true },
-    { id: 'tiktok', name: 'TikTok', cls: 'tiktok', hint: 'https://tiktok.com/@user/video/...', isSearch: false },
-    { id: 'facebook', name: 'Facebook', cls: 'facebook', hint: 'https://facebook.com/watch/...', isSearch: false },
-    { id: 'instagram', name: 'Instagram', cls: 'instagram', hint: 'https://instagram.com/reel/...', isSearch: false },
-    { id: 'twitter', name: 'Twitter / X', cls: 'twitter', hint: 'https://x.com/user/status/...', isSearch: false }
-  ];
-
   const getSearchPlaceholder = () => {
-    if (searchPlatform === 'youtube') return '🔍 Tìm kiếm video YouTube (ví dụ: lofi chill, nhạc trẻ...) hoặc dán link...';
-    if (searchPlatform === 'soundcloud') return '🎵 Tìm kiếm nhạc SoundCloud (ví dụ: lofi, remix...) hoặc dán link...';
+    if (searchPlatform === 'youtube') return '🔍 Tìm kiếm video YouTube (lofi, nhạc trẻ...) hoặc dán link...';
+    if (searchPlatform === 'soundcloud') return '🎵 Tìm kiếm nhạc SoundCloud (lofi, remix...) hoặc dán link...';
     return t('urlPlaceholder');
   };
 
   return (
-    <div className="downloader-tab-wrapper">
-      {/* Floating Service Dust Particles Background */}
-      <div className="bg-dust-container">
+    <div className="relative min-h-full w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-slate-800 dark:text-slate-100 font-sans select-none transition-colors duration-300">
+      {/* Floating Service Dust Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         {dustParticles.map((p) => (
-          <span key={p.id} className="dust-particle-item" style={p.style}>
-            <Globe size={11} style={{ display: 'inline', marginRight: '5px', verticalAlign: 'middle', opacity: 0.7 }} />
+          <span
+            key={p.id}
+            className="dust-particle-item absolute flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md bg-white/70 dark:bg-pink-500/10 border border-sky-300/50 dark:border-pink-500/20 shadow-sm transition-opacity duration-500 animate-float"
+            style={p.style}
+          >
+            <Globe size={11} className="opacity-70" />
             {p.name}
           </span>
         ))}
       </div>
 
-      {/* Centered Search Container */}
+      {/* Centered Search Hero Container */}
       {!mediaInfo && (
-        <div className="hero-search-container fade-in-up">
-          <h1 className="center-app-title">{t('appName')}</h1>
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-[68vh] py-8 sm:py-12 px-2 sm:px-4 text-center animate-fade-in-up">
+          {/* Main App Title */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-pink-500 via-purple-400 to-sky-500 bg-clip-text text-transparent drop-shadow-sm">
+            {t('appName')}
+          </h1>
 
-          {/* Quick Search Mode Switchers */}
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
-            <span
-              className={`site-pill-badge youtube ${searchPlatform === 'youtube' ? 'active' : ''}`}
+          {/* Quick Search Mode Switcher Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6">
+            <button
+              type="button"
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border ${
+                searchPlatform === 'youtube'
+                  ? 'bg-pink-500/20 border-pink-500 text-pink-600 dark:text-pink-300 shadow-md shadow-pink-500/25 scale-105'
+                  : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
+              }`}
               onClick={() => setSearchPlatform('youtube')}
               title="Chế độ tìm kiếm video YouTube"
             >
-              <Film size={13} color={searchPlatform === 'youtube' ? '#fca5a5' : undefined} />
+              <Film size={14} className={searchPlatform === 'youtube' ? 'text-pink-500 dark:text-pink-300' : 'text-slate-400'} />
               <span>YouTube Search</span>
-            </span>
-            <span
-              className={`site-pill-badge soundcloud ${searchPlatform === 'soundcloud' ? 'active' : ''}`}
+            </button>
+
+            <button
+              type="button"
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border ${
+                searchPlatform === 'soundcloud'
+                  ? 'bg-amber-500/20 border-amber-500 text-amber-600 dark:text-amber-300 shadow-md shadow-amber-500/25 scale-105'
+                  : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
+              }`}
               onClick={() => {
                 setSearchPlatform('soundcloud');
                 updateDraft({ formatType: 'audio' });
               }}
               title="Chế độ tìm kiếm nhạc SoundCloud"
             >
-              <Music size={13} color={searchPlatform === 'soundcloud' ? '#fcd34d' : undefined} />
+              <Music size={14} className={searchPlatform === 'soundcloud' ? 'text-amber-500 dark:text-amber-300' : 'text-slate-400'} />
               <span>SoundCloud Search</span>
-            </span>
-            <span
-              className={`site-pill-badge ${searchPlatform === 'auto' ? 'active' : ''}`}
+            </button>
+
+            <button
+              type="button"
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 border ${
+                searchPlatform === 'auto'
+                  ? 'bg-sky-500/20 border-sky-500 text-sky-600 dark:text-sky-300 shadow-md shadow-sky-500/25 scale-105'
+                  : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 shadow-sm'
+              }`}
               onClick={() => setSearchPlatform('auto')}
               title="Chế độ dán trực tiếp URL video/bài hát"
             >
-              <Globe size={13} />
+              <Globe size={14} className={searchPlatform === 'auto' ? 'text-sky-500 dark:text-sky-300' : 'text-slate-400'} />
               <span>Dán Link URL</span>
-            </span>
+            </button>
           </div>
 
-          <div className="google-search-bar">
-            <Search className="search-icon-left" size={20} />
+          {/* Search Bar Input Container */}
+          <div className="w-full max-w-2xl relative flex items-center gap-2 p-2 sm:p-2.5 rounded-2xl sm:rounded-full bg-white/90 dark:bg-slate-950/80 backdrop-blur-xl border border-sky-300 dark:border-pink-500/30 shadow-light-glow dark:shadow-pink-500/10 focus-within:border-pink-500 focus-within:ring-2 focus-within:ring-pink-400/30 transition-all duration-300">
+            <Search className="text-sky-500 dark:text-pink-400 ml-3 shrink-0" size={20} />
             <input
               type="text"
-              className="google-search-input"
+              className="flex-1 bg-transparent px-2 py-2 text-sm sm:text-base text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none w-full"
               placeholder={getSearchPlaceholder()}
               value={url}
               onChange={handleUrlInputChange}
@@ -444,17 +469,17 @@ export default function DownloaderTab({
             {url && (
               <button
                 type="button"
-                className="btn-clear-input"
+                className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 transition-colors cursor-pointer"
                 onClick={() => updateDraft({ url: '' })}
                 title="Xóa liên kết"
               >
-                <X size={15} />
+                <X size={16} />
               </button>
             )}
 
             <button
               type="button"
-              className="btn-paste-clipboard"
+              className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-sky-600 dark:text-sky-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
               onClick={handlePasteClipboard}
               title={t('pasteClipboard')}
             >
@@ -462,202 +487,216 @@ export default function DownloaderTab({
             </button>
 
             <button
-              className="btn-analyze-pill"
+              type="button"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md shadow-sky-500/20 active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
               onClick={() => handleAnalyze()}
               disabled={isAnalyzing || !url.trim()}
             >
               {isAnalyzing ? (
                 <>
-                  <Clock size={16} className="spin" />
+                  <Clock size={16} className="animate-spin text-slate-950" />
                   <span>{t('analyzing')}</span>
                 </>
               ) : (
                 <>
-                  <Search size={16} />
+                  <Search size={16} className="text-slate-950" />
                   <span>{searchPlatform !== 'auto' && !url.trim().startsWith('http') ? 'Tìm kiếm' : t('analyzeBtn')}</span>
                 </>
               )}
             </button>
           </div>
 
+          {/* Auto-detected Platform Badge */}
           {detectedPlatform && (
-            <div style={{ marginTop: '14px', fontSize: '12px', color: '#c084fc', background: 'rgba(192, 132, 252, 0.12)', border: '1px solid rgba(192, 132, 252, 0.3)', padding: '6px 14px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }} className="fade-in-up">
-              <Sparkles size={14} color="#c084fc" />
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/15 border border-purple-400/40 text-purple-600 dark:text-purple-300 text-xs font-semibold backdrop-blur-sm animate-fade-in-up">
+              <Sparkles size={14} className="text-purple-500 dark:text-purple-400" />
               <span>{t('detectedPlatform', { platform: detectedPlatform.platformName })}</span>
             </div>
           )}
 
+          {/* Analyzing Shimmer Card */}
           {isAnalyzing && (
-            <div className="analyzing-shimmer-card fade-in-up">
-              <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', gap: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#c084fc', fontSize: '13px', fontWeight: '600' }}>
-                  <Loader2 size={16} className="spin" />
-                  <span>{searchPlatform !== 'auto' && !url.trim().startsWith('http') ? `Đang tìm kiếm trên ${searchPlatform === 'soundcloud' ? 'SoundCloud' : 'YouTube'}...` : t('analyzing')}</span>
+            <div className="w-full max-w-2xl mt-6 p-4 rounded-2xl bg-white/80 dark:bg-slate-900/70 backdrop-blur-md border border-purple-300 dark:border-purple-500/30 shadow-lg animate-pulse">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-300 text-xs sm:text-sm font-semibold">
+                  <Loader2 size={16} className="animate-spin text-purple-500 dark:text-purple-400" />
+                  <span>
+                    {searchPlatform !== 'auto' && !url.trim().startsWith('http')
+                      ? `Đang tìm kiếm trên ${searchPlatform === 'soundcloud' ? 'SoundCloud' : 'YouTube'}...`
+                      : t('analyzing')}
+                  </span>
                 </div>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>yt-dlp engine</span>
+                <span className="text-[11px] text-slate-400">yt-dlp engine</span>
               </div>
-              <div className="analyzing-pulse-bar" />
+              <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full mt-3 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-sky-400 via-pink-400 to-purple-400 animate-pulse" />
+              </div>
             </div>
           )}
 
+          {/* Analyze Error Banner */}
           {analyzeError && (
-            <div className="analyze-error-toast fade-in-up">
-              <AlertTriangle size={16} />
+            <div className="w-full max-w-2xl mt-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-400/40 text-rose-600 dark:text-rose-300 text-xs sm:text-sm flex items-center justify-center gap-2 font-medium">
+              <AlertTriangle size={16} className="text-rose-500 shrink-0" />
               <span>{analyzeError}</span>
             </div>
           )}
-
         </div>
       )}
 
-      {/* Result Card State */}
+      {/* Result View State */}
       {mediaInfo && (
         (mediaInfo.isSearch || (mediaInfo.isPlaylist && mediaInfo.searchPlatform)) ? (
-          <div className="search-results-section fade-in-up">
-            {/* Search Results Header */}
-            <div className="search-results-header">
-              <div className="search-results-top-bar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          /* SEARCH RESULTS GRID VIEW */
+          <div className="relative z-10 space-y-6 animate-fade-in-up">
+            {/* Header & Control Toolbar */}
+            <div className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
                   <button
-                    className="btn btn-secondary"
+                    type="button"
                     onClick={resetSearch}
-                    style={{ padding: '8px 14px', fontSize: '13px' }}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
                   >
                     <ArrowLeft size={14} />
-                    <span>Back</span>
+                    <span>Quay lại</span>
                   </button>
 
                   <div>
-                    <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                       {mediaInfo.searchPlatform === 'soundcloud' ? (
                         <>
-                          <Music size={18} color="#f59e0b" />
+                          <Music size={18} className="text-amber-500" />
                           <span>Kết quả tìm kiếm SoundCloud</span>
                         </>
                       ) : (
                         <>
-                          <Film size={18} color="#ef4444" />
+                          <Film size={18} className="text-rose-500" />
                           <span>Kết quả tìm kiếm YouTube</span>
                         </>
                       )}
                     </h2>
-                    <p style={{ fontSize: '12px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       Từ khóa: "{mediaInfo.searchQuery || url}" ({mediaInfo.info.entries?.length || 0} kết quả)
                     </p>
                   </div>
                 </div>
 
                 <button
-                  className="btn btn-primary"
+                  type="button"
                   onClick={handleAddAllToQueue}
                   disabled={!mediaInfo.info.entries || mediaInfo.info.entries.length === 0}
-                  style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-md active:scale-95 transition-all cursor-pointer"
                 >
                   {batchAdded ? <Check size={16} /> : <ListPlus size={16} />}
                   <span>{batchAdded ? 'Đã thêm tất cả!' : `Thêm tất cả (${mediaInfo.info.entries?.length || 0}) vào Queue`}</span>
                 </button>
               </div>
 
-              {/* Format options for queue items */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '10px', borderTop: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '600' }}>Định dạng khi bấm +:</span>
-                <div style={{ display: 'flex', gap: '6px' }}>
+              {/* Format selection toolbar for search results */}
+              <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-200 dark:border-slate-800/80">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Định dạng khi bấm +:</span>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="btn btn-secondary"
                     onClick={() => updateDraft({ formatType: 'video' })}
-                    style={{
-                      padding: '4px 12px',
-                      fontSize: '12px',
-                      background: formatType === 'video' ? 'rgba(139, 92, 246, 0.25)' : undefined,
-                      borderColor: formatType === 'video' ? '#8b5cf6' : undefined,
-                      color: formatType === 'video' ? '#fff' : undefined
-                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      formatType === 'video'
+                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                        : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
                   >
-                    <Film size={13} style={{ marginRight: '4px' }} /> Video (MP4)
+                    <Film size={13} />
+                    <span>Video (MP4)</span>
                   </button>
+
                   <button
                     type="button"
-                    className="btn btn-secondary"
                     onClick={() => updateDraft({ formatType: 'audio' })}
-                    style={{
-                      padding: '4px 12px',
-                      fontSize: '12px',
-                      background: formatType === 'audio' ? 'rgba(139, 92, 246, 0.25)' : undefined,
-                      borderColor: formatType === 'audio' ? '#8b5cf6' : undefined,
-                      color: formatType === 'audio' ? '#fff' : undefined
-                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      formatType === 'audio'
+                        ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                        : 'bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
                   >
-                    <Music size={13} style={{ marginRight: '4px' }} /> Audio (MP3/M4A)
+                    <Music size={13} />
+                    <span>Audio (MP3/M4A)</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Search Results Grid (YouTube list layout) */}
-            <div className="search-results-grid">
+            {/* Results Grid Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
               {mediaInfo.info.entries && mediaInfo.info.entries.map((item, idx) => {
                 const isAdded = !!addedToQueueMap[item.url];
                 return (
-                  <div key={item.url || idx} className="yt-video-card">
-                    {/* Thumbnail */}
-                    <div className="yt-thumb-wrapper">
+                  <div
+                    key={item.url || idx}
+                    className="group flex flex-col justify-between rounded-2xl bg-white/80 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/80 hover:border-pink-400/50 shadow-md hover:shadow-xl hover:shadow-pink-500/10 hover:-translate-y-1 backdrop-blur-md transition-all duration-300 overflow-hidden"
+                  >
+                    {/* Thumbnail Section */}
+                    <div className="relative w-full aspect-video overflow-hidden bg-slate-950">
                       <img
                         src={item.thumbnail || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
                         alt={item.title}
-                        className="yt-thumb-img"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="yt-platform-badge">
-                        {mediaInfo.searchPlatform === 'soundcloud' ? <Music size={11} color="#f59e0b" /> : <Film size={11} color="#ef4444" />}
+                      <div className="absolute top-2 left-2 flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-950/85 text-[11px] font-semibold text-slate-200 backdrop-blur-md border border-slate-700/50">
+                        {mediaInfo.searchPlatform === 'soundcloud' ? <Music size={11} className="text-amber-400" /> : <Film size={11} className="text-rose-400" />}
                         <span>{mediaInfo.searchPlatform === 'soundcloud' ? 'SoundCloud' : 'YouTube'}</span>
                       </div>
                       {item.duration && (
-                        <div className="yt-duration-pill">
+                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-950/90 text-[11px] font-bold text-slate-200 backdrop-blur-md border border-slate-800">
                           {formatDuration(item.duration)}
                         </div>
                       )}
                     </div>
 
-                    {/* Content */}
-                    <div className="yt-card-content">
+                    {/* Meta & Content Section */}
+                    <div className="p-3.5 flex flex-col justify-between flex-1 gap-3">
                       <div>
-                        <h3 className="yt-video-title" title={item.title}>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-pink-500 dark:group-hover:text-sky-300 transition-colors" title={item.title}>
                           {item.title}
                         </h3>
-                        <p className="yt-uploader-name">
-                          <Sparkles size={12} color="#8b5cf6" />
-                          <span>{item.uploader || 'N/A'}</span>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                          <Sparkles size={12} className="text-pink-500 shrink-0" />
+                          <span className="truncate">{item.uploader || 'N/A'}</span>
                         </p>
                       </div>
 
-                      {/* Action row with + button */}
-                      <div className="yt-card-actions">
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 pt-1 border-t border-slate-200 dark:border-slate-800/60">
                         <button
                           type="button"
-                          className={`btn-add-queue-card ${isAdded ? 'added' : ''}`}
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all duration-200 ${
+                            isAdded
+                              ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 cursor-default'
+                              : 'bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/40 text-sky-600 dark:text-sky-300 hover:text-sky-700 dark:hover:text-sky-200 cursor-pointer active:scale-95'
+                          }`}
                           onClick={() => handleAddToQueue(item)}
                           disabled={isAdded}
                         >
                           {isAdded ? (
                             <>
-                              <Check size={16} />
-                              <span>Đã thêm vào Queue</span>
+                              <Check size={15} />
+                              <span>Đã thêm</span>
                             </>
                           ) : (
                             <>
-                              <Plus size={16} />
-                              <span>Thêm vào Queue</span>
+                              <Plus size={15} />
+                              <span>Thêm Queue</span>
                             </>
                           )}
                         </button>
 
                         <button
                           type="button"
-                          className="btn-inspect-card"
+                          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 hover:text-pink-500 border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
                           onClick={() => handleInspectSingle(item)}
                           title="Xem chi tiết & Tùy chỉnh"
                         >
-                          <SlidersHorizontal size={14} />
+                          <SlidersHorizontal size={15} />
                         </button>
                       </div>
                     </div>
@@ -667,33 +706,34 @@ export default function DownloaderTab({
             </div>
           </div>
         ) : (
-          <div className="downloader-result-container">
-            {/* 0. Top Bar: Back button on left, OK button on right (mobile) / Advanced tab on right (desktop) */}
-            <div className="downloader-top-actions">
+          /* SINGLE MEDIA OR PLAYLIST INSPECTOR DETAIL VIEW */
+          <div className="relative z-10 space-y-4 animate-fade-in-up">
+            {/* Top Toolbar Navigation */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-md">
               <button
-                className="btn btn-secondary"
+                type="button"
                 onClick={resetSearch}
-                style={{ padding: '8px 14px', fontSize: '13px' }}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-colors cursor-pointer"
               >
                 <ArrowLeft size={14} />
-                <span>Back</span>
+                <span>Quay lại</span>
               </button>
 
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className="flex items-center gap-2">
                 <button
-                  className="btn btn-secondary desktop-only-btn"
+                  type="button"
                   onClick={goToAdvanced}
-                  style={{ padding: '8px 14px', fontSize: '13px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
+                  className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <SlidersHorizontal size={14} />
                   <span>{t('navAdvanced')}</span>
                 </button>
 
                 <button
-                  className="btn btn-primary mobile-ok-btn"
+                  type="button"
                   onClick={handleStartDownload}
                   disabled={mediaInfo.isPlaylist && playlistSelectedIndexes.length === 0}
-                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                  className="flex sm:hidden items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-pink-500 text-slate-950 font-extrabold text-xs shadow-md disabled:opacity-50 active:scale-95"
                 >
                   <Check size={16} />
                   <span>OK ({mediaInfo.isPlaylist ? playlistSelectedIndexes.length : 'Tải ngay'})</span>
@@ -701,61 +741,63 @@ export default function DownloaderTab({
               </div>
             </div>
 
-            <section className="card preview-card-animated fade-in-up">
-              <div className="preview-card-grid">
-                {/* 1. Thumbnail, 2. Title, 3. Artist / Uploader */}
-                <div className="preview-meta-column">
-                  {/* 1. Thumbnail */}
-                  <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', background: '#000' }}>
+            {/* Main Media Detail Card (2 Column Grid) */}
+            <section className="p-4 sm:p-6 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-2xl space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left Column: Media Thumbnail & Info Meta */}
+                <div className="lg:col-span-5 flex flex-col gap-3">
+                  <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800/80 shadow-md">
                     <img
                       src={mediaInfo.info.thumbnail || 'https://via.placeholder.com/400x225?text=No+Thumbnail'}
                       alt="Thumbnail"
-                      style={{ width: '100%', height: '160px', objectFit: 'cover', display: 'block' }}
+                      className="w-full h-44 sm:h-52 object-cover block"
                     />
                     {mediaInfo.info.duration && (
-                      <span style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,0.8)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: '600', color: '#fff' }}>
+                      <span className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-md bg-slate-950/85 text-xs font-bold text-slate-100 backdrop-blur-md border border-slate-800">
                         {formatDuration(mediaInfo.info.duration)}
                       </span>
                     )}
                   </div>
 
-                  {/* 2. Title */}
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', marginTop: '10px', color: '#f8fafc', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                    {mediaInfo.info.title}
-                  </h3>
-
-                  {/* 3. Uploader / Artist */}
-                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                    {mediaInfo.info.uploader || 'Web Media'}
-                  </p>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug">
+                      {mediaInfo.info.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-purple-500 dark:text-purple-400 shrink-0" />
+                      <span>{mediaInfo.info.uploader || 'Web Media'}</span>
+                    </p>
+                  </div>
 
                   {mediaInfo.isPlaylist && (
-                    <div style={{ marginTop: '8px', background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', display: 'inline-block' }}>
-                      {t('playlistTitle')} ({t('playlistItemCount', { count: mediaInfo.info.entriesCount || mediaInfo.info.entries?.length || 0 })})
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold">
+                      <Layers size={14} className="text-purple-500 dark:text-purple-400" />
+                      <span>
+                        {t('playlistTitle')} ({t('playlistItemCount', { count: mediaInfo.info.entriesCount || mediaInfo.info.entries?.length || 0 })})
+                      </span>
                     </div>
                   )}
                 </div>
 
-                {/* 4. Settings Column (Basic 4.1, Advanced 4.2, Playlist 5) */}
-                <div className="preview-config-column">
-                  {/* 4.1 BASIC DOWNLOAD SETTINGS (Hiển thị) */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#f8fafc' }}>
+                {/* Right Column: Download Configuration & Options */}
+                <div className="lg:col-span-7 flex flex-col justify-between gap-5">
+                  <div className="space-y-4">
+                    {/* Header & Mobile Format Selector */}
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100">
                         {t('formatHeader')}
                       </h3>
                       {detectedPlatform && (
-                        <span style={{ fontSize: '11px', color: '#c084fc', background: 'rgba(192, 132, 252, 0.12)', padding: '2px 8px', borderRadius: '4px' }}>
+                        <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-300 bg-purple-500/15 border border-purple-400/30 px-2.5 py-1 rounded-md">
                           {detectedPlatform.platformName}
                         </span>
                       )}
                     </div>
 
-                    {/* Mobile Format Select Dropdown */}
-                    <div className="mobile-format-select-container">
+                    {/* Mobile Select */}
+                    <div className="block sm:hidden">
                       <select
-                        className="custom-select mobile-format-select"
-                        style={{ width: '100%', fontSize: '13px', fontWeight: '600' }}
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:border-pink-500"
                         value={formatType}
                         onChange={(e) => updateDraft({ formatType: e.target.value })}
                       >
@@ -766,67 +808,86 @@ export default function DownloaderTab({
                       </select>
                     </div>
 
-                    {/* Format Toggle Group (Desktop) */}
-                    <div className="format-toggle-group">
-                      <div
-                        className={`format-option-card ${formatType === 'video' ? 'selected' : ''}`}
+                    {/* Desktop Format Cards Toggle */}
+                    <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <button
+                        type="button"
                         onClick={() => updateDraft({ formatType: 'video' })}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                          formatType === 'video'
+                            ? 'bg-gradient-to-br from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-md shadow-pink-500/15 scale-105'
+                            : 'bg-slate-100/90 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
                       >
-                        <Film size={18} />
-                        <span style={{ fontWeight: '600', fontSize: '12px' }}>{t('formatVideo')} (MP4)</span>
-                      </div>
+                        <Film size={20} className={formatType === 'video' ? 'text-pink-500 dark:text-pink-300' : 'text-slate-400'} />
+                        <span>{t('formatVideo')} (MP4)</span>
+                      </button>
 
-                      <div
-                        className={`format-option-card ${formatType === 'audio' ? 'selected' : ''}`}
+                      <button
+                        type="button"
                         onClick={() => updateDraft({ formatType: 'audio' })}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                          formatType === 'audio'
+                            ? 'bg-gradient-to-br from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-md shadow-pink-500/15 scale-105'
+                            : 'bg-slate-100/90 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
                       >
-                        <Music size={18} />
-                        <span style={{ fontWeight: '600', fontSize: '12px' }}>{t('formatAudio')}</span>
-                      </div>
+                        <Music size={20} className={formatType === 'audio' ? 'text-pink-500 dark:text-pink-300' : 'text-slate-400'} />
+                        <span>{t('formatAudio')}</span>
+                      </button>
 
-                      <div
-                        className={`format-option-card ${formatType === 'gif' ? 'selected' : ''}`}
+                      <button
+                        type="button"
                         onClick={() => updateDraft({ formatType: 'gif' })}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                          formatType === 'gif'
+                            ? 'bg-gradient-to-br from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-md shadow-pink-500/15 scale-105'
+                            : 'bg-slate-100/90 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
                       >
-                        <ImageIcon size={18} />
-                        <span style={{ fontWeight: '600', fontSize: '12px' }}>{t('formatGif')}</span>
-                      </div>
+                        <ImageIcon size={20} className={formatType === 'gif' ? 'text-pink-500 dark:text-pink-300' : 'text-slate-400'} />
+                        <span>{t('formatGif')}</span>
+                      </button>
 
-                      <div
-                        className={`format-option-card ${formatType === 'thumbnail' ? 'selected' : ''}`}
+                      <button
+                        type="button"
                         onClick={() => updateDraft({ formatType: 'thumbnail' })}
+                        className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                          formatType === 'thumbnail'
+                            ? 'bg-gradient-to-br from-sky-500/20 to-pink-500/20 border-pink-400 text-pink-600 dark:text-pink-200 shadow-md shadow-pink-500/15 scale-105'
+                            : 'bg-slate-100/90 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
                       >
-                        <ImageIcon size={18} color="#c084fc" />
-                        <span style={{ fontWeight: '600', fontSize: '12px' }}>{t('formatThumbnail')}</span>
-                      </div>
+                        <ImageIcon size={20} className={formatType === 'thumbnail' ? 'text-purple-500 dark:text-purple-300' : 'text-slate-400'} />
+                        <span>{t('formatThumbnail')}</span>
+                      </button>
                     </div>
 
-                    {/* Dynamic Format Tuning Section */}
-                    <div style={{ marginTop: '14px', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '14px' }}>
-                      {/* THUMBNAIL ONLY MODE OPTIONS */}
+                    {/* Dynamic Format Specific Tuning Options */}
+                    <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-3">
+                      {/* Thumbnail mode info */}
                       {formatType === 'thumbnail' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px' }}>
-                          <span style={{ fontSize: '13px', color: '#c084fc', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <ImageIcon size={16} color="#c084fc" />
+                        <div className="flex flex-col gap-1 text-xs">
+                          <span className="text-purple-600 dark:text-purple-300 font-semibold flex items-center gap-2">
+                            <ImageIcon size={16} className="text-purple-500 dark:text-purple-400" />
                             {t('formatThumbnail')}
                           </span>
-                          <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: '1.5' }}>
+                          <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                             {t('writeThumbnailOpt')}
                           </p>
                         </div>
                       )}
 
-                      {/* VIDEO OPTIONS */}
+                      {/* Video options */}
                       {formatType === 'video' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div className="downloader-options-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                              <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                                 {t('qualityLabel')}
                               </label>
                               <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '13px' }}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
                                 value={videoQuality}
                                 onChange={(e) => updateDraft({ videoQuality: e.target.value })}
                               >
@@ -839,12 +900,11 @@ export default function DownloaderTab({
                             </div>
 
                             <div>
-                              <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                              <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
                                 {t('fpsLabel')}
                               </label>
                               <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '13px' }}
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
                                 value={videoFps}
                                 onChange={(e) => updateDraft({ videoFps: e.target.value })}
                               >
@@ -857,10 +917,10 @@ export default function DownloaderTab({
                           </div>
 
                           <div>
-                            <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1.5 font-medium">
                               {t('containerLabel')}
                             </label>
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div className="flex gap-2">
                               {[
                                 { id: 'mp4', name: t('containerMp4') },
                                 { id: 'mkv', name: t('containerMkv') },
@@ -870,16 +930,11 @@ export default function DownloaderTab({
                                   key={c.id}
                                   type="button"
                                   onClick={() => updateDraft({ videoContainer: c.id })}
-                                  style={{
-                                    flex: 1,
-                                    padding: '6px',
-                                    borderRadius: '6px',
-                                    fontSize: '12px',
-                                    border: videoContainer === c.id ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
-                                    background: videoContainer === c.id ? 'rgba(139, 92, 246, 0.2)' : 'rgba(0,0,0,0.3)',
-                                    color: videoContainer === c.id ? '#fff' : '#94a3b8',
-                                    cursor: 'pointer'
-                                  }}
+                                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                                    videoContainer === c.id
+                                      ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 font-bold'
+                                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                                  }`}
                                 >
                                   {c.name}
                                 </button>
@@ -889,239 +944,212 @@ export default function DownloaderTab({
                         </div>
                       )}
 
-                      {/* AUDIO OPTIONS */}
+                      {/* Audio options */}
                       {formatType === 'audio' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div className="downloader-options-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <div>
-                              <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                                {t('audioQualityLabel')}
-                              </label>
-                              <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '13px' }}
-                                value={audioQuality}
-                                onChange={(e) => updateDraft({ audioQuality: e.target.value })}
-                              >
-                                <option value="mp3-320">{t('audioMp3_320')}</option>
-                                <option value="mp3-256">{t('audioMp3_256')}</option>
-                                <option value="mp3-128">{t('audioMp3_128')}</option>
-                                <option value="m4a">{t('audioM4a')}</option>
-                                <option value="flac">{t('audioFlac')}</option>
-                                <option value="wav">{t('audioWav')}</option>
-                              </select>
-                            </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
+                              {t('audioQualityLabel')}
+                            </label>
+                            <select
+                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              value={audioQuality}
+                              onChange={(e) => updateDraft({ audioQuality: e.target.value })}
+                            >
+                              <option value="mp3-320">{t('audioMp3_320')}</option>
+                              <option value="mp3-256">{t('audioMp3_256')}</option>
+                              <option value="mp3-128">{t('audioMp3_128')}</option>
+                              <option value="m4a">{t('audioM4a')}</option>
+                              <option value="flac">{t('audioFlac')}</option>
+                              <option value="wav">{t('audioWav')}</option>
+                            </select>
+                          </div>
 
-                            <div>
-                              <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                                {t('audioSampleRateLabel')}
-                              </label>
-                              <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '13px' }}
-                                value={audioSampleRate}
-                                onChange={(e) => updateDraft({ audioSampleRate: e.target.value })}
-                              >
-                                <option value="auto">{t('sampleRateAuto')}</option>
-                                <option value="48000">{t('sampleRate48k')}</option>
-                                <option value="44100">{t('sampleRate44k')}</option>
-                              </select>
-                            </div>
+                          <div>
+                            <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1 font-medium">
+                              {t('audioSampleRateLabel')}
+                            </label>
+                            <select
+                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              value={audioSampleRate}
+                              onChange={(e) => updateDraft({ audioSampleRate: e.target.value })}
+                            >
+                              <option value="auto">{t('sampleRateAuto')}</option>
+                              <option value="48000">{t('sampleRate48k')}</option>
+                              <option value="44100">{t('sampleRate44k')}</option>
+                            </select>
                           </div>
                         </div>
                       )}
 
-                      {/* GIF OPTIONS */}
+                      {/* GIF options */}
                       {formatType === 'gif' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div className="downloader-gif-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                            <div>
-                              <label style={{ fontSize: '12px', color: '#c084fc', display: 'block', marginBottom: '4px' }}>
-                                {t('gifFpsLabel')}
-                              </label>
-                              <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '12px' }}
-                                value={gifFps}
-                                onChange={(e) => updateDraft({ gifFps: e.target.value })}
-                              >
-                                <option value="10">10 FPS</option>
-                                <option value="15">15 FPS</option>
-                                <option value="20">20 FPS</option>
-                                <option value="30">30 FPS</option>
-                              </select>
-                            </div>
+                        <div className="grid grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
+                              {t('gifFpsLabel')}
+                            </label>
+                            <select
+                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              value={gifFps}
+                              onChange={(e) => updateDraft({ gifFps: e.target.value })}
+                            >
+                              <option value="10">10 FPS</option>
+                              <option value="15">15 FPS</option>
+                              <option value="20">20 FPS</option>
+                              <option value="30">30 FPS</option>
+                            </select>
+                          </div>
 
-                            <div>
-                              <label style={{ fontSize: '12px', color: '#c084fc', display: 'block', marginBottom: '4px' }}>
-                                {t('gifResLabel')}
-                              </label>
-                              <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '12px' }}
-                                value={gifRes}
-                                onChange={(e) => updateDraft({ gifRes: e.target.value })}
-                              >
-                                <option value="480p">480p</option>
-                                <option value="360p">360p</option>
-                                <option value="240p">240p</option>
-                              </select>
-                            </div>
+                          <div>
+                            <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
+                              {t('gifResLabel')}
+                            </label>
+                            <select
+                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              value={gifRes}
+                              onChange={(e) => updateDraft({ gifRes: e.target.value })}
+                            >
+                              <option value="480p">480p</option>
+                              <option value="360p">360p</option>
+                              <option value="240p">240p</option>
+                            </select>
+                          </div>
 
-                            <div>
-                              <label style={{ fontSize: '12px', color: '#c084fc', display: 'block', marginBottom: '4px' }}>
-                                {t('gifSpeedLabel')}
-                              </label>
-                              <select
-                                className="custom-select"
-                                style={{ width: '100%', fontSize: '12px' }}
-                                value={gifSpeed}
-                                onChange={(e) => updateDraft({ gifSpeed: e.target.value })}
-                              >
-                                <option value="1.0">1.0x</option>
-                                <option value="1.25">1.25x</option>
-                                <option value="1.5">1.5x</option>
-                                <option value="2.0">2.0x</option>
-                                <option value="0.5">0.5x</option>
-                              </select>
-                            </div>
+                          <div>
+                            <label className="text-[11px] text-purple-600 dark:text-purple-300 block mb-1 font-medium">
+                              {t('gifSpeedLabel')}
+                            </label>
+                            <select
+                              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:border-pink-500"
+                              value={gifSpeed}
+                              onChange={(e) => updateDraft({ gifSpeed: e.target.value })}
+                            >
+                              <option value="1.0">1.0x</option>
+                              <option value="1.25">1.25x</option>
+                              <option value="1.5">1.5x</option>
+                              <option value="2.0">2.0x</option>
+                              <option value="0.5">0.5x</option>
+                            </select>
                           </div>
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* 4.2 ADVANCED DOWNLOAD SETTINGS (Có nút Ẩn/Hiện Toggle) */}
-                  <div style={{ marginTop: '14px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedInResult(!showAdvancedInResult)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justify: 'space-between',
-                        padding: '10px 14px',
-                        background: 'rgba(30, 41, 59, 0.6)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '10px',
-                        color: '#c084fc',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <SlidersHorizontal size={15} />
-                        <span>Cài đặt nâng cao (Metadata, Cắt video...)</span>
-                      </div>
-                      {showAdvancedInResult ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </button>
-
-                    {showAdvancedInResult && (
-                      <div className="fade-in-up" style={{ marginTop: '10px', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '14px' }}>
-                        {/* SEPARATE ASSETS EXTRACTION OPTIONS */}
-                        <div>
-                          <label style={{ fontSize: '12px', color: '#f8fafc', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                            <Sliders size={14} color="#a7f3d0" />
-                            <span>{t('metadataOptions')}</span>
-                          </label>
-                          <div className="metadata-options-grid">
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={!!writeThumbnail}
-                                onChange={(e) => updateDraft({ writeThumbnail: e.target.checked })}
-                              />
-                              <span>{t('writeThumbnailOpt')}</span>
-                            </label>
-
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={!!advancedOptions.writeSubs}
-                                onChange={(e) => {
-                                  if (setAdvancedOptions) {
-                                    setAdvancedOptions((prev) => ({ ...prev, writeSubs: e.target.checked }));
-                                  }
-                                }}
-                              />
-                              <span>{t('writeSubs')}</span>
-                            </label>
-
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={!!writeDescription}
-                                onChange={(e) => updateDraft({ writeDescription: e.target.checked })}
-                              />
-                              <span>{t('writeDescriptionOpt')}</span>
-                            </label>
-                          </div>
+                    {/* Advanced Collapsible Options */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedInResult(!showAdvancedInResult)}
+                        className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-100/90 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <SlidersHorizontal size={15} />
+                          <span>Cài đặt nâng cao (Metadata, Cắt video...)</span>
                         </div>
+                        {showAdvancedInResult ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
 
-                        {/* INLINE MEDIA TRIM SECTION */}
-                        {formatType !== 'thumbnail' && (
-                          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
-                            <label style={{ fontSize: '12px', color: '#f8fafc', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                              <Scissors size={14} color="#3b82f6" />
-                              <span>{t('trimLabel')}</span>
+                      {showAdvancedInResult && (
+                        <div className="mt-2.5 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md space-y-4 animate-fade-in-up">
+                          {/* Asset Extraction Checkboxes */}
+                          <div>
+                            <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2">
+                              <Sliders size={14} className="text-emerald-500 dark:text-emerald-400" />
+                              <span>{t('metadataOptions')}</span>
                             </label>
-                            <div className="downloader-trim-grid">
-                              <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                <input
+                                  type="checkbox"
+                                  className="accent-pink-500 rounded"
+                                  checked={!!writeThumbnail}
+                                  onChange={(e) => updateDraft({ writeThumbnail: e.target.checked })}
+                                />
+                                <span>{t('writeThumbnailOpt')}</span>
+                              </label>
+
+                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                <input
+                                  type="checkbox"
+                                  className="accent-pink-500 rounded"
+                                  checked={!!advancedOptions.writeSubs}
+                                  onChange={(e) => {
+                                    if (setAdvancedOptions) {
+                                      setAdvancedOptions((prev) => ({ ...prev, writeSubs: e.target.checked }));
+                                    }
+                                  }}
+                                />
+                                <span>{t('writeSubs')}</span>
+                              </label>
+
+                              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer font-medium">
+                                <input
+                                  type="checkbox"
+                                  className="accent-pink-500 rounded"
+                                  checked={!!writeDescription}
+                                  onChange={(e) => updateDraft({ writeDescription: e.target.checked })}
+                                />
+                                <span>{t('writeDescriptionOpt')}</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Trim Video Section */}
+                          {formatType !== 'thumbnail' && (
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80">
+                              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2">
+                                <Scissors size={14} className="text-sky-500 dark:text-sky-400" />
+                                <span>{t('trimLabel')}</span>
+                              </label>
+                              <div className="grid grid-cols-2 gap-3">
                                 <input
                                   type="text"
-                                  className="text-input"
-                                  style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-pink-500"
                                   placeholder={t('trimStart')}
                                   value={trimStart}
                                   onChange={(e) => updateDraft({ trimStart: e.target.value })}
                                 />
-                              </div>
-
-                              <div>
                                 <input
                                   type="text"
-                                  className="text-input"
-                                  style={{ width: '100%', padding: '6px 10px', fontSize: '12px' }}
+                                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-pink-500"
                                   placeholder={t('trimEnd')}
                                   value={trimEnd}
                                   onChange={(e) => updateDraft({ trimEnd: e.target.value })}
                                 />
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {(advancedOptions.writeSubs || advancedOptions.downloadSections || advancedOptions.cookiesFromBrowser !== 'none' || advancedOptions.customArgs) && (
-                          <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(139, 92, 246, 0.12)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.25)', fontSize: '11px', color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <Terminal size={12} />
-                            <span>CLI options active from Advanced Tab.</span>
-                          </div>
-                        )}
-                      </div>
+                          {(advancedOptions.writeSubs || advancedOptions.downloadSections || advancedOptions.cookiesFromBrowser !== 'none' || advancedOptions.customArgs) && (
+                            <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-400/20 text-[11px] text-purple-600 dark:text-purple-300 flex items-center gap-2 font-medium">
+                              <Terminal size={14} className="shrink-0" />
+                              <span>CLI options active from Advanced Tab.</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Playlist Inspector */}
+                    {mediaInfo.isPlaylist && mediaInfo.info.entries && mediaInfo.info.entries.length > 0 && (
+                      <PlaylistInspector
+                        entries={mediaInfo.info.entries}
+                        selectedIndexes={playlistSelectedIndexes}
+                        setSelectedIndexes={setPlaylistSelectedIndexes}
+                      />
                     )}
                   </div>
 
-                  {/* 5. PLAYLIST INSPECTOR SECTION (nếu có) */}
-                  {mediaInfo.isPlaylist && mediaInfo.info.entries && mediaInfo.info.entries.length > 0 && (
-                    <PlaylistInspector
-                      entries={mediaInfo.info.entries}
-                      selectedIndexes={playlistSelectedIndexes}
-                      setSelectedIndexes={setPlaylistSelectedIndexes}
-                    />
-                  )}
-
-                  {/* Bottom Main Download Button */}
-                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                  {/* Start Download CTA Button */}
+                  <div className="pt-4">
                     <button
-                      className="btn btn-primary"
-                      style={{ width: '100%', padding: '14px' }}
+                      type="button"
+                      className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-pink-500/25 active:scale-95 transition-all duration-300 cursor-pointer"
                       onClick={handleStartDownload}
                       disabled={mediaInfo.isPlaylist && playlistSelectedIndexes.length === 0}
                     >
-                      <Download size={18} />
+                      <Download size={18} className="text-slate-950 shrink-0" />
                       <span>
                         {mediaInfo.isPlaylist
                           ? `Download (${playlistSelectedIndexes.length})`
@@ -1133,7 +1161,8 @@ export default function DownloaderTab({
               </div>
             </section>
           </div>
-        ))}
+        )
+      )}
     </div>
   );
 }

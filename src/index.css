@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg-primary: #0b0f19;
   --bg-secondary: #111827;
@@ -1628,21 +1632,22 @@ body {
 }
 
 /* ==========================================
-   ULTRA-BEAUTIFIED DROPDOWN (SELECT) CONTROLS
+   ULTRA-BEAUTIFIED DROPDOWN (SELECT) CONTROLS & ITEMS
    ========================================== */
 select,
 .custom-select,
-.app-dropdown-select {
+.app-dropdown-select,
+.mini-select {
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
-  background-color: rgba(30, 41, 59, 0.85);
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a78bfa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
+  background-color: rgba(15, 23, 42, 0.85);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23ec4899" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
   background-repeat: no-repeat !important;
   background-position: right 12px center !important;
   background-size: 14px 14px !important;
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px;
   padding: 8px 36px 8px 12px !important;
   font-family: inherit;
   font-size: 13px;
@@ -1652,59 +1657,112 @@ select,
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 select:hover,
 .custom-select:hover,
-.app-dropdown-select:hover {
+.app-dropdown-select:hover,
+.mini-select:hover {
   background-color: rgba(30, 41, 59, 0.95);
-  border-color: var(--accent-purple);
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+  border-color: rgba(236, 72, 153, 0.6) !important;
+  box-shadow: 0 0 18px rgba(236, 72, 153, 0.25), 0 4px 12px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
 }
 
 select:focus,
 .custom-select:focus,
-.app-dropdown-select:focus {
+.app-dropdown-select:focus,
+.mini-select:focus {
   outline: none;
-  border-color: var(--accent-purple);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.35), 0 4px 20px rgba(139, 92, 246, 0.25);
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.35), 0 4px 22px rgba(139, 92, 246, 0.3);
   background-color: rgba(15, 23, 42, 0.98);
 }
 
+/* Dropdown Option & Optgroup Items (Dark Theme default) */
 select option,
 .custom-select option,
-.app-dropdown-select option {
-  background-color: #1e293b;
-  color: #f8fafc;
-  padding: 10px 14px;
+.app-dropdown-select option,
+.mini-select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 10px 14px !important;
+  font-size: 13px;
   font-weight: 500;
+  border: none;
 }
 
+select option:checked,
+select option:hover,
+select option:focus,
+.custom-select option:checked,
+.app-dropdown-select option:checked,
+.mini-select option:checked {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+select optgroup,
+.custom-select optgroup,
+.app-dropdown-select optgroup,
+.mini-select optgroup {
+  background-color: #090d16 !important;
+  color: #c084fc !important;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 12px 4px !important;
+}
+
+/* Light Theme Styling for Select & Options */
 [data-theme="light"] select,
 [data-theme="light"] .custom-select,
-[data-theme="light"] .app-dropdown-select {
-  background-color: rgba(255, 255, 255, 0.95);
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%237c3aed" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
-  border-color: rgba(0, 0, 0, 0.15);
+[data-theme="light"] .app-dropdown-select,
+[data-theme="light"] .mini-select {
+  background-color: rgba(255, 255, 255, 0.96);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%238b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') !important;
+  border-color: rgba(0, 0, 0, 0.14) !important;
   color: #0f172a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="light"] select:hover,
 [data-theme="light"] .custom-select:hover,
-[data-theme="light"] .app-dropdown-select:hover {
+[data-theme="light"] .app-dropdown-select:hover,
+[data-theme="light"] .mini-select:hover {
   background-color: #ffffff;
-  border-color: var(--accent-purple);
-  box-shadow: 0 0 14px rgba(139, 92, 246, 0.22);
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25);
 }
 
 [data-theme="light"] select option,
 [data-theme="light"] .custom-select option,
-[data-theme="light"] .app-dropdown-select option {
-  background-color: #ffffff;
-  color: #0f172a;
+[data-theme="light"] .app-dropdown-select option,
+[data-theme="light"] .mini-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] select option:checked,
+[data-theme="light"] select option:hover,
+[data-theme="light"] select option:focus,
+[data-theme="light"] .custom-select option:checked,
+[data-theme="light"] .app-dropdown-select option:checked,
+[data-theme="light"] .mini-select option:checked {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] select optgroup,
+[data-theme="light"] .custom-select optgroup,
+[data-theme="light"] .app-dropdown-select optgroup,
+[data-theme="light"] .mini-select optgroup {
+  background-color: #f1f5f9 !important;
+  color: #7c3aed !important;
 }
 
 /* Specific Dropdown Variations */

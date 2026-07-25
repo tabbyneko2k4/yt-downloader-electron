@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Terminal, Bookmark, RotateCcw, Copy, Eye, Plus, Trash2, Subtitles, Clock, Cookie, Zap, Code, FileCode } from 'lucide-react';
+import { Terminal, Bookmark, RotateCcw, Copy, Eye, Plus, Trash2, Subtitles, Clock, Cookie, Zap, Code, FileCode, Check } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
@@ -110,31 +110,33 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
   };
 
   return (
-    <div className="advanced-tab-container" style={{ maxWidth: '950px', margin: '0 auto' }}>
+    <div className="relative z-10 w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 text-slate-800 dark:text-slate-100 font-sans select-none animate-fade-in-up">
       {/* Top Banner & Live CLI Command Preview Box */}
-      <section className="card advanced-sticky-header">
-        <div className="advanced-header-bar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Terminal size={20} color="#c084fc" />
-            <h2 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+      <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-purple-500/15 border border-purple-400/30 text-purple-600 dark:text-purple-300">
+              <Terminal size={20} />
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
               {t('advancedTitle')}
             </h2>
           </div>
 
-          <div className="advanced-header-actions">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              className="btn btn-secondary"
+              type="button"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95"
               onClick={() => setShowSaveModal(true)}
-              style={{ padding: '7px 12px', fontSize: '12px', color: '#c084fc', borderColor: 'rgba(192, 132, 252, 0.3)' }}
             >
               <Plus size={14} />
               <span>{t('savePresetBtn')}</span>
             </button>
 
             <button
-              className="btn btn-secondary"
+              type="button"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer active:scale-95"
               onClick={handleReset}
-              style={{ padding: '7px 12px', fontSize: '12px' }}
             >
               <RotateCcw size={14} />
               <span>{t('resetBtn')}</span>
@@ -143,56 +145,50 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </div>
 
         {/* Live Command Terminal Box */}
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '12px 14px', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Eye size={12} color="#10b981" />
+        <div className="p-3.5 rounded-2xl bg-slate-950 text-emerald-400 border border-emerald-500/30 shadow-inner space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-400">
+            <span className="flex items-center gap-1.5 text-emerald-400 uppercase tracking-wider text-[11px]">
+              <Eye size={13} />
               <span>{t('previewCmdTitle')}</span>
             </span>
             <button
+              type="button"
               onClick={copyCmdPreview}
-              style={{ background: 'transparent', border: 'none', color: copiedCmd ? '#10b981' : 'var(--text-muted)', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 4px' }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-800/80 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
             >
-              <Copy size={12} />
+              {copiedCmd ? <Check size={13} /> : <Copy size={13} />}
               <span>{copiedCmd ? t('cmdCopied') : t('copyCmd')}</span>
             </button>
           </div>
-          <code className="cmd-preview-box" style={{ fontFamily: 'Consolas, monospace', fontSize: '12px', color: '#10b981', wordBreak: 'break-all', display: 'block' }}>
+          <code className="font-mono text-xs text-emerald-400 break-all select-all leading-relaxed block p-1">
             {generateCmdPreview()}
           </code>
         </div>
       </section>
 
-      {/* Preset Selector Grid */}
-      <section className="card">
-        <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Bookmark size={16} color="#f59e0b" />
+      {/* Preset Selector Grid Section */}
+      <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-4">
+        <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <Bookmark size={16} className="text-amber-500" />
           <span>{t('presetsSectionTitle')}</span>
         </h3>
 
-        <div className="advanced-preset-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Built-in Presets */}
           {builtinPresets.map((preset) => (
             <div
               key={preset.id}
               onClick={() => handleApplyPreset(preset.options)}
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '10px',
-                padding: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                position: 'relative'
-              }}
-              className="preset-card-item"
+              className="group p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 hover:bg-white dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 hover:border-sky-400/50 text-left transition-all duration-200 cursor-pointer shadow-sm hover:-translate-y-0.5 flex flex-col justify-between"
             >
-              <h4 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '4px' }}>
-                {preset.name}
-              </h4>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', margin: 0 }}>
-                {preset.desc}
-              </p>
+              <div>
+                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-pink-500 dark:group-hover:text-sky-300 mb-1 transition-colors">
+                  {preset.name}
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {preset.desc}
+                </p>
+              </div>
             </div>
           ))}
 
@@ -201,75 +197,68 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
             <div
               key={preset.id}
               onClick={() => handleApplyPreset(preset.options)}
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid #8b5cf6',
-                borderRadius: '10px',
-                padding: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                position: 'relative'
-              }}
-              className="preset-card-item"
+              className="group p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-300 dark:border-purple-400/40 hover:border-pink-400 text-left transition-all duration-200 cursor-pointer shadow-sm hover:-translate-y-0.5 flex flex-col justify-between"
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
-                <h4 style={{ fontSize: '13px', fontWeight: '600', color: '#c084fc', marginBottom: '4px', wordBreak: 'break-word' }}>
-                  ⭐ {preset.name}
-                </h4>
-                <button
-                  onClick={(e) => handleDeleteCustomPreset(e, preset.id)}
-                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', flexShrink: 0 }}
-                  title={t('delete') || 'Xóa'}
-                >
-                  <Trash2 size={13} />
-                </button>
+              <div>
+                <div className="flex items-start justify-between gap-1.5">
+                  <h4 className="text-xs font-bold text-purple-600 dark:text-purple-300 group-hover:text-pink-500 dark:group-hover:text-pink-300 mb-1 transition-colors break-words">
+                    ⭐ {preset.name}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteCustomPreset(e, preset.id)}
+                    className="text-rose-500 hover:text-rose-600 p-1 hover:bg-rose-500/15 rounded-md transition-colors shrink-0"
+                    title={t('delete') || 'Xóa'}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {preset.desc}
+                </p>
               </div>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4', margin: 0 }}>
-                {preset.desc}
-              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Categorized Visual Configuration Cards */}
-      <div className="advanced-options-grid">
+      {/* Categorized Options Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
         {/* Subtitles Visual Controls */}
-        <section className="card" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Subtitles size={18} color="#ec4899" />
+        <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <Subtitles size={18} className="text-pink-500" />
             <span>{t('subtitlesSection')}</span>
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label className="advanced-checkbox-label">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold cursor-pointer">
               <input
                 type="checkbox"
-                style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
+                className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
                 checked={advancedOptions.writeSubs}
                 onChange={(e) => handleChange('writeSubs', e.target.checked)}
               />
               <span>{t('writeSubs')}</span>
             </label>
 
-            <label className="advanced-checkbox-label">
+            <label className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold cursor-pointer">
               <input
                 type="checkbox"
-                style={{ width: '18px', height: '18px', accentColor: '#8b5cf6', cursor: 'pointer' }}
+                className="w-4 h-4 accent-pink-500 rounded cursor-pointer"
                 checked={advancedOptions.embedSubs}
                 onChange={(e) => handleChange('embedSubs', e.target.checked)}
               />
               <span>{t('embedSubs')}</span>
             </label>
 
-            <div style={{ marginTop: '4px' }}>
-              <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+            <div className="pt-1">
+              <label className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1.5 font-medium">
                 {t('subLangsLabel')}
               </label>
               <input
                 type="text"
-                className="text-input"
-                style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
                 placeholder="vi,en"
                 value={advancedOptions.subLangs}
                 onChange={(e) => handleChange('subLangs', e.target.value)}
@@ -279,17 +268,16 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Time Cut Section Visual Controls */}
-        <section className="card" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Clock size={18} color="#3b82f6" />
+        <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <Clock size={18} className="text-sky-500" />
             <span>{t('downloadSectionsLabel')}</span>
           </h3>
 
           <div>
             <input
               type="text"
-              className="text-input"
-              style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
               placeholder={t('downloadSectionsPlaceholder')}
               value={advancedOptions.downloadSections}
               onChange={(e) => handleChange('downloadSections', e.target.value)}
@@ -298,59 +286,47 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Cookies & Geo-bypass */}
-        <section className="card" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Cookie size={18} color="#f59e0b" />
+        <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <Cookie size={18} className="text-amber-500" />
             <span>{t('cookieBrowserLabel')}</span>
           </h3>
 
-          <div>
-            <div className="advanced-cookie-grid">
-              {[
-                { name: t('cookieNone'), id: 'none' },
-                { name: t('cookieChrome'), id: 'chrome' },
-                { name: t('cookieEdge'), id: 'edge' },
-                { name: t('cookieFirefox'), id: 'firefox' },
-                { name: t('cookieBrave'), id: 'brave' }
-              ].map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => handleChange('cookiesFromBrowser', b.id)}
-                  className="advanced-cookie-btn"
-                  style={{
-                    padding: '8px 6px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    border: advancedOptions.cookiesFromBrowser === b.id ? '1px solid #f59e0b' : '1px solid var(--border-color)',
-                    background: advancedOptions.cookiesFromBrowser === b.id ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-secondary)',
-                    color: advancedOptions.cookiesFromBrowser === b.id ? '#f59e0b' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {b.name}
-                </button>
-              ))}
-            </div>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            {[
+              { name: t('cookieNone'), id: 'none' },
+              { name: t('cookieChrome'), id: 'chrome' },
+              { name: t('cookieEdge'), id: 'edge' },
+              { name: t('cookieFirefox'), id: 'firefox' },
+              { name: t('cookieBrave'), id: 'brave' }
+            ].map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => handleChange('cookiesFromBrowser', b.id)}
+                className={`py-2 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center truncate cursor-pointer ${
+                  advancedOptions.cookiesFromBrowser === b.id
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-600 dark:text-amber-300 shadow-sm scale-105 font-bold'
+                    : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {b.name}
+              </button>
+            ))}
           </div>
         </section>
 
         {/* Speed Limit & Rate */}
-        <section className="card" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Zap size={18} color="#10b981" />
+        <section className="p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <Zap size={18} className="text-emerald-500" />
             <span>{t('rateLimitLabel')}</span>
           </h3>
 
           <div>
             <input
               type="text"
-              className="text-input"
-              style={{ width: '100%', padding: '8px 10px', fontSize: '13px' }}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
               placeholder={t('rateLimitPlaceholder')}
               value={advancedOptions.rateLimit}
               onChange={(e) => handleChange('rateLimit', e.target.value)}
@@ -359,16 +335,15 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Custom Format Box */}
-        <section className="card advanced-grid-full-width" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Code size={18} color="#8b5cf6" />
+        <section className="md:col-span-2 p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <Code size={18} className="text-purple-500" />
             <span>{t('customFormatLabel')}</span>
           </h3>
 
           <input
             type="text"
-            className="text-input"
-            style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
             placeholder={t('customFormatPlaceholder')}
             value={advancedOptions.customFormat}
             onChange={(e) => handleChange('customFormat', e.target.value)}
@@ -376,16 +351,15 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
         </section>
 
         {/* Extra CLI Flags */}
-        <section className="card advanced-grid-full-width" style={{ marginBottom: 0 }}>
-          <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FileCode size={18} color="#06b6d4" />
+        <section className="md:col-span-2 p-4 sm:p-5 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-light-glow dark:shadow-xl space-y-3">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-2">
+            <FileCode size={18} className="text-cyan-500" />
             <span>{t('customArgsLabel')}</span>
           </h3>
 
           <input
             type="text"
-            className="text-input"
-            style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
             placeholder={t('customArgsPlaceholder')}
             value={advancedOptions.customArgs}
             onChange={(e) => handleChange('customArgs', e.target.value)}
@@ -395,39 +369,36 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
 
       {/* Save Preset Modal */}
       {showSaveModal && (
-        <div className="modal-backdrop" onClick={() => setShowSaveModal(false)}>
-          <div className="modal-window" style={{ maxWidth: '450px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-main)', margin: 0 }}>
-                {t('savePresetModalTitle')}
-              </h3>
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              <input
-                type="text"
-                className="text-input"
-                style={{ width: '100%', padding: '10px 14px', fontSize: '13px', marginBottom: '16px' }}
-                placeholder={t('presetNamePlaceholder')}
-                value={newPresetName}
-                onChange={(e) => setNewPresetName(e.target.value)}
-                autoFocus
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowSaveModal(false)}
-                  style={{ padding: '8px 16px', fontSize: '13px', flex: '1' }}
-                >
-                  {t('cancel')}
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSaveCustomPreset}
-                  style={{ padding: '8px 16px', fontSize: '13px', flex: '1' }}
-                >
-                  {t('save')}
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fade-in-up" onClick={() => setShowSaveModal(false)}>
+          <div className="w-full max-w-md p-6 rounded-3xl bg-white dark:bg-slate-900 border border-pink-300 dark:border-pink-400/30 text-slate-800 dark:text-slate-100 shadow-2xl space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+              {t('savePresetModalTitle')}
+            </h3>
+
+            <input
+              type="text"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-pink-500"
+              placeholder={t('presetNamePlaceholder')}
+              value={newPresetName}
+              onChange={(e) => setNewPresetName(e.target.value)}
+              autoFocus
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                onClick={() => setShowSaveModal(false)}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 hover:from-sky-300 hover:to-pink-400 text-slate-950 font-extrabold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+                onClick={handleSaveCustomPreset}
+              >
+                {t('save')}
+              </button>
             </div>
           </div>
         </div>
@@ -435,4 +406,3 @@ export default function AdvancedTab({ advancedOptions, setAdvancedOptions }) {
     </div>
   );
 }
-
