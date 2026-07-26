@@ -198,7 +198,7 @@ export default function DownloadedTab({
             {/* Open Folder */}
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
               onClick={async () => {
                 let baseDir = settings?.defaultPath;
                 if (!baseDir && window.api?.getDownloadsPath) {
@@ -217,7 +217,7 @@ export default function DownloadedTab({
               title={t("openDownloadFolder")}
             >
               <FolderOpen size={14} className="shrink-0" />
-              <span className="hidden sm:inline">
+              <span className="hidden sm:inline-block max-w-[100px] md:max-w-none truncate">
                 {t("openDownloadFolder")}
               </span>
             </button>
@@ -225,12 +225,12 @@ export default function DownloadedTab({
             {/* Import Log */}
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-600 dark:text-purple-300 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
               onClick={handleImportLogFileToResume}
               title={t("importLogBtn")}
             >
               <FileCode size={14} className="shrink-0" />
-              <span className="hidden sm:inline">
+              <span className="hidden sm:inline-block max-w-[100px] md:max-w-none truncate">
                 {t("importLogBtn")}
               </span>
             </button>
@@ -239,7 +239,7 @@ export default function DownloadedTab({
             {downloadsHistory.length > 0 && (
               <button
                 type="button"
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
                 onClick={() => {
                   if (confirm(t("confirmClearHistory"))) {
                     clearAllHistory();
@@ -248,7 +248,7 @@ export default function DownloadedTab({
                 title={t("clearHistoryBtn")}
               >
                 <Trash2 size={14} className="shrink-0" />
-                <span className="hidden sm:inline">
+                <span className="hidden sm:inline-block max-w-[100px] md:max-w-none truncate">
                   {t("clearHistoryBtn")}
                 </span>
               </button>
