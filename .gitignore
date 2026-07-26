@@ -62,4 +62,5 @@ installer/electron_installer_data/
 installer/app.zip
 
 dist-react/
+dist-extension/
 temp/
