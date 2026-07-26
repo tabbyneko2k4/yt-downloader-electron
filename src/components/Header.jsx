@@ -380,11 +380,6 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
               )}
             </div>
 
-            <div className="burger-footer-info">
-              <span>YT Downloader Pro</span>
-              <span className="burger-dot">•</span>
-              <span>v2.5</span>
-            </div>
           </div>
         </div>
       )}
