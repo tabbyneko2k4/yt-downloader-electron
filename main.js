@@ -1043,6 +1043,7 @@ function startLocalHttpBridge() {
 
           const defaultDest = (currentSettings && currentSettings.defaultPath) ? currentSettings.defaultPath : (app.getPath('downloads') || path.join(process.env.USERPROFILE || 'C:\\Users\\1', 'Downloads'));
           const normalizedOptions = {
+            ...downloadOptions,
             id: downloadOptions.id || `dl_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
             url: downloadOptions.url,
             formatType: downloadOptions.formatType || downloadOptions.downloadType || 'video',

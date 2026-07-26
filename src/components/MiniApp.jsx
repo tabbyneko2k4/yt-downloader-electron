@@ -653,7 +653,12 @@ export default function MiniApp() {
   };
 
   const filteredFiles = useMemo(() => {
-    let result = [...history];
+    // Hide standalone sub-playlist items from top-level list
+    let result = history.filter((item) => {
+      if (item.isPlaylistItem) return false;
+      if (item.id && typeof item.id === 'string' && item.id.includes('_item_')) return false;
+      return true;
+    });
 
     if (filesSearch.trim()) {
       const term = filesSearch.toLowerCase();
@@ -663,7 +668,8 @@ export default function MiniApp() {
           (item.mediaTitle && item.mediaTitle.toLowerCase().includes(term)) ||
           (item.uploader && item.uploader.toLowerCase().includes(term)) ||
           (item.filePath && item.filePath.toLowerCase().includes(term)) ||
-          (item.folderPath && item.folderPath.toLowerCase().includes(term))
+          (item.folderPath && item.folderPath.toLowerCase().includes(term)) ||
+          (item.playlist_items && Array.isArray(item.playlist_items) && item.playlist_items.some(child => child.title?.toLowerCase().includes(term) || child.filePath?.toLowerCase().includes(term)))
       );
     }
 
@@ -1250,7 +1256,8 @@ export default function MiniApp() {
               ) : (
                 filteredFiles.map((item, idx) => {
                   const title = item.title || item.mediaTitle || 'Untitled Media';
-                  const folderPath = item.folderPath || item.destDir || item.filePath;
+                  const firstValidTrackPath = item.playlist_items?.find(i => i.filePath && i.filePath !== item.folderPath)?.filePath;
+                  const folderPath = item.playlistDir || item.folderPath || (item.downloadedFiles && item.downloadedFiles[0] ? item.downloadedFiles[0] : firstValidTrackPath || item.filePath);
                   const filePath = item.filePath || folderPath;
                   const isExpanded = expandedFolders[item.id];
                   const displayThumb = item.thumbnail || (item.playlistEntries && item.playlistEntries[0] ? item.playlistEntries[0].thumbnail : '');
