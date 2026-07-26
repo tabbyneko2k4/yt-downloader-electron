@@ -1903,14 +1903,21 @@ ipcMain.handle('shell:open-folder', async (event, dirPath) => {
   if (!dirPath) return false;
   try {
     let target = dirPath;
-    if (fs.existsSync(target) && fs.statSync(target).isFile()) {
-      target = path.dirname(target);
+    if (fs.existsSync(target)) {
+      const stat = fs.statSync(target);
+      if (stat.isFile()) {
+        shell.showItemInFolder(target);
+        return true;
+      }
+      await shell.openPath(target);
+      return true;
+    } else {
+      const parentDir = path.dirname(target);
+      if (fs.existsSync(parentDir)) {
+        await shell.openPath(parentDir);
+        return true;
+      }
     }
-    if (!fs.existsSync(target)) {
-      fs.mkdirSync(target, { recursive: true });
-    }
-    await shell.openPath(target);
-    return true;
   } catch (e) {
     console.error('Failed to open folder:', e);
     return false;
@@ -2266,6 +2273,119 @@ function enrichDownloadDetails(destDir, isPlaylist = false, downloadedFiles = []
 function addDownloadItemToDbInternal(rawItem) {
   try {
     const currentDb = loadDownloadsDb();
+
+    // Special handling for sub-playlist item: merge into Parent Playlist record
+    if (rawItem.isPlaylistItem && rawItem.groupId) {
+      let trackFile = (rawItem.downloadedFiles && rawItem.downloadedFiles[0]) || rawItem.filePath;
+      if (trackFile === rawItem.folderPath || (trackFile && !path.extname(trackFile))) {
+        // Look in folderPath for media file matching mediaTitle
+        const targetFolder = rawItem.folderPath || rawItem.destDir;
+        if (targetFolder && fs.existsSync(targetFolder)) {
+          const files = fs.readdirSync(targetFolder);
+          const sanitizedTitle = (rawItem.mediaTitle || rawItem.title || '').replace(/[\\/:*?"<>|]/g, '_').toLowerCase();
+          const found = files.find(f => {
+            const ext = path.extname(f).toLowerCase();
+            return ['.mp3', '.m4a', '.mp4', '.mkv', '.webm', '.flac', '.wav'].includes(ext) &&
+              (f.toLowerCase().includes(sanitizedTitle) || sanitizedTitle.includes(path.basename(f, ext).toLowerCase()));
+          });
+          if (found) {
+            trackFile = path.join(targetFolder, found);
+          }
+        }
+      }
+
+      const childItem = {
+        id: rawItem.id,
+        title: rawItem.mediaTitle || rawItem.title || 'Track Item',
+        uploader: rawItem.uploader || '',
+        duration: rawItem.duration || 0,
+        thumbnail: rawItem.thumbnail || '',
+        filePath: trackFile || rawItem.folderPath,
+        sourceUrl: rawItem.sourceUrl || rawItem.url || '',
+        formatType: rawItem.formatType || 'video',
+        status: 'completed',
+        downloadedAt: rawItem.downloadedAt || Date.now()
+      };
+
+      const parentTitle = rawItem.playlistTitle;
+      const parentUrl = rawItem.playlistSourceUrl;
+
+      // Find parent playlist by groupId or matching title / url
+      const parentIdx = currentDb.findIndex(i =>
+        i.id === rawItem.groupId ||
+        (i.isPlaylist && parentTitle && i.title === parentTitle) ||
+        (i.isPlaylist && parentUrl && (i.sourceUrl === parentUrl || i.url === parentUrl))
+      );
+
+      if (parentIdx >= 0) {
+        const parent = { ...currentDb[parentIdx], isPlaylist: true };
+        const currentFiles = parent.downloadedFiles || [];
+        if (trackFile && trackFile !== parent.folderPath && !currentFiles.includes(trackFile)) {
+          parent.downloadedFiles = [...currentFiles, trackFile];
+        }
+
+        // Dynamically update parent folder path if it points to root downloads directory
+        if (trackFile && path.extname(trackFile)) {
+          const actualDir = path.dirname(trackFile);
+          if (actualDir) {
+            parent.filePath = actualDir;
+            parent.folderPath = actualDir;
+            parent.playlistDir = actualDir;
+          }
+        }
+
+        const currentItems = parent.playlist_items || parent.playlistEntries || [];
+        const exists = currentItems.some(it => (it.title && it.title === childItem.title) || (it.sourceUrl && it.sourceUrl === childItem.sourceUrl));
+        if (!exists) {
+          parent.playlist_items = [...currentItems, childItem];
+          parent.playlistEntries = parent.playlist_items;
+        } else {
+          // Update existing child item details (e.g. valid filePath)
+          parent.playlist_items = currentItems.map(it => {
+            if ((it.title && it.title === childItem.title) || (it.sourceUrl && it.sourceUrl === childItem.sourceUrl)) {
+              return { ...it, ...childItem };
+            }
+            return it;
+          });
+          parent.playlistEntries = parent.playlist_items;
+        }
+        if (rawItem.playlistTotalItems || rawItem.playlistEntries?.length) {
+          parent.entriesCount = rawItem.playlistTotalItems || rawItem.playlistEntries.length;
+        }
+        currentDb[parentIdx] = parent;
+      } else {
+        const realFolder = (trackFile && trackFile !== rawItem.folderPath) ? path.dirname(trackFile) : (rawItem.folderPath || rawItem.destDir);
+        const parent = {
+          id: rawItem.groupId,
+          title: rawItem.playlistTitle || 'Playlist',
+          uploader: rawItem.uploader || '',
+          thumbnail: rawItem.thumbnail || '',
+          formatType: rawItem.formatType || 'video',
+          sourceUrl: rawItem.playlistSourceUrl || rawItem.sourceUrl || rawItem.url || '',
+          filePath: realFolder,
+          folderPath: realFolder,
+          playlistDir: realFolder,
+          isPlaylist: true,
+          entriesCount: rawItem.playlistTotalItems || (rawItem.playlistEntries ? rawItem.playlistEntries.length : 1),
+          playlist_items: [childItem],
+          playlistEntries: [childItem],
+          downloadedFiles: (trackFile && trackFile !== realFolder) ? [trackFile] : [],
+          downloadedAt: Date.now()
+        };
+        currentDb.unshift(parent);
+      }
+
+      // Filter out any accidental standalone records of sub-playlist items from top level DB
+      const cleanDb = currentDb.filter(item => {
+        if (item.isPlaylistItem) return false;
+        if (item.id && typeof item.id === 'string' && item.id.includes('_item_')) return false;
+        return true;
+      });
+
+      saveDownloadsDb(cleanDb);
+      return cleanDb;
+    }
+
     const targetDir = rawItem.folderPath || rawItem.filePath || (rawItem.downloadedFiles && rawItem.downloadedFiles[0] ? path.dirname(rawItem.downloadedFiles[0]) : '');
     const enrich = enrichDownloadDetails(targetDir, rawItem.isPlaylist, rawItem.downloadedFiles);
 

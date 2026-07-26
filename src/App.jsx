@@ -425,41 +425,83 @@ export default function App() {
           const downloadedFile = result.files && result.files.length > 0 ? result.files[0] : null;
 
           if (options.isPlaylistItem && options.groupId) {
-            const trackFile = downloadedFile || result.destDir;
-            const existingIndex = downloadsHistory.findIndex((item) => item.id === options.groupId);
-
-            let masterPlaylistHistory;
-            if (existingIndex >= 0) {
-              masterPlaylistHistory = { ...downloadsHistory[existingIndex] };
-              const currentFiles = masterPlaylistHistory.downloadedFiles || [];
-              if (trackFile && !currentFiles.includes(trackFile)) {
-                masterPlaylistHistory.downloadedFiles = [...currentFiles, trackFile];
-              }
-            } else {
-              masterPlaylistHistory = {
-                id: options.groupId,
-                title: options.playlistTitle || options.mediaTitle || 'Playlist',
-                uploader: options.uploader,
-                thumbnail: options.thumbnail,
-                formatType: options.formatType,
-                sourceUrl: options.url,
-                filePath: result.destDir,
-                folderPath: result.destDir,
-                isPlaylist: true,
-                entriesCount: options.playlistTotalItems || options.playlistEntries?.length || 1,
-                playlistEntries: options.playlistEntries || [],
-                downloadedFiles: trackFile ? [trackFile] : [],
-                downloadedAt: Date.now()
-              };
-            }
+            let updatedHistory;
+            const itemPayload = {
+              ...options,
+              filePath: downloadedFile || result.destDir,
+              downloadedFiles: downloadedFile ? [downloadedFile] : []
+            };
 
             if (window.api && window.api.addDownloadDbItem) {
-              const updated = await window.api.addDownloadDbItem(masterPlaylistHistory);
-              setDownloadsHistory(updated);
+              updatedHistory = await window.api.addDownloadDbItem(itemPayload);
+              setDownloadsHistory(updatedHistory);
             } else {
-              saveHistory([masterPlaylistHistory, ...downloadsHistory]);
+              const freshDb = JSON.parse(localStorage.getItem('media_downloader_history') || '[]');
+              const trackFile = downloadedFile || result.destDir;
+              const currentItemChild = {
+                id: options.id || `${options.groupId}_item_${Date.now()}`,
+                title: options.mediaTitle || options.title || 'Track Item',
+                uploader: options.uploader || '',
+                duration: options.duration || 0,
+                thumbnail: options.thumbnail || '',
+                filePath: trackFile,
+                sourceUrl: options.url,
+                formatType: options.formatType,
+                status: 'completed',
+                downloadedAt: Date.now()
+              };
+              const parentIdx = freshDb.findIndex(i => i.id === options.groupId);
+              if (parentIdx >= 0) {
+                const parent = { ...freshDb[parentIdx], isPlaylist: true };
+                const currentFiles = parent.downloadedFiles || [];
+                if (trackFile && !currentFiles.includes(trackFile)) parent.downloadedFiles = [...currentFiles, trackFile];
+                const currentItems = parent.playlist_items || parent.playlistEntries || [];
+                if (!currentItems.some(it => it.filePath === trackFile || it.title === currentItemChild.title)) {
+                  parent.playlist_items = [...currentItems, currentItemChild];
+                  parent.playlistEntries = parent.playlist_items;
+                }
+                freshDb[parentIdx] = parent;
+              } else {
+                freshDb.unshift({
+                  id: options.groupId,
+                  title: options.playlistTitle || options.mediaTitle || 'Playlist',
+                  uploader: options.uploader,
+                  thumbnail: options.thumbnail,
+                  formatType: options.formatType,
+                  sourceUrl: options.playlistSourceUrl || options.url,
+                  filePath: result.destDir,
+                  folderPath: result.destDir,
+                  isPlaylist: true,
+                  entriesCount: options.playlistTotalItems || options.playlistEntries?.length || 1,
+                  playlist_items: [currentItemChild],
+                  playlistEntries: [currentItemChild],
+                  downloadedFiles: trackFile ? [trackFile] : [],
+                  downloadedAt: Date.now()
+                });
+              }
+              saveHistory(freshDb);
             }
           } else {
+            // Standard item or bulk playlist download
+            const rawEntries = options.playlistEntries || [];
+            const processedPlaylistItems = options.isPlaylist
+              ? (result.files || []).map((f, i) => {
+                const entry = rawEntries[i] || {};
+                return {
+                  id: entry.id || `${options.id}_sub_${i}`,
+                  title: entry.title || `Track ${i + 1}`,
+                  uploader: entry.uploader || options.uploader || '',
+                  duration: entry.duration || 0,
+                  thumbnail: entry.thumbnail || options.thumbnail || '',
+                  filePath: f,
+                  sourceUrl: entry.url || options.url,
+                  formatType: options.formatType,
+                  status: 'completed',
+                  downloadedAt: Date.now()
+                };
+              })
+              : null;
+
             const historyItem = {
               id: options.id,
               title: options.isPlaylist ? (options.playlistTitle || options.mediaTitle) : (options.mediaTitle || 'Media File'),
@@ -471,7 +513,8 @@ export default function App() {
               filePath: downloadedFile || result.destDir,
               folderPath: result.destDir,
               isPlaylist: options.isPlaylist,
-              playlistEntries: options.playlistEntries || null,
+              playlist_items: processedPlaylistItems || options.playlistEntries || null,
+              playlistEntries: processedPlaylistItems || options.playlistEntries || null,
               downloadedFiles: result.files || [],
               entriesCount: options.isPlaylist ? (result.files?.length || options.playlistEntries?.length || 1) : 1,
               downloadedAt: Date.now()
@@ -509,8 +552,67 @@ export default function App() {
   };
 
   const startDownload = (options) => {
+    // Check Duplicate Detection (only for root downloads, not sub-playlist items)
+    if (!options.isPlaylistItem) {
+      const duplicatePolicy = settings.duplicateAction || 'ask';
+      const targetUrl = options.url;
+      const targetTitle = options.playlistTitle || options.mediaTitle;
+
+      const existingMatch = downloadsHistory.find(
+        (h) => (targetUrl && (h.sourceUrl === targetUrl || h.url === targetUrl)) || (targetTitle && h.title === targetTitle)
+      );
+
+      if (existingMatch) {
+        if (duplicatePolicy === 'ask') {
+          const choice = confirm(
+            `Mục này đã tồn tại trong lịch sử database:\n"${existingMatch.title}"\n\n- Nhấn OK để GHI ĐÈ (Overwrite)\n- Nhấn Cancel để PHÂN CÁCH BẢNG / TẠO MỤC MỚI (Separate Entry)`
+          );
+          if (choice) {
+            // Ghi đè: Xóa bản ghi cũ trong db trước
+            deleteHistoryItem(existingMatch.id, existingMatch.filePath);
+          }
+        } else if (duplicatePolicy === 'overwrite') {
+          deleteHistoryItem(existingMatch.id, existingMatch.filePath);
+        }
+        // nếu policy === 'separate', giữ nguyên bản ghi cũ và thêm bản ghi mới
+      }
+    }
+
     if (options.isPlaylist && options.playlistEntries && options.playlistEntries.length > 0) {
       const groupId = options.id || Date.now().toString();
+
+      const baseFolder = options.destDir || settings.defaultPath || 'C:\\Users\\1\\Downloads';
+      const folderName = (options.playlistTitle || options.mediaTitle || 'Playlist').replace(/[\\/:*?"<>|]/g, '_').trim();
+      const playlistFolderPath = `${baseFolder}\\Media Download\\${folderName}`;
+
+      // Immediately register Master Playlist entry to DB so sub-items always find parent
+      const masterPlaylistEntry = {
+        id: groupId,
+        title: options.playlistTitle || options.mediaTitle || 'Playlist',
+        uploader: options.uploader || '',
+        thumbnail: options.thumbnail || '',
+        formatType: options.formatType || 'video',
+        sourceUrl: options.playlistSourceUrl || options.url,
+        filePath: playlistFolderPath,
+        folderPath: playlistFolderPath,
+        playlistDir: playlistFolderPath,
+        isPlaylist: true,
+        isPlaylistItem: false,
+        entriesCount: options.playlistEntries.length,
+        playlist_items: [],
+        playlistEntries: [],
+        downloadedFiles: [],
+        downloadedAt: Date.now()
+      };
+
+      if (window.api && window.api.addDownloadDbItem) {
+        window.api.addDownloadDbItem(masterPlaylistEntry).then((updated) => {
+          setDownloadsHistory(updated);
+        });
+      } else {
+        saveHistory([masterPlaylistEntry, ...downloadsHistory]);
+      }
+
       const expandedTasks = options.playlistEntries.map((entry, idx) => {
         const itemNum = idx + 1;
         return {

@@ -163,6 +163,15 @@ export const translations = {
     dragModeFiles: "🎵 Drag Multiple Files",
     dragModeFilesDesc: "Drag all track files directly to another application.",
 
+    duplicateActionLabel: "Duplicate Media Handling Policy",
+    duplicateActionDesc: "Choose action when downloading a media item or playlist that already exists in database/disk:",
+    duplicateActionAsk: "❓ Ask user every time",
+    duplicateActionAskDesc: "Display confirmation prompt to choose overwrite or separate table.",
+    duplicateActionOverwrite: "🔄 Always Overwrite",
+    duplicateActionOverwriteDesc: "Automatically replace existing entry and re-download.",
+    duplicateActionSeparate: "📑 Separate Tables / Append",
+    duplicateActionSeparateDesc: "Keep existing item intact and save as a separate database entry.",
+
     maxConcurrentLabel: "Max Concurrent Downloads",
     maxConcurrent1: "1 thread (Save bandwidth)",
     maxConcurrent2: "2 threads (Recommended balance)",
@@ -1236,6 +1245,15 @@ export const translations = {
     dragModeFolderDesc: "Kéo thả thư mục chứa toàn bộ bài hát trong Playlist.",
     dragModeFiles: "🎵 Kéo thả Hàng loạt Tệp (Multiple Files)",
     dragModeFilesDesc: "Kéo trực tiếp danh sách tất cả các file bài hát ra ứng dụng khác.",
+
+    duplicateActionLabel: "Xử lý Trùng Lặp khi Tải Downloader / Playlist",
+    duplicateActionDesc: "Tùy chỉnh hành vi khi tải media/playlist đã tồn tại trong lịch sử database:",
+    duplicateActionAsk: "❓ Hỏi người dùng",
+    duplicateActionAskDesc: "Hiển thị hộp thoại hỏi muốn Ghi đè (Overwrite) hay Phân cách 2 bảng (Tạo mục mới).",
+    duplicateActionOverwrite: "🔄 Tự động Ghi đè",
+    duplicateActionOverwriteDesc: "Thay thế thông tin bản ghi cũ trong database và tải đè file.",
+    duplicateActionSeparate: "📑 Phân cách 2 bảng (Tạo bản ghi mới)",
+    duplicateActionSeparateDesc: "Giữ nguyên bản ghi cũ và lưu thành một dòng riêng biệt trong database.",
 
     maxConcurrentLabel: "Số lượng tiến trình tải song song tối đa (Max Concurrent Downloads)",
     maxConcurrent1: "1 tiến trình (Tiết kiệm băng thông)",

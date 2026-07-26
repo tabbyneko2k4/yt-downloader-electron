@@ -1,0 +1,101 @@
+[
+  {
+    "id": "1785087748708_pmcv",
+    "title": "ref",
+    "uploader": "Tabby Neko",
+    "thumbnail": "https://i1.sndcdn.com/artworks-NUPg5Q4g9z0TjybF-e9mg1g-t500x500.png",
+    "formatType": "audio",
+    "sourceUrl": "https://soundcloud.com/tabbyneko/sets/ref/s-Am4aebKcDh5?si=36e6548e35be4c16ba63f4be853ec15e&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing",
+    "filePath": "C:\\Users\\1\\Downloads",
+    "folderPath": "C:\\Users\\1\\Downloads",
+    "playlistDir": "C:\\Users\\1\\Downloads",
+    "isPlaylist": true,
+    "isPlaylistItem": false,
+    "entriesCount": 3,
+    "playlist_items": [
+      {
+        "id": "1785087748708_pmcv_item_3",
+        "title": "Halv - Miracle Once Again",
+        "uploader": "Halv",
+        "duration": 195,
+        "thumbnail": "https://i1.sndcdn.com/artworks-NySJy7o8HQEQvQ0n-TAskDQ-t500x500.png",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\Halv - Miracle Once Again.mp3",
+        "sourceUrl": "https://soundcloud.com/halvsan/halv-miracle-once-again",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758043
+      },
+      {
+        "id": "1785087748708_pmcv_item_2",
+        "title": "KIRAMEKI",
+        "uploader": "Zekk",
+        "duration": 201,
+        "thumbnail": "https://i1.sndcdn.com/artworks-xTMhSEFitZZ0CASy-gHh6yw-t500x500.jpg",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\KIRAMEKI.mp3",
+        "sourceUrl": "https://soundcloud.com/zekk_wa_zetku/kirameki",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758346
+      },
+      {
+        "id": "1785087748708_pmcv_item_1",
+        "title": "PIKA☆PIKA",
+        "uploader": "Zekk",
+        "duration": 219,
+        "thumbnail": "https://i1.sndcdn.com/artworks-NUPg5Q4g9z0TjybF-e9mg1g-t500x500.png",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\Halv - Miracle Once Again.mp3",
+        "sourceUrl": "https://soundcloud.com/zekk_wa_zetku/pikapika",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758569
+      }
+    ],
+    "playlistEntries": [
+      {
+        "id": "1785087748708_pmcv_item_3",
+        "title": "Halv - Miracle Once Again",
+        "uploader": "Halv",
+        "duration": 195,
+        "thumbnail": "https://i1.sndcdn.com/artworks-NySJy7o8HQEQvQ0n-TAskDQ-t500x500.png",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\Halv - Miracle Once Again.mp3",
+        "sourceUrl": "https://soundcloud.com/halvsan/halv-miracle-once-again",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758043
+      },
+      {
+        "id": "1785087748708_pmcv_item_2",
+        "title": "KIRAMEKI",
+        "uploader": "Zekk",
+        "duration": 201,
+        "thumbnail": "https://i1.sndcdn.com/artworks-xTMhSEFitZZ0CASy-gHh6yw-t500x500.jpg",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\KIRAMEKI.mp3",
+        "sourceUrl": "https://soundcloud.com/zekk_wa_zetku/kirameki",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758346
+      },
+      {
+        "id": "1785087748708_pmcv_item_1",
+        "title": "PIKA☆PIKA",
+        "uploader": "Zekk",
+        "duration": 219,
+        "thumbnail": "https://i1.sndcdn.com/artworks-NUPg5Q4g9z0TjybF-e9mg1g-t500x500.png",
+        "filePath": "C:\\Users\\1\\Downloads\\Media Download\\ref\\Halv - Miracle Once Again.mp3",
+        "sourceUrl": "https://soundcloud.com/zekk_wa_zetku/pikapika",
+        "formatType": "audio",
+        "status": "completed",
+        "downloadedAt": 1785087758569
+      }
+    ],
+    "downloadedFiles": [
+      "C:\\Users\\1\\Downloads\\Media Download\\ref\\Halv - Miracle Once Again.mp3",
+      "C:\\Users\\1\\Downloads\\Media Download\\ref\\KIRAMEKI.mp3"
+    ],
+    "downloadedAt": 1785087748708,
+    "hasSub": false,
+    "subPaths": [],
+    "hasThumbnail": true,
+    "thumbnailPath": "C:\\Users\\1\\Downloads\\0dda81ce4618ec1c.png"
+  }
+]

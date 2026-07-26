@@ -43,16 +43,34 @@ export default function DownloadedTab({
 
   // Filter & Sort Completed History
   const filteredHistory = useMemo(() => {
-    let result = [...downloadsHistory];
+    // Hide standalone sub-playlist items from top-level list
+    let result = downloadsHistory.filter((item) => {
+      if (item.isPlaylistItem) return false;
+      if (item.id && typeof item.id === 'string' && item.id.includes('_item_')) return false;
+      if (!item.isPlaylist && item.playlistEntries && item.playlistEntries.length > 1) return false;
+      return true;
+    });
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (item) =>
-          (item.title && item.title.toLowerCase().includes(term)) ||
-          (item.uploader && item.uploader.toLowerCase().includes(term)) ||
-          (item.filePath && item.filePath.toLowerCase().includes(term))
-      );
+      result = result.filter((item) => {
+        const titleMatch = item.title && item.title.toLowerCase().includes(term);
+        const uploaderMatch = item.uploader && item.uploader.toLowerCase().includes(term);
+        const pathMatch = item.filePath && item.filePath.toLowerCase().includes(term);
+
+        let childMatch = false;
+        const children = item.playlist_items || item.playlistEntries || [];
+        if (Array.isArray(children)) {
+          childMatch = children.some((child) => {
+            const childTitle = child.title && child.title.toLowerCase().includes(term);
+            const childUploader = child.uploader && child.uploader.toLowerCase().includes(term);
+            const childPath = child.filePath && child.filePath.toLowerCase().includes(term);
+            return childTitle || childUploader || childPath;
+          });
+        }
+
+        return titleMatch || uploaderMatch || pathMatch || childMatch;
+      });
     }
 
     if (filterType === 'video') {
@@ -322,7 +340,15 @@ export default function DownloadedTab({
         ) : (
           <div className="space-y-3">
             {filteredHistory.map((item) => {
-              const isExpanded = expandedFolders[item.id];
+              const term = searchTerm.trim().toLowerCase();
+              const hasChildSearchMatch = term && item.isPlaylist && (item.playlist_items || item.playlistEntries || []).some((child) => {
+                const childTitle = child.title && child.title.toLowerCase().includes(term);
+                const childUploader = child.uploader && child.uploader.toLowerCase().includes(term);
+                const childPath = child.filePath && child.filePath.toLowerCase().includes(term);
+                return childTitle || childUploader || childPath;
+              });
+
+              const isExpanded = expandedFolders[item.id] || hasChildSearchMatch;
               const displayThumb =
                 item.thumbnail ||
                 (item.playlistEntries && item.playlistEntries[0] ? item.playlistEntries[0].thumbnail : '') ||
@@ -401,7 +427,11 @@ export default function DownloadedTab({
                       <button
                         type="button"
                         className="p-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-600 dark:text-sky-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-xs"
-                        onClick={() => handleOpenFolder(item.folderPath || item.filePath)}
+                        onClick={() => {
+                          const firstValidTrackPath = item.playlist_items?.find(i => i.filePath && i.filePath !== item.folderPath)?.filePath;
+                          const targetDir = item.playlistDir || item.folderPath || (item.downloadedFiles && item.downloadedFiles[0] ? item.downloadedFiles[0] : firstValidTrackPath || item.filePath);
+                          handleOpenFolder(targetDir);
+                        }}
                         title={t('openFolder')}
                       >
                         <FolderOpen size={14} />
@@ -547,24 +577,31 @@ export default function DownloadedTab({
                   {/* EXPANDABLE PLAYLIST TRACK ITEMS DRAWER */}
                   {item.isPlaylist && isExpanded && (
                     <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 animate-fade-in-up">
-                      {item.playlistEntries && item.playlistEntries.length > 0 ? (
+                      {((item.playlist_items && item.playlist_items.length > 0) || (item.playlistEntries && item.playlistEntries.length > 0)) ? (
                         <div className="max-h-60 overflow-y-auto bg-slate-100/90 dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-1.5">
                           <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 px-2 py-1">
                             <span>📁 {t('playlistTitle')}</span>
                             <span className="text-[11px] opacity-75">
-                              {item.playlistEntries.length} {t('tracks')}
+                              {(item.playlist_items || item.playlistEntries).length} {t('tracks')}
                             </span>
                           </div>
-                          {item.playlistEntries.map((entry, idx) => {
+                          {(item.playlist_items || item.playlistEntries).map((entry, idx) => {
                             const trackFilePath =
-                              item.downloadedFiles && item.downloadedFiles[idx] ? item.downloadedFiles[idx] : null;
+                              entry.filePath || (item.downloadedFiles && item.downloadedFiles[idx] ? item.downloadedFiles[idx] : null);
+
+                            const childTitleStr = (entry.title || '').toLowerCase();
+                            const childPathStr = (trackFilePath || '').toLowerCase();
+                            const isMatchedChild = term && (childTitleStr.includes(term) || childPathStr.includes(term));
 
                             return (
                               <div
                                 key={idx}
                                 draggable
                                 onDragStart={(e) => handleTrackDragStart(e, trackFilePath, item.folderPath)}
-                                className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 hover:border-pink-400/40 transition-colors cursor-grab"
+                                className={`flex items-center justify-between gap-2 p-2 rounded-xl border transition-colors cursor-grab ${isMatchedChild
+                                  ? 'bg-pink-500/15 border-pink-400/80 dark:bg-pink-900/30'
+                                  : 'bg-white dark:bg-slate-900/60 border-slate-200/60 dark:border-slate-800/60 hover:border-pink-400/40'
+                                  }`}
                                 title={t('dragHint')}
                               >
                                 <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">

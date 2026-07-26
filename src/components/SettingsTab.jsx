@@ -136,18 +136,18 @@ export default function SettingsTab({ settings, updateSettings }) {
                     onClick={() => handleOpenMobileSection(tab.id)}
                     className="p-4 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 hover:border-pink-400/50 shadow-sm active:scale-98 transition-all cursor-pointer flex items-center justify-between gap-3"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex items-center gap-3.5 min-w-0 text-left">
                       <div
                         className="p-2.5 rounded-2xl shrink-0"
                         style={{ backgroundColor: `${tab.color}15`, border: `1px solid ${tab.color}30` }}
                       >
                         <IconComp size={20} color={tab.color} />
                       </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
+                      <div className="min-w-0 text-left">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate text-left">
                           {tab.label}
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 text-left">
                           {tab.desc}
                         </p>
                       </div>
@@ -214,16 +214,16 @@ export default function SettingsTab({ settings, updateSettings }) {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSubTab(tab.id)}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isSelected
+                className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-all cursor-pointer text-left ${isSelected
                   ? 'bg-gradient-to-r from-sky-500/20 to-pink-500/20 border border-pink-400/60 text-pink-600 dark:text-pink-200 shadow-md scale-[1.02]'
                   : 'bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <IconComp size={18} color={tab.color} />
-                  <span>{tab.label}</span>
+                <div className="flex items-center gap-2.5 min-w-0 flex-1 text-left">
+                  <IconComp size={18} color={tab.color} className="shrink-0" />
+                  <span className="break-words leading-tight text-left flex-1">{tab.label}</span>
                 </div>
-                <ChevronRight size={14} className={isSelected ? 'text-pink-500' : 'text-slate-400 opacity-50'} />
+                <ChevronRight size={14} className={`shrink-0 ml-1 ${isSelected ? 'text-pink-500' : 'text-slate-400 opacity-50'}`} />
               </button>
             );
           })}
@@ -397,6 +397,52 @@ function DetailSectionContent({
               >
                 <div className="font-bold mb-1">{t('dragModeFiles')}</div>
                 <div className="text-[11px] opacity-75">{t('dragModeFilesDesc')}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Duplicate Media Handling Policy */}
+          <div className="space-y-2.5 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <Sliders size={15} className="text-pink-500" />
+              <span>{t('duplicateActionLabel')}</span>
+            </label>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('duplicateActionDesc')}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div
+                onClick={() => updateSettings({ duplicateAction: 'ask' })}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${(settings.duplicateAction || 'ask') === 'ask'
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                  : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+              >
+                <div className="font-bold mb-1">{t('duplicateActionAsk')}</div>
+                <div className="text-[11px] opacity-75">{t('duplicateActionAskDesc')}</div>
+              </div>
+
+              <div
+                onClick={() => updateSettings({ duplicateAction: 'overwrite' })}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${settings.duplicateAction === 'overwrite'
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                  : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+              >
+                <div className="font-bold mb-1">{t('duplicateActionOverwrite')}</div>
+                <div className="text-[11px] opacity-75">{t('duplicateActionOverwriteDesc')}</div>
+              </div>
+
+              <div
+                onClick={() => updateSettings({ duplicateAction: 'separate' })}
+                className={`p-3.5 rounded-2xl border text-xs transition-all cursor-pointer ${settings.duplicateAction === 'separate'
+                  ? 'bg-purple-500/20 border-purple-400 text-purple-600 dark:text-purple-200 shadow-sm font-bold'
+                  : 'bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+              >
+                <div className="font-bold mb-1">{t('duplicateActionSeparate')}</div>
+                <div className="text-[11px] opacity-75">{t('duplicateActionSeparateDesc')}</div>
               </div>
             </div>
           </div>
