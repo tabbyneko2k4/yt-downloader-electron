@@ -27,8 +27,8 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 650,
-    height: 480,
+    width: 680,
+    height: 520,
     resizable: false,
     frame: false, // frameless UI
     transparent: true,
@@ -84,8 +84,8 @@ ipcMain.handle('dialog:select-directory', async (event, defaultPath) => {
 // IPC Handler: Get Default Paths
 ipcMain.handle('app:get-default-paths', () => {
   return {
-    localInstall: path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Programs', 'YT-DLP Downloader'),
-    portableInstall: path.join(os.homedir(), 'Desktop', 'YT-DLP Downloader')
+    localInstall: path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Programs', "Nyanko's Media Downloader"),
+    portableInstall: path.join(os.homedir(), 'Desktop', "Nyanko's Media Downloader (Portable)")
   };
 });
 
@@ -238,13 +238,31 @@ function createShortcutPowerShell(targetPath, shortcutPath) {
   }
 }
 
+// Helper: Find main executable in app directory
+function getMainExePath(appPath) {
+  const candidates = [
+    path.join(appPath, "Nyanko's Media Downloader.exe"),
+    path.join(appPath, "Media Downloader.exe"),
+    path.join(appPath, "YT-DLP Media Downloader.exe")
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  if (fs.existsSync(appPath)) {
+    const files = fs.readdirSync(appPath);
+    const exe = files.find(f => f.endsWith('.exe') && !f.toLowerCase().includes('uninstall'));
+    if (exe) return path.join(appPath, exe);
+  }
+  return path.join(appPath, "Media Downloader.exe");
+}
+
 // IPC Handler: Create shortcuts
 ipcMain.handle('install:create-shortcuts', async (event, { appPath, desktop, startMenu }) => {
-  const exePath = path.join(appPath, 'YT-DLP Media Downloader.exe');
+  const exePath = getMainExePath(appPath);
   let success = true;
 
   if (desktop) {
-    const desktopPath = path.join(os.homedir(), 'Desktop', 'YT-DLP Media Downloader.lnk');
+    const desktopPath = path.join(os.homedir(), 'Desktop', "Nyanko's Media Downloader.lnk");
     const res = createShortcutPowerShell(exePath, desktopPath);
     if (!res) success = false;
   }
@@ -254,7 +272,7 @@ ipcMain.handle('install:create-shortcuts', async (event, { appPath, desktop, sta
     if (!fs.existsSync(startMenuFolder)) {
       fs.mkdirSync(startMenuFolder, { recursive: true });
     }
-    const startMenuPath = path.join(startMenuFolder, 'YT-DLP Media Downloader.lnk');
+    const startMenuPath = path.join(startMenuFolder, "Nyanko's Media Downloader.lnk");
     const res = createShortcutPowerShell(exePath, startMenuPath);
     if (!res) success = false;
   }
@@ -264,8 +282,8 @@ ipcMain.handle('install:create-shortcuts', async (event, { appPath, desktop, sta
 
 // IPC Handler: Pin to Taskbar
 ipcMain.handle('install:pin-taskbar', async (event, { appPath }) => {
-  const startMenuShortcut = path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'YT-DLP Media Downloader.lnk');
-  const desktopShortcut = path.join(os.homedir(), 'Desktop', 'YT-DLP Media Downloader.lnk');
+  const startMenuShortcut = path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs', "Nyanko's Media Downloader.lnk");
+  const desktopShortcut = path.join(os.homedir(), 'Desktop', "Nyanko's Media Downloader.lnk");
   
   let sourceShortcutPath = '';
   if (fs.existsSync(startMenuShortcut)) {
@@ -273,7 +291,7 @@ ipcMain.handle('install:pin-taskbar', async (event, { appPath }) => {
   } else if (fs.existsSync(desktopShortcut)) {
     sourceShortcutPath = desktopShortcut;
   } else {
-    const exePath = path.join(appPath, 'YT-DLP Media Downloader.exe');
+    const exePath = getMainExePath(appPath);
     sourceShortcutPath = path.join(os.tmpdir(), `yt_dlp_temp_${Date.now()}.lnk`);
     createShortcutPowerShell(exePath, sourceShortcutPath);
   }
@@ -309,7 +327,7 @@ ipcMain.handle('install:pin-taskbar', async (event, { appPath }) => {
 
 // IPC Handler: Launch application
 ipcMain.handle('install:launch-app', async (event, { appPath }) => {
-  const exePath = path.join(appPath, 'YT-DLP Media Downloader.exe');
+  const exePath = getMainExePath(appPath);
   try {
     // Spawn detached process
     const child = exec(`"${exePath}"`, {
@@ -349,3 +367,84 @@ ipcMain.handle('install:unzip-file', async (event, { zipPath, destPath }) => {
     return { success: false, error: err.message };
   }
 });
+
+// IPC Handler: Check existing system/local dependencies
+ipcMain.handle('install:check-dependencies', async (event, { targetPath }) => {
+  const results = {
+    ytdlp: false,
+    ffmpeg: false,
+    ffprobe: false
+  };
+
+  // Helper to check if binary exists locally in targetPath/bin or on system PATH
+  const checkBinary = (name) => {
+    const localBinPath = path.join(targetPath, 'bin', `${name}.exe`);
+    if (fs.existsSync(localBinPath)) {
+      return true;
+    }
+    try {
+      execSync(`where ${name}`, { stdio: 'ignore' });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  results.ytdlp = checkBinary('yt-dlp');
+  results.ffmpeg = checkBinary('ffmpeg');
+  results.ffprobe = checkBinary('ffprobe');
+
+  return results;
+});
+
+// Helper to copy directory recursively
+function copyDirRecursiveSync(src, dest) {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (let entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursiveSync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+// IPC Handler: Copy Chrome extension to target folder
+ipcMain.handle('install:copy-extension', async (event, { targetPath }) => {
+  try {
+    const extSrcPath = path.join(__dirname, 'chrome-extension');
+    const rootExtSrcPath = path.join(__dirname, '..', 'chrome-extension');
+    const srcPath = fs.existsSync(extSrcPath) ? extSrcPath : (fs.existsSync(rootExtSrcPath) ? rootExtSrcPath : null);
+
+    if (!srcPath) {
+      console.log('Chrome extension source folder not found.');
+      return { success: false, error: 'Source extension directory not found' };
+    }
+
+    const extDestPath = path.join(targetPath, 'chrome-extension');
+    copyDirRecursiveSync(srcPath, extDestPath);
+    return { success: true, destPath: extDestPath };
+  } catch (err) {
+    console.error('Error copying extension:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler: Create portable.tag marker file
+ipcMain.handle('install:create-portable-tag', async (event, { targetPath }) => {
+  try {
+    const tagPath = path.join(targetPath, 'portable.tag');
+    fs.writeFileSync(tagPath, 'portable=true\ncreated_at=' + new Date().toISOString(), 'utf-8');
+    return { success: true };
+  } catch (err) {
+    console.error('Error creating portable.tag:', err);
+    return { success: false, error: err.message };
+  }
+});
+

@@ -3,32 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YT-DLP Downloader Setup</title>
+  <title>Nyanko's Media Downloader Setup</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#06b6d4',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar and frameless window drag area */
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .drag-region {
+      -webkit-app-region: drag;
+    }
+    .no-drag {
+      -webkit-app-region: no-drag;
+    }
+    .setup-step {
+      display: none;
+    }
+    .setup-step.active {
+      display: flex;
+    }
+  </style>
 </head>
-<body>
-  <div class="window-container">
-    <!-- Header bar / Custom Titlebar -->
-    <header class="titlebar">
-      <div class="titlebar-logo">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="logo-icon">
+<body class="bg-slate-950 text-slate-100 font-sans overflow-hidden h-screen flex items-center justify-center p-0 m-0">
+
+  <!-- Main Window Container (680x520) -->
+  <div class="w-[680px] h-[520px] bg-slate-900/90 backdrop-blur-2xl border border-slate-800 rounded-2xl shadow-2xl flex flex-col relative overflow-hidden text-slate-100">
+    
+    <!-- Background Ambient Glow -->
+    <div class="absolute -top-32 -right-32 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -left-32 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Titlebar (Frameless Drag Area) -->
+    <header class="h-10 border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md flex justify-between items-center px-4 select-none drag-region z-50 shrink-0">
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <svg class="w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-        <span>YT-DLP Downloader Setup</span>
+        <span id="titlebar-appName">YT-DLP Downloader Setup</span>
       </div>
-      <div class="titlebar-controls">
-        <button id="btn-minimize" class="control-btn" title="Thu nhỏ">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+
+      <div class="flex items-center gap-1 no-drag">
+        <button id="btn-minimize" class="w-7 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
         </button>
-        <button id="btn-close" class="control-btn close-btn" title="Đóng">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="btn-close" class="w-7 h-6 rounded flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white transition-colors">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
@@ -36,33 +83,351 @@
       </div>
     </header>
 
-    <!-- Main Content Panel -->
-    <main class="window-content">
+    <!-- Content Panel -->
+    <main class="flex-1 p-6 relative z-10 flex flex-col min-h-0 overflow-hidden">
       
-      <!-- STEP 1: WELCOME SCREEN -->
-      <section id="step-welcome" class="setup-step active">
-        <div class="welcome-container">
-          <div class="app-branding">
-            <div class="brand-logo-wrapper">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2.5" class="brand-logo">
-                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path>
-                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="currentColor"></polygon>
+      <!-- ========================================================================= -->
+      <!-- SCREEN 0: SELECT LANGUAGE (5 Languages) -->
+      <!-- ========================================================================= -->
+      <section id="step-lang" class="setup-step active flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-4">
+          <div class="text-center space-y-1.5 pt-2">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-pink-500 to-sky-400 p-0.5 shadow-lg shadow-pink-500/20">
+              <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+                <svg class="w-6 h-6 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </div>
+            </div>
+            <h1 class="text-xl font-extrabold text-white" id="txt-lang-title">Choose Installation Language</h1>
+            <p class="text-xs text-slate-400" id="txt-lang-subtitle">Select your preferred language to continue</p>
+          </div>
+
+          <!-- Language Grid (5 languages) -->
+          <div class="grid grid-cols-1 gap-2 max-w-md mx-auto pt-2">
+            <button data-lang="vi" class="lang-option-btn flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-pink-500/80 hover:bg-slate-800 transition-all cursor-pointer group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🇻🇳</span>
+                <span class="text-sm font-semibold text-slate-200 group-hover:text-white">Tiếng Việt</span>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-pink-400 font-medium">Vietnamese</span>
+            </button>
+
+            <button data-lang="en" class="lang-option-btn flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-pink-500/80 hover:bg-slate-800 transition-all cursor-pointer group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🇺🇸</span>
+                <span class="text-sm font-semibold text-slate-200 group-hover:text-white">English</span>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-pink-400 font-medium">English</span>
+            </button>
+
+            <button data-lang="zh" class="lang-option-btn flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-pink-500/80 hover:bg-slate-800 transition-all cursor-pointer group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🇨🇳</span>
+                <span class="text-sm font-semibold text-slate-200 group-hover:text-white">简体中文</span>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-pink-400 font-medium">Simplified Chinese</span>
+            </button>
+
+            <button data-lang="zh-TW" class="lang-option-btn flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-pink-500/80 hover:bg-slate-800 transition-all cursor-pointer group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🇹🇼</span>
+                <span class="text-sm font-semibold text-slate-200 group-hover:text-white">繁體中文</span>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-pink-400 font-medium">Traditional Chinese</span>
+            </button>
+
+            <button data-lang="ja" class="lang-option-btn flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 hover:border-pink-500/80 hover:bg-slate-800 transition-all cursor-pointer group">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🇯🇵</span>
+                <span class="text-sm font-semibold text-slate-200 group-hover:text-white">日本語</span>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-pink-400 font-medium">Japanese</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t border-slate-800/60">
+          <button id="btn-lang-next" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-pink-500/25 flex items-center gap-2 cursor-pointer transition-all">
+            <span id="lbl-lang-next">Tiếp tục</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SCREEN 1: WELCOME & OVERVIEW -->
+      <!-- ========================================================================= -->
+      <section id="step-welcome" class="setup-step flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-4">
+          <!-- Branding Header -->
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-800/40 border border-slate-800">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500 to-sky-400 p-0.5 shadow-lg shrink-0">
+              <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+                <svg class="w-7 h-7 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path>
+                  <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="currentColor"></polygon>
+                </svg>
+              </div>
+            </div>
+            <div>
+              <h1 class="text-lg font-extrabold text-white" id="txt-welcome-title">Chào mừng đến với YT-DLP Downloader</h1>
+              <p class="text-xs text-pink-400 font-semibold" id="txt-welcome-version">Phiên bản 1.0.1 • Tabby Neko Edition</p>
+            </div>
+          </div>
+
+          <!-- Feature Description Card -->
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="txt-welcome-desc-title">Giới thiệu ứng dụng</h2>
+            <p class="text-xs text-slate-300 leading-relaxed" id="txt-welcome-desc-body">
+              YT-DLP Downloader là ứng dụng tải xuống video, nhạc chất lượng cao mượt mà từ YouTube, TikTok, Facebook, SoundCloud và hơn 1000+ trang web khác. 
+            </p>
+            
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                <span class="text-emerald-400 font-bold">✓</span>
+                <span id="feat-1">Hỗ trợ Full HD / 4K / 60fps</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                <span class="text-emerald-400 font-bold">✓</span>
+                <span id="feat-2">Tách nhạc MP3 / FLAC cực nhanh</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                <span class="text-emerald-400 font-bold">✓</span>
+                <span id="feat-3">Bao gồm yt-dlp & ffmpeg mới nhất</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+                <span class="text-emerald-400 font-bold">✓</span>
+                <span id="feat-4">Tích hợp Chrome Extension tiện lợi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-4 border-t border-slate-800/60">
+          <button id="btn-welcome-back" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all cursor-pointer">
+            <span id="lbl-welcome-back">Quay lại</span>
+          </button>
+          <button id="btn-welcome-next" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-pink-500/25 flex items-center gap-2 cursor-pointer transition-all">
+            <span id="lbl-welcome-next">Bắt đầu thiết lập</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SCREEN 2: INSTALLATION MODE & PATH SELECTION -->
+      <!-- ========================================================================= -->
+      <section id="step-options" class="setup-step flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-3">
+          <div>
+            <h1 class="text-base font-extrabold text-white" id="txt-options-title">Tùy chọn Cài đặt</h1>
+            <p class="text-xs text-slate-400" id="txt-options-subtitle">Chọn chế độ cài đặt và đường dẫn lưu trữ ứng dụng</p>
+          </div>
+
+          <!-- Mode Cards -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Mode 1: Local System Install -->
+            <label class="mode-card cursor-pointer p-3.5 rounded-2xl bg-slate-800/40 border-2 border-pink-500/80 bg-pink-500/5 transition-all flex flex-col justify-between" for="mode-local">
+              <div class="flex items-start justify-between">
+                <div class="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                </div>
+                <input type="radio" id="mode-local" name="install-mode" value="local" checked class="accent-pink-500 w-4 h-4">
+              </div>
+              <div class="mt-3">
+                <h3 class="text-xs font-bold text-white" id="lbl-mode-local-title">Cài đặt vào Máy (Local)</h3>
+                <p class="text-[11px] text-slate-400 mt-1 leading-snug" id="lbl-mode-local-desc">Khuyên dùng. Cài đặt vào hệ thống, tự động tạo shortcut ở Start Menu và Desktop.</p>
+              </div>
+            </label>
+
+            <!-- Mode 2: Portable Install -->
+            <label class="mode-card cursor-pointer p-3.5 rounded-2xl bg-slate-800/40 border-2 border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between" for="mode-portable">
+              <div class="flex items-start justify-between">
+                <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                </div>
+                <input type="radio" id="mode-portable" name="install-mode" value="portable" class="accent-pink-500 w-4 h-4">
+              </div>
+              <div class="mt-3">
+                <h3 class="text-xs font-bold text-white" id="lbl-mode-portable-title">Bản Di động (Portable)</h3>
+                <p class="text-[11px] text-slate-400 mt-1 leading-snug" id="lbl-mode-portable-desc">Giải nén toàn bộ phần mềm & dependency vào 1 thư mục riêng (dễ dàng chép vào USB).</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Path Input -->
+          <div class="space-y-1.5 pt-1">
+            <label class="text-xs font-semibold text-slate-300" id="lbl-install-path">Đường dẫn thư mục cài đặt:</label>
+            <div class="flex gap-2">
+              <input type="text" id="install-path-input" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-pink-500 transition-colors" readonly>
+              <button id="btn-browse-path" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors shrink-0" id="lbl-browse">Duyệt...</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-4 border-t border-slate-800/60">
+          <button id="btn-options-back" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all cursor-pointer">
+            <span id="lbl-options-back">Quay lại</span>
+          </button>
+          <button id="btn-options-install" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-pink-500/25 flex items-center gap-2 cursor-pointer transition-all">
+            <span id="lbl-options-install">Bắt đầu Cài đặt</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SCREEN 3: INSTALL PROGRESS & DEPENDENCY CHECK -->
+      <!-- ========================================================================= -->
+      <section id="step-progress" class="setup-step flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-3">
+          <div>
+            <h1 class="text-base font-extrabold text-white" id="txt-progress-title">Đang cài đặt phần mềm</h1>
+            <p class="text-xs text-slate-400" id="txt-progress-subtitle">Vui lòng chờ trong khi hệ thống sao chép file và kiểm tra dependency...</p>
+          </div>
+
+          <!-- Status Items -->
+          <div class="space-y-2 bg-slate-800/30 p-3.5 rounded-2xl border border-slate-800 max-h-[230px] overflow-y-auto">
+            <!-- 1. Extract Main App -->
+            <div id="status-extract" class="flex items-center gap-3 text-xs p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div class="status-icon shrink-0">
+                <svg class="animate-spin w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+              </div>
+              <span class="text-slate-300 font-medium flex-1" id="status-extract-text">Giải nén tập tin ứng dụng chính...</span>
+            </div>
+
+            <!-- 2. YT-DLP Check/Download -->
+            <div id="status-ytdlp" class="flex items-center gap-3 text-xs p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div class="status-icon shrink-0">
+                <span class="w-4 h-4 flex items-center justify-center text-slate-500 font-bold">•</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-300 font-medium" id="status-ytdlp-text">Kiểm tra dependency: yt-dlp.exe...</span>
+                  <span class="text-[11px] text-slate-400 font-mono" id="ytdlp-detail">Đang chờ...</span>
+                </div>
+                <div id="ytdlp-bar-container" class="w-full bg-slate-950 rounded-full h-1.5 mt-1.5 overflow-hidden hidden">
+                  <div id="ytdlp-bar" class="bg-pink-500 h-full w-0 transition-all"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. FFMPEG Check/Download -->
+            <div id="status-ffmpeg" class="flex items-center gap-3 text-xs p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div class="status-icon shrink-0">
+                <span class="w-4 h-4 flex items-center justify-center text-slate-500 font-bold">•</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-300 font-medium" id="status-ffmpeg-text">Kiểm tra dependency: ffmpeg.exe...</span>
+                  <span class="text-[11px] text-slate-400 font-mono" id="ffmpeg-detail">Đang chờ...</span>
+                </div>
+                <div id="ffmpeg-bar-container" class="w-full bg-slate-950 rounded-full h-1.5 mt-1.5 overflow-hidden hidden">
+                  <div id="ffmpeg-bar" class="bg-pink-500 h-full w-0 transition-all"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. FFPROBE Check/Download -->
+            <div id="status-ffprobe" class="flex items-center gap-3 text-xs p-2 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div class="status-icon shrink-0">
+                <span class="w-4 h-4 flex items-center justify-center text-slate-500 font-bold">•</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-300 font-medium" id="status-ffprobe-text">Kiểm tra dependency: ffprobe.exe...</span>
+                  <span class="text-[11px] text-slate-400 font-mono" id="ffprobe-detail">Đang chờ...</span>
+                </div>
+                <div id="ffprobe-bar-container" class="w-full bg-slate-950 rounded-full h-1.5 mt-1.5 overflow-hidden hidden">
+                  <div id="ffprobe-bar" class="bg-pink-500 h-full w-0 transition-all"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Progress Bar -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-slate-300" id="major-progress-status">Đang chuẩn bị...</span>
+              <span class="text-pink-400 font-mono" id="major-progress-percent">0%</span>
+            </div>
+            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div id="major-progress-fill" class="bg-gradient-to-r from-pink-500 to-sky-400 h-full w-0 transition-all duration-300"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SCREEN 4: CHROME EXTENSION INSTALLATION PROMPT -->
+      <!-- ========================================================================= -->
+      <section id="step-chrome-ext" class="setup-step flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="21.17" y1="8" x2="12" y2="8"></line>
+                <line x1="3.95" y1="6.06" x2="8.54" y2="14"></line>
+                <line x1="10.88" y1="21.94" x2="15.46" y2="14"></line>
               </svg>
             </div>
-            <h1>YT-DLP Downloader</h1>
-            <p class="app-version">Phiên bản 1.0.1</p>
+            <div>
+              <h1 class="text-base font-extrabold text-white" id="txt-ext-title">Cài đặt Extension cho Trình duyệt Chrome?</h1>
+              <p class="text-xs text-slate-400" id="txt-ext-subtitle">Giúp tự động phát hiện link tải video/nhạc trực tiếp từ Chrome</p>
+            </div>
           </div>
-          
-          <div class="glass-card welcome-intro">
-            <h2>Chào mừng đến với trình cài đặt!</h2>
-            <p>Trình thiết lập này sẽ cài đặt ứng dụng tải nhạc & video chất lượng cao từ YouTube (và hơn 1000+ trang web khác) cùng với các phụ thuộc cần thiết như <strong>yt-dlp</strong>, <strong>ffmpeg</strong> và <strong>ffprobe</strong> để bạn có thể sử dụng ứng dụng ngay lập tức.</p>
+
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-3">
+            <label class="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-slate-900/60 border border-slate-700/80 hover:border-pink-500 transition-colors">
+              <input type="checkbox" id="chk-install-extension" checked class="mt-1 accent-pink-500 w-4 h-4">
+              <div class="space-y-1">
+                <span class="text-xs font-bold text-white block" id="lbl-ext-option-title">Tích hợp Chrome Extension tiện lợi</span>
+                <p class="text-[11px] text-slate-400 leading-snug" id="lbl-ext-option-desc">Tự động sao chép bộ Extension vào thư mục phần mềm để bạn dễ dàng load unpacked vào Google Chrome / Edge / Cốc Cốc.</p>
+              </div>
+            </label>
+
+            <div class="text-[11px] text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-1">
+              <div class="font-semibold text-slate-300" id="txt-ext-guide-title">📌 Cách kích hoạt Extension sau khi cài đặt:</div>
+              <ol class="list-decimal list-inside space-y-0.5 text-slate-400 pl-1" id="txt-ext-guide-steps">
+                <li>Mở trình duyệt Google Chrome và truy cập <code class="text-pink-400 font-mono">chrome://extensions</code></li>
+                <li>Bật nút <strong>Developer mode (Chế độ dành cho nhà phát triển)</strong> ở góc trên bên phải</li>
+                <li>Bấm <strong>Load unpacked (Tải tiện ích đã giải nén)</strong> và chọn thư mục <code class="text-pink-400 font-mono">chrome-extension</code></li>
+              </ol>
+            </div>
           </div>
-          
-          <div class="step-footer">
-            <div></div>
-            <button id="btn-welcome-next" class="btn btn-primary">
-              Bắt đầu thiết lập
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
+        </div>
+
+        <div class="flex justify-between items-center pt-4 border-t border-slate-800/60">
+          <button id="btn-ext-back" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all cursor-pointer">
+            <span id="lbl-ext-back">Quay lại</span>
+          </button>
+          <div class="flex items-center gap-2">
+            <button id="btn-ext-skip" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all cursor-pointer">
+              <span id="lbl-ext-skip">Bỏ qua</span>
+            </button>
+            <button id="btn-ext-next" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-pink-500/25 flex items-center gap-2 cursor-pointer transition-all">
+              <span id="lbl-ext-next">Tiếp tục</span>
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
             </button>
@@ -70,209 +435,63 @@
         </div>
       </section>
 
-      <!-- STEP 2: INSTALLATION OPTIONS -->
-      <section id="step-options" class="setup-step">
-        <div class="options-container">
-          <h2>Tùy chọn Cài đặt</h2>
-          <p class="subtitle">Vui lòng chọn loại hình cài đặt và thư mục lưu trữ phù hợp với nhu cầu.</p>
-
-          <div class="install-modes">
-            <!-- Mode 1: Local Install -->
-            <label class="mode-card glass-card active" for="mode-local">
-              <input type="radio" id="mode-local" name="install-mode" value="local" checked>
-              <div class="mode-info">
-                <div class="mode-title-wrapper">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                    <line x1="8" y1="21" x2="16" y2="21"></line>
-                    <line x1="12" y1="17" x2="12" y2="21"></line>
-                  </svg>
-                  <h3>Cài đặt Hệ thống (Local Install)</h3>
-                </div>
-                <p>Khuyến nghị. Cài ứng dụng vào thư mục hệ thống của bạn, cho phép tạo các lỗi tắt trên màn hình và ghim thanh tác vụ để mở nhanh bất kỳ lúc nào.</p>
-              </div>
-            </label>
-
-            <!-- Mode 2: Portable -->
-            <label class="mode-card glass-card" for="mode-portable">
-              <input type="radio" id="mode-portable" name="install-mode" value="portable">
-              <div class="mode-info">
-                <div class="mode-title-wrapper">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                  </svg>
-                  <h3>Ứng dụng Di động (Portable Mode)</h3>
-                </div>
-                <p>Giải nén toàn bộ ứng dụng và phụ thuộc vào một thư mục do bạn chỉ định. Thuận tiện để chép vào USB mang đi nơi khác chạy ngay không cần cài đặt lại.</p>
-              </div>
-            </label>
-          </div>
-
-          <!-- Installation Path Picker -->
-          <div class="path-selection">
-            <label for="install-path-input">Thư mục cài đặt:</label>
-            <div class="path-input-group">
-              <input type="text" id="install-path-input" placeholder="Đang tải đường dẫn mặc định...">
-              <button id="btn-browse-path" class="btn btn-secondary">Duyệt...</button>
-            </div>
-          </div>
-
-          <div class="step-footer">
-            <button id="btn-options-back" class="btn btn-secondary">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-left">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-              Quay lại
-            </button>
-            <button id="btn-options-install" class="btn btn-primary btn-install">
-              Cài đặt & Tải phụ thuộc
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 3: INSTALL PROGRESS -->
-      <section id="step-progress" class="setup-step">
-        <div class="progress-container">
-          <h2>Đang thiết lập hệ thống</h2>
-          <p class="subtitle" id="progress-subtitle">Vui lòng chờ trong khi trình cài đặt tải xuống các tài nguyên thiết yếu...</p>
-
-          <div class="installation-steps-list">
-            <!-- App Files Extraction Status -->
-            <div class="status-item" id="status-extract">
-              <div class="status-icon-wrapper">
-                <div class="spinner-small"></div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <span class="status-text">Giải nén tệp tin ứng dụng chính...</span>
-            </div>
-
-            <!-- YT-DLP Download Status -->
-            <div class="status-item" id="status-ytdlp">
-              <div class="status-icon-wrapper">
-                <div class="spinner-small hidden"></div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <div class="pending-dot">•</div>
-              </div>
-              <div class="status-content">
-                <span class="status-text">Tải xuống yt-dlp.exe (Trình tải cốt lõi)...</span>
-                <span class="progress-detail" id="ytdlp-detail">Đang chờ...</span>
-                <div class="progress-bar-small hidden" id="ytdlp-bar-container">
-                  <div class="progress-fill-small" id="ytdlp-bar" style="width: 0%"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- FFMPEG Download Status -->
-            <div class="status-item" id="status-ffmpeg">
-              <div class="status-icon-wrapper">
-                <div class="spinner-small hidden"></div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <div class="pending-dot">•</div>
-              </div>
-              <div class="status-content">
-                <span class="status-text">Tải xuống ffmpeg.exe (Bộ giải mã âm thanh)...</span>
-                <span class="progress-detail" id="ffmpeg-detail">Đang chờ...</span>
-                <div class="progress-bar-small hidden" id="ffmpeg-bar-container">
-                  <div class="progress-fill-small" id="ffmpeg-bar" style="width: 0%"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- FFPROBE Download Status -->
-            <div class="status-item" id="status-ffprobe">
-              <div class="status-icon-wrapper">
-                <div class="spinner-small hidden"></div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="check-icon hidden">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <div class="pending-dot">•</div>
-              </div>
-              <div class="status-content">
-                <span class="status-text">Tải xuống ffprobe.exe (Phân tích phương tiện)...</span>
-                <span class="progress-detail" id="ffprobe-detail">Đang chờ...</span>
-                <div class="progress-bar-small hidden" id="ffprobe-bar-container">
-                  <div class="progress-fill-small" id="ffprobe-bar" style="width: 0%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Major Progress Bar -->
-          <div class="major-progress-container">
-            <div class="major-progress-bar">
-              <div id="major-progress-fill" style="width: 0%"></div>
-            </div>
-            <div class="major-progress-labels">
-              <span id="major-progress-status">Đang giải nén ứng dụng...</span>
-              <span id="major-progress-percent">0%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- STEP 4: FINISH SCREEN -->
-      <section id="step-finish" class="setup-step">
-        <div class="finish-container">
-          <div class="success-header">
-            <div class="success-icon-wrapper">
-              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="3">
+      <!-- ========================================================================= -->
+      <!-- SCREEN 5: FINISH & SHORTCUT OPTIONS -->
+      <!-- ========================================================================= -->
+      <section id="step-finish" class="setup-step flex-col justify-between h-full animate-fade-in">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
             </div>
-            <h2>Hoàn tất Cài đặt thành công!</h2>
-            <p class="subtitle">Ứng dụng YT-DLP Downloader đã sẵn sàng để sử dụng.</p>
-          </div>
-
-          <div class="finish-options-card glass-card">
-            <h3>Tùy chọn bổ sung:</h3>
-            <div class="checkbox-group">
-              <label class="checkbox-label" id="label-desktop-shortcut">
-                <input type="checkbox" id="chk-desktop-shortcut" checked>
-                <span>Tạo lối tắt trên Màn hình chính (Desktop Shortcut)</span>
-              </label>
-              <label class="checkbox-label" id="label-start-shortcut">
-                <input type="checkbox" id="chk-start-shortcut" checked>
-                <span>Ghim ứng dụng vào Start Menu</span>
-              </label>
-              <label class="checkbox-label" id="label-taskbar-pin">
-                <input type="checkbox" id="chk-taskbar-pin" checked>
-                <span>Ghim ứng dụng vào Thanh tác vụ (Taskbar)</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" id="chk-launch-app" checked>
-                <span class="launch-text">Khởi chạy YT-DLP Downloader ngay bây giờ</span>
-              </label>
+            <div>
+              <h1 class="text-base font-extrabold text-white" id="txt-finish-title">Hoàn tất Cài đặt thành công!</h1>
+              <p class="text-xs text-slate-400" id="txt-finish-subtitle">YT-DLP Downloader đã sẵn sàng để sử dụng</p>
             </div>
           </div>
 
-          <div class="step-footer">
-            <div></div>
-            <button id="btn-finish" class="btn btn-primary">
-              Hoàn tất
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" class="icon-right">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </button>
+          <div class="p-4 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="txt-finish-options-title">Tùy chọn tạo lối tắt:</h3>
+            
+            <div class="space-y-2">
+              <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors" id="label-desktop-shortcut">
+                <input type="checkbox" id="chk-desktop-shortcut" checked class="accent-pink-500 w-4 h-4">
+                <span class="text-xs text-slate-200 font-medium" id="lbl-finish-desktop">Tạo lối tắt trên Màn hình chính (Desktop Shortcut)</span>
+              </label>
+
+              <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors" id="label-start-shortcut">
+                <input type="checkbox" id="chk-start-shortcut" checked class="accent-pink-500 w-4 h-4">
+                <span class="text-xs text-slate-200 font-medium" id="lbl-finish-start">Ghim ứng dụng vào Start Menu</span>
+              </label>
+
+              <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors" id="label-taskbar-pin">
+                <input type="checkbox" id="chk-taskbar-pin" checked class="accent-pink-500 w-4 h-4">
+                <span class="text-xs text-slate-200 font-medium" id="lbl-finish-taskbar">Ghim ứng dụng vào Thanh tác vụ (Taskbar)</span>
+              </label>
+
+              <label class="flex items-center gap-3 cursor-pointer p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/30 hover:border-pink-500 transition-colors">
+                <input type="checkbox" id="chk-launch-app" checked class="accent-pink-500 w-4 h-4">
+                <span class="text-xs text-pink-300 font-bold" id="lbl-finish-launch">Khởi chạy YT-DLP Downloader ngay bây giờ</span>
+              </label>
+            </div>
           </div>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t border-slate-800/60">
+          <button id="btn-finish" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center gap-2 cursor-pointer transition-all">
+            <span id="lbl-finish-btn">Hoàn tất & Đóng</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
         </div>
       </section>
 
     </main>
   </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>

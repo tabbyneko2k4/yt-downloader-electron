@@ -1,12 +1,12 @@
 {
   "name": "yt-downloader-installer",
-  "version": "1.0.1",
-  "description": "Installer for YT-DLP Media Downloader",
+  "version": "1.2.0",
+  "description": "Installer for Nyanko's Media Downloader",
   "main": "main.js",
   "author": "Tabby Neko",
   "build": {
     "appId": "com.tabbyneko.ytdownloader.installer",
-    "productName": "YT-DLP Downloader Setup",
+    "productName": "Nyanko's Media Downloader Setup",
     "electronVersion": "31.7.7",
     "icon": "icon/icon.png",
     "directories": {
@@ -30,7 +30,8 @@
       "preload.js",
       "renderer.js",
       "app.zip",
-      "icon/icon.png"
+      "icon/icon.png",
+      "chrome-extension/**/*"
     ],
     "asar": true
   }

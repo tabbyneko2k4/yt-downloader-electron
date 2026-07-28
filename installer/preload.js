@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('api', {
   createShortcuts: (options) => ipcRenderer.invoke('install:create-shortcuts', options),
   pinTaskbar: (options) => ipcRenderer.invoke('install:pin-taskbar', options),
   launchApp: (options) => ipcRenderer.invoke('install:launch-app', options),
+  checkDependencies: (options) => ipcRenderer.invoke('install:check-dependencies', options),
+  copyExtension: (options) => ipcRenderer.invoke('install:copy-extension', options),
+  createPortableTag: (options) => ipcRenderer.invoke('install:create-portable-tag', options),
   
   onDownloadProgress: (callback) => {
     const subscription = (event, data) => callback(data);

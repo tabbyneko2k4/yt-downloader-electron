@@ -143,7 +143,9 @@ contextBridge.exposeInMainWorld('api', {
     const handler = (_event, value) => callback(value);
     ipcRenderer.on('db:sync-options', handler);
     return () => ipcRenderer.removeListener('db:sync-options', handler);
-  }
+  },
+
+  checkAppDependencies: () => ipcRenderer.invoke('app:check-dependencies')
 });
 
 

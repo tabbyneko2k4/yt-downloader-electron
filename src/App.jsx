@@ -693,7 +693,10 @@ export default function App() {
 
   return (
     <LanguageProvider language={settings.language || 'en'} onLanguageChange={(lang) => updateSettings({ language: lang })}>
-      <div className="app-container">
+      <div className="app-container relative overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+        {/* Ambient background glow - Pink & Blue Neon Gradients */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(236,72,153,0.10)_0%,transparent_50%),radial-gradient(circle_at_85%_85%,rgba(59,130,246,0.10)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_15%_10%,rgba(236,72,153,0.18)_0%,transparent_50%),radial-gradient(circle_at_85%_85%,rgba(59,130,246,0.18)_0%,transparent_50%)] pointer-events-none z-0 transform-gpu" />
+
         {/* Top Header & Tab Navigation */}
         <Header
           activeTab={activeTab}

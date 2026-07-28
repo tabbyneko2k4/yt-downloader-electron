@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Download, Terminal, FolderCheck, Settings, Minus, Square, X, ArrowDown, Globe, Sun, Moon, Monitor, Menu, Check } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
+import APP_ICON from '../assets/appIcon';
+
 export default function Header({ activeTab, setActiveTab, downloadsCount, activeDownloads = [], downloadQueue = [], settings, updateSettings }) {
   const { t, language, setLanguage, LANGUAGES } = useTranslation();
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
@@ -54,20 +56,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
         <div className="header-layout">
           {/* Left: App Logo Icon & Title */}
           <div className="header-left">
-            <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
-                fill="url(#header-logo-grad)"
-              />
-              <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
-              <defs>
-                <linearGradient id="header-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#ec4899" />
-                  <stop offset="0.5" stopColor="#8b5cf6" />
-                  <stop offset="1" stopColor="#3b82f6" />
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src={APP_ICON} alt="App Icon" className="logo-icon app-header-icon-img" />
             <span className="app-header-title">{t('appName')}</span>
           </div>
 
@@ -164,10 +153,10 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsLangDropdownOpen(false)} />
                   <div
-                    className="absolute right-0 mt-2 w-48 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-pink-500/30 shadow-2xl p-1.5 z-50 animate-fade-in-up space-y-1"
+                    className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-pink-400/30 shadow-xl p-1.5 z-50 animate-fade-in-up space-y-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-1.5 mb-1">
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-1">
                       <span>{t('languageLabel') || 'Language'}</span>
                       <Globe size={13} className="text-pink-400" />
                     </div>
@@ -185,10 +174,10 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
                             }
                             setIsLangDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all cursor-pointer ${
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-gradient-to-r from-pink-500/15 to-purple-500/15 border border-pink-400/40 text-pink-600 dark:text-pink-300 font-bold'
-                              : 'hover:bg-slate-100 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300 text-xs'
+                              ? 'bg-pink-500/10 border border-pink-400/40 text-pink-600 dark:text-pink-300 font-bold'
+                              : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs'
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
@@ -241,20 +230,7 @@ export default function Header({ activeTab, setActiveTab, downloadsCount, active
           <div className="burger-dropdown-menu" onClick={(e) => e.stopPropagation()}>
             <div className="burger-menu-header">
               <div className="burger-brand">
-                <svg className="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 3.88 12 3.88 12 3.88s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
-                    fill="url(#burger-logo-grad)"
-                  />
-                  <path d="M9.75 15.02l6-3.27-6-3.27v6.54z" fill="#ffffff" />
-                  <defs>
-                    <linearGradient id="burger-logo-grad" x1="1" y1="11.75" x2="23" y2="11.75" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#ec4899" />
-                      <stop offset="0.5" stopColor="#8b5cf6" />
-                      <stop offset="1" stopColor="#3b82f6" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+                <img src={APP_ICON} alt="App Icon" className="logo-icon app-header-icon-img" />
                 <div className="burger-brand-text">
                   <span className="burger-menu-title">{t('appName')}</span>
                   <span className="burger-menu-sub">Navigation</span>

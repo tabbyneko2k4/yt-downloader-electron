@@ -31,7 +31,7 @@ try {
   console.log(`-> Đang sao chép file ZIP đến: ${zipDestPath}`);
   fs.copyFileSync(zipSrcPath, zipDestPath);
 
-  // Sao chép icon vào installer để đóng gói
+  // Sao chép icon & chrome-extension vào installer để đóng gói
   const iconSrcDir = path.join(__dirname, 'icon');
   const iconDestDir = path.join(__dirname, 'installer', 'icon');
   if (fs.existsSync(iconSrcDir)) {
@@ -40,6 +40,22 @@ try {
     }
     fs.copyFileSync(path.join(iconSrcDir, 'icon.png'), path.join(iconDestDir, 'icon.png'));
     console.log('-> Đã sao chép icon.png sang thư mục installer.');
+  }
+
+  const extSrcDir = path.join(__dirname, 'chrome-extension');
+  const extDestDir = path.join(__dirname, 'installer', 'chrome-extension');
+  if (fs.existsSync(extSrcDir)) {
+    const copyDir = (src, dest) => {
+      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+      for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+        const s = path.join(src, entry.name);
+        const d = path.join(dest, entry.name);
+        if (entry.isDirectory()) copyDir(s, d);
+        else fs.copyFileSync(s, d);
+      }
+    };
+    copyDir(extSrcDir, extDestDir);
+    console.log('-> Đã sao chép chrome-extension sang thư mục installer.');
   }
 
   // 3. Build installer

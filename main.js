@@ -116,6 +116,13 @@ function getExtraBinSearchPaths() {
   return paths;
 }
 
+function isPortableMode() {
+  // Check portable marker file in application directory
+  const appDir = app.isPackaged ? path.dirname(process.execPath) : __dirname;
+  const portableTagPath = path.join(appDir, 'portable.tag');
+  return fs.existsSync(portableTagPath);
+}
+
 function getBinPaths() {
   const isWin = process.platform === 'win32';
   return {
@@ -125,10 +132,36 @@ function getBinPaths() {
   };
 }
 
+// Check if binary is in system PATH
+function findBinaryInSystemPath(name) {
+  try {
+    const cmd = process.platform === 'win32' ? `where ${name}` : `which ${name}`;
+    const result = execSync(cmd, { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split(/\r?\n/)[0];
+    if (result && fs.existsSync(result)) {
+      return result;
+    }
+  } catch (e) {}
+  return null;
+}
+
 function getYtDlpCommand() {
+  const isPortable = isPortableMode();
+
+  // In portable mode or if specified, prioritize local binDir first
+  if (isPortable) {
+    const localPaths = getBinPaths();
+    if (fs.existsSync(localPaths.ytDlp)) return localPaths.ytDlp;
+  }
+
+  // 1. First priority: Check system PATH
+  const systemBinary = findBinaryInSystemPath('yt-dlp');
+  if (systemBinary) return systemBinary;
+
+  // 2. Second priority: Local binDir after installation
   const paths = getBinPaths();
   if (fs.existsSync(paths.ytDlp)) return paths.ytDlp;
 
+  // 3. Fallback: WinGet or Extra bin search paths
   const winGetPkg = findBinaryInWinGetPackages('yt-dlp.exe');
   if (winGetPkg) return winGetPkg;
 
@@ -143,11 +176,19 @@ function getYtDlpCommand() {
 }
 
 function getSpawnEnv() {
-  const extraPaths = [binDir, ...getExtraBinSearchPaths()];
+  const isPortable = isPortableMode();
   const pathSeparator = process.platform === 'win32' ? ';' : ':';
+
+  // For Portable mode, put binDir first in PATH. Otherwise, append system PATH first.
+  let extraPaths = isPortable
+    ? [binDir, ...getExtraBinSearchPaths()]
+    : [...getExtraBinSearchPaths(), binDir];
+
   return {
     ...process.env,
-    PATH: `${extraPaths.join(pathSeparator)}${pathSeparator}${process.env.PATH || ''}`,
+    PATH: isPortable
+      ? `${extraPaths.join(pathSeparator)}${pathSeparator}${process.env.PATH || ''}`
+      : `${process.env.PATH || ''}${pathSeparator}${extraPaths.join(pathSeparator)}`,
     PYTHONIOENCODING: 'utf-8',
     LANG: 'en_US.UTF-8'
   };
@@ -170,11 +211,13 @@ app.on('before-quit', () => {
 });
 
 function createWindow() {
+  const appIconPath = path.join(__dirname, 'icon', 'icon.png');
   mainWindow = new BrowserWindow({
     width: 880,
     height: 720,
     minWidth: 400,
     minHeight: 520,
+    icon: appIconPath,
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -275,8 +318,9 @@ function createMiniWindow() {
 }
 
 function createTray() {
-  const iconPath = 'C:\\Users\\1\\.gemini\\antigravity-ide\\brain\\a626b701-239b-4406-87e0-4379625520b9\\tray_icon_1784924763103.png';
-  tray = new Tray(iconPath);
+  const iconPath = path.join(__dirname, 'icon', 'icon.png');
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+  tray = new Tray(trayIcon);
   tray.setToolTip('YT Downloader');
   tray.on('click', () => {
     if (!miniWindow) {
@@ -2435,5 +2479,41 @@ ipcMain.handle('db:delete-download', async (event, id) => {
 ipcMain.handle('db:clear-downloads', async () => {
   saveDownloadsDb([]);
   return [];
+});
+
+// IPC Handler: Check current dependencies status (for SettingsTab)
+ipcMain.handle('app:check-dependencies', async () => {
+  const isWin = process.platform === 'win32';
+  const binPaths = getBinPaths();
+
+  const checkBin = (binName, localPath) => {
+    // 1. System PATH
+    const systemPath = findBinaryInSystemPath(binName);
+    if (systemPath) {
+      return { found: true, path: systemPath, type: 'system' };
+    }
+    // 2. Local bin directory
+    if (fs.existsSync(localPath)) {
+      return { found: true, path: localPath, type: 'local' };
+    }
+    // 3. WinGet fallback (for windows)
+    const winGetPath = findBinaryInWinGetPackages(isWin ? `${binName}.exe` : binName);
+    if (winGetPath) {
+      return { found: true, path: winGetPath, type: 'winget' };
+    }
+    return { found: false, path: null, type: null };
+  };
+
+  const ytdlp = checkBin('yt-dlp', binPaths.ytDlp);
+  const ffmpeg = checkBin('ffmpeg', binPaths.ffmpeg);
+  const ffprobe = checkBin('ffprobe', binPaths.ffprobe);
+  const isPortable = isPortableMode();
+
+  return {
+    isPortable,
+    ytdlp,
+    ffmpeg,
+    ffprobe
+  };
 });
 

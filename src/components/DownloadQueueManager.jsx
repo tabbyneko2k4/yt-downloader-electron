@@ -101,7 +101,7 @@ export default function DownloadQueueManager({
               className={`h-full rounded-full transition-all duration-300 ${
                 isFailedOnly
                   ? 'bg-rose-500'
-                  : 'bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500'
+                  : 'bg-pink-500'
               }`}
               style={{ width: `${currentActive.percent || 0}%` }}
             />
@@ -128,12 +128,12 @@ export default function DownloadQueueManager({
 
       {/* Expanded Accordion Drawer */}
       {isExpanded && (
-        <div className="mt-2 p-3 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-sky-200 dark:border-pink-500/20 shadow-2xl space-y-2.5 animate-fade-in-up">
+        <div className="mt-2 p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-pink-400/30 shadow-xl space-y-2.5 animate-fade-in-up">
           {/* Active Downloads List */}
           {activeDownloads.map((dl) => (
             <div
               key={dl.id}
-              className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 space-y-2"
+              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2"
             >
               {/* Task Header */}
               <div className="flex items-center justify-between gap-2">
@@ -183,7 +183,7 @@ export default function DownloadQueueManager({
               {/* Individual Live Progress Bar */}
               <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-sky-400 via-cyan-400 to-pink-500 rounded-full transition-all duration-300"
+                  className="h-full bg-pink-500 rounded-full transition-all duration-300"
                   style={{ width: `${dl.percent || 0}%` }}
                 />
               </div>
@@ -217,7 +217,7 @@ export default function DownloadQueueManager({
                 {retryDownload && (
                   <button
                     type="button"
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-[11px] shadow-sm cursor-pointer active:scale-95"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[11px] shadow-sm cursor-pointer active:scale-95 transition-all"
                     onClick={() => retryDownload(f)}
                     title={t('retry')}
                   >
@@ -250,7 +250,7 @@ export default function DownloadQueueManager({
               </span>
               <button
                 type="button"
-                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-sky-400 to-pink-500 text-slate-950 font-bold text-[11px] cursor-pointer active:scale-95"
+                className="px-2.5 py-1 rounded-lg bg-pink-500 hover:bg-pink-600 dark:bg-pink-400 text-white dark:text-slate-950 font-bold text-[11px] cursor-pointer active:scale-95 transition-all"
                 onClick={() => resumeDownload(p)}
               >
                 {t('resume')}

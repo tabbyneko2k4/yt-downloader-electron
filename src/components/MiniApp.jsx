@@ -44,6 +44,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { getResolutionOptions, getAudioQualityOptions, buildDownloadOptions } from '../utils/downloadHelper';
 import Listbox from './Listbox';
 import PlaylistChoiceModal from './PlaylistChoiceModal';
+import APP_ICON from '../assets/appIcon';
 
 export default function MiniApp() {
   const { t } = useTranslation();
@@ -701,15 +702,13 @@ export default function MiniApp() {
   return (
     <div className="relative flex flex-col h-screen w-screen max-h-screen max-w-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans select-none overflow-hidden rounded-none border-none shadow-2xl transform-gpu transition-colors duration-300">
       {/* Ambient background glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(236,72,153,0.12)_0%,transparent_50%),radial-gradient(circle_at_85%_85%,rgba(59,130,246,0.12)_0%,transparent_50%)] pointer-events-none z-0 transform-gpu" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(236,72,153,0.10)_0%,transparent_50%),radial-gradient(circle_at_85%_85%,rgba(59,130,246,0.10)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_15%_10%,rgba(236,72,153,0.18)_0%,transparent_50%),radial-gradient(circle_at_85%_85%,rgba(59,130,246,0.18)_0%,transparent_50%)] pointer-events-none z-0 transform-gpu" />
 
       {/* Top Header / Titlebar */}
       <header className="relative z-10 flex items-center justify-between h-11 px-3 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/10 shrink-0 drag-region transition-colors duration-300">
         <div className="flex items-center gap-2 no-drag">
-          <div className="flex items-center drop-shadow-[0_0_6px_rgba(236,72,153,0.5)]">
-            <Sparkles size={16} className="text-pink-500 animate-pulse" />
-          </div>
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">Quick Downloader</span>
+          <img src={APP_ICON} alt="App Icon" className="w-5 h-5 rounded-md app-header-icon-img drop-shadow-[0_0_6px_rgba(59,130,246,0.5)]" />
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">Nyanko's Media Downloader</span>
         </div>
         <div className="flex items-center gap-1 no-drag">
           <button
@@ -731,8 +730,8 @@ export default function MiniApp() {
               /* ===== STAGE 1: App Branding & Google-Style Search Bar ===== */
               <div className="flex flex-col items-center justify-center py-6 px-2 space-y-4 animate-fade-in-up transform-gpu">
                 <div className="text-center space-y-1">
-                  <div className="inline-flex p-2.5 rounded-2xl bg-pink-500/10 border border-pink-500/20 mb-1 shadow-md shadow-pink-500/10">
-                    <Sparkles size={20} className="text-pink-500 animate-pulse" />
+                  <div className="inline-flex p-2 rounded-2xl bg-pink-500/10 border border-pink-500/20 mb-1 shadow-md shadow-pink-500/10">
+                    <img src={APP_ICON} alt="App Icon" className="w-7 h-7 rounded-lg app-header-icon-img" />
                   </div>
                   <h2 className="text-base font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">{t('appName')}</h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{t('miniHeroSubtitle')}</p>
@@ -772,7 +771,7 @@ export default function MiniApp() {
 
                 {/* Quick Analyze Button */}
                 <button
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 hover:opacity-95 active:scale-98 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-pink-500/20 transition-all duration-200 cursor-pointer transform-gpu"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-pink-500 hover:bg-pink-600 dark:bg-pink-400 dark:hover:bg-pink-300 text-white dark:text-slate-950 text-xs font-extrabold shadow-sm transition-all duration-200 cursor-pointer"
                   onClick={() => triggerAnalyze()}
                   disabled={isAnalyzing || !url.trim()}
                 >
@@ -812,7 +811,7 @@ export default function MiniApp() {
 
                 {/* Media Thumbnail & Title Card */}
                 {mediaInfo && mediaInfo.info && (
-                  <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl shadow-md space-y-2 transform-gpu transition-transform duration-200 hover:scale-[1.01]">
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-pink-400/30 shadow-md space-y-2">
                     <div className="flex items-center gap-3">
                       {mediaInfo.info.thumbnail ? (
                         <img
@@ -843,7 +842,7 @@ export default function MiniApp() {
 
                 {/* Playlist Inspector & Track Selection Card (Shown if playlist) */}
                 {mediaInfo && mediaInfo.isPlaylist && mediaInfo.info && mediaInfo.info.entries && (
-                  <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl space-y-2.5 shadow-md transform-gpu">
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-purple-400/30 space-y-2.5 shadow-md">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
                         <ListPlus size={14} className="text-purple-500" />
@@ -871,7 +870,7 @@ export default function MiniApp() {
                       </button>
                     </div>
 
-                    <div className="max-h-40 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-950/60 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <div className="max-h-40 overflow-y-auto space-y-1 bg-slate-50 dark:bg-slate-950 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
                       {mediaInfo.info.entries.map((track, idx) => {
                         const trackNum = idx + 1;
                         const isSelected = playlistSelectedIndexes.includes(trackNum);
@@ -905,14 +904,14 @@ export default function MiniApp() {
                 )}
 
                 {/* Format Type Selector Pills */}
-                <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl space-y-2.5 shadow-md transform-gpu">
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-pink-400/30 space-y-2.5 shadow-md">
                   <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {t('miniSelectFormatLabel')}
                   </div>
-                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
                     <button
                       className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${formatType === 'video'
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
+                        ? 'bg-pink-500 text-white dark:bg-pink-400 dark:text-slate-950 font-extrabold shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                       onClick={() => {
@@ -925,7 +924,7 @@ export default function MiniApp() {
                     </button>
                     <button
                       className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${formatType === 'audio'
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
+                        ? 'bg-pink-500 text-white dark:bg-pink-400 dark:text-slate-950 font-extrabold shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                       onClick={() => {
@@ -938,7 +937,7 @@ export default function MiniApp() {
                     </button>
                     <button
                       className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${formatType === 'thumbnail'
-                        ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/20 scale-[1.02]'
+                        ? 'bg-pink-500 text-white dark:bg-pink-400 dark:text-slate-950 font-extrabold shadow-sm'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                       onClick={() => {
@@ -965,7 +964,7 @@ export default function MiniApp() {
                 </div>
 
                 {/* Advance Preset Selector */}
-                <div className="p-3 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl space-y-2 shadow-md transform-gpu">
+                <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 shadow-md">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100">
                       <SlidersHorizontal size={13} className="text-purple-500" />
@@ -1007,9 +1006,8 @@ export default function MiniApp() {
                 </div>
 
 
-                {/* Primary Download Button */}
                 <button
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 hover:opacity-95 active:scale-98 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-pink-500/25 transition-all duration-200 cursor-pointer transform-gpu"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-pink-500 hover:bg-pink-600 dark:bg-pink-400 dark:hover:bg-pink-300 text-white dark:text-slate-950 text-xs font-extrabold shadow-sm transition-all duration-200 cursor-pointer"
                   onClick={handleStartDownload}
                   disabled={mediaInfo && mediaInfo.isPlaylist && playlistSelectedIndexes.length === 0}
                 >
@@ -1159,7 +1157,7 @@ export default function MiniApp() {
                       {/* Animated Progress Bar */}
                       <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200 dark:border-white/5 relative">
                         <div
-                          className="h-full bg-gradient-to-r from-cyan-500 via-pink-500 to-purple-500 rounded-full transition-all duration-500 ease-out transform-gpu"
+                          className="h-full bg-pink-500 rounded-full transition-all duration-500 ease-out transform-gpu"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

@@ -147,6 +147,20 @@ export const translations = {
 
     // SettingsTab
     settingsTitle: "App Settings & Storage",
+    sectionUpdates: "Update Channel",
+    sectionUpdatesDesc: "Check for new releases on official GitHub repository",
+    sectionUpdatesTitle: "Update Channel & GitHub Releases",
+    updateChecking: "Checking...",
+    updateCheckNow: "Check Now",
+    updateChannelDesc: "Automatically check for the latest releases from the official GitHub repository.",
+    updateOpenReleasesBtn: "View on GitHub Releases",
+    updateErrorTitle: "Failed to fetch release info",
+    updateNoReleasesFound: "No public release found on GitHub repository yet.",
+    updatePublishedAt: "Release Date",
+    updateLastChecked: "Checked at",
+    updateDownloadRelease: "Download this release",
+    updateReleaseNotesTitle: "Release Notes:",
+    updateAssetsTitle: "Assets & Installers:",
     storageFolderLabel: "Default Download Folder",
     selectFolderPlaceholder: "Select download directory...",
     changeFolderBtn: "Change",
@@ -238,7 +252,7 @@ export const translations = {
     noPlaylistMatch: "No matching tracks found in playlist",
 
     // FooterDisclaimer
-    disclaimerTitle: "Disclaimer:",
+    disclaimerTitle: "Disclaimer",
     disclaimerText: "This application is for personal and lawful use only. Users are solely responsible for copyright compliance of downloaded files.",
 
     // Confirmations & Alerts
@@ -320,6 +334,8 @@ export const translations = {
     sectionStorageDesc: "Save path, playlist drag mode, metadata",
     sectionGeneral: "General Settings",
     sectionGeneralDesc: "Close action, download threads, Chrome extension",
+    sectionDependenciesTitle: "Dependency Status",
+    sectionDependenciesDesc: "Check yt-dlp, ffmpeg & ffprobe status & paths",
     sectionStorageTitle: "Folder & Storage",
     sectionGeneralTitle: "General Settings",
     chromeExtIntegration: "Chrome Extension Integration",
@@ -599,7 +615,7 @@ export const translations = {
     noPlaylistMatch: "未找到匹配的曲目",
 
     // FooterDisclaimer
-    disclaimerTitle: "免责声明：",
+    disclaimerTitle: "免责声明",
     disclaimerText: "本应用仅供个人合法使用。用户对下载内容的版权承担全部责任。",
 
     // Confirmations & Alerts
@@ -955,7 +971,7 @@ export const translations = {
     noPlaylistMatch: "未找到相符的曲目",
 
     // FooterDisclaimer
-    disclaimerTitle: "免責聲明：",
+    disclaimerTitle: "免責聲明",
     disclaimerText: "本應用程式僅供個人合法使用。使用者對下載內容的版權承擔全部責任。",
 
     // Confirmations & Alerts
@@ -1321,7 +1337,7 @@ export const translations = {
     noPlaylistMatch: "Không tìm thấy bài hát phù hợp trong playlist",
 
     // FooterDisclaimer
-    disclaimerTitle: "Tuyên bố miễn trừ trách nhiệm:",
+    disclaimerTitle: "Tuyên bố miễn trừ trách nhiệm",
     disclaimerText: "Ứng dụng chỉ phục vụ mục đích cá nhân và hợp pháp. Người dùng hoàn toàn chịu trách nhiệm về bản quyền đối với các tệp tải về.",
 
     // Confirmations & Alerts
@@ -1677,7 +1693,7 @@ export const translations = {
     noPlaylistMatch: "一致するトラックが見つかりません",
 
     // FooterDisclaimer
-    disclaimerTitle: "免責事項：",
+    disclaimerTitle: "免責事項",
     disclaimerText: "本アプリは個人使用および合法的な目的専用です。ダウンロードしたファイルの著作権責任はユーザー自身にあります。",
 
     // Confirmations & Alerts
