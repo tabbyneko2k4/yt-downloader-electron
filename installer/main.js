@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { exec, execSync } = require('child_process');
+const { exec, execSync, execFile, execFileSync } = require('child_process');
 const https = require('https');
 const http = require('http');
 const url = require('url');
@@ -196,8 +196,11 @@ ipcMain.handle('install:extract-app', async (event, { destPath }) => {
 
     // Extract using PowerShell Expand-Archive
     return new Promise((resolve) => {
-      const cmd = `powershell -NoProfile -Command "Expand-Archive -Path '${tempZipPath}' -DestinationPath '${destPath}' -Force"`;
-      exec(cmd, (err, stdout, stderr) => {
+      const safeTempZip = tempZipPath.replace(/'/g, "''");
+      const safeDest = destPath.replace(/'/g, "''");
+      const psCommand = `Expand-Archive -LiteralPath '${safeTempZip}' -DestinationPath '${safeDest}' -Force`;
+
+      execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand], (err, stdout, stderr) => {
         // Clean up temp zip
         try { fs.unlinkSync(tempZipPath); } catch (e) {}
 
@@ -216,21 +219,20 @@ ipcMain.handle('install:extract-app', async (event, { destPath }) => {
 
 // Helper: Run PowerShell Shortcut Creator
 function createShortcutPowerShell(targetPath, shortcutPath) {
-  const cleanShortcut = shortcutPath.replace(/\//g, '\\');
-  const cleanTarget = targetPath.replace(/\//g, '\\');
-  const cleanDir = path.dirname(targetPath).replace(/\//g, '\\');
+  const safeShortcut = shortcutPath.replace(/\//g, '\\').replace(/'/g, "''");
+  const safeTarget = targetPath.replace(/\//g, '\\').replace(/'/g, "''");
+  const safeDir = path.dirname(targetPath).replace(/\//g, '\\').replace(/'/g, "''");
   
   const code = [
     `$WshShell = New-Object -ComObject WScript.Shell`,
-    `$Shortcut = $WshShell.CreateShortcut('${cleanShortcut}')`,
-    `$Shortcut.TargetPath = '${cleanTarget}'`,
-    `$Shortcut.WorkingDirectory = '${cleanDir}'`,
+    `$Shortcut = $WshShell.CreateShortcut('${safeShortcut}')`,
+    `$Shortcut.TargetPath = '${safeTarget}'`,
+    `$Shortcut.WorkingDirectory = '${safeDir}'`,
     `$Shortcut.Save()`
   ].join('; ');
   
-  const cmd = `powershell -NoProfile -Command "${code}"`;
   try {
-    execSync(cmd);
+    execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', code]);
     return true;
   } catch (err) {
     console.error(`Failed to create shortcut at ${shortcutPath}:`, err);
@@ -296,23 +298,20 @@ ipcMain.handle('install:pin-taskbar', async (event, { appPath }) => {
     createShortcutPowerShell(exePath, sourceShortcutPath);
   }
 
-  const cleanShortcutPath = sourceShortcutPath.replace(/\//g, '\\');
-  const dirName = path.dirname(cleanShortcutPath);
-  const baseName = path.basename(cleanShortcutPath);
+  const safeDir = path.dirname(sourceShortcutPath).replace(/\//g, '\\').replace(/'/g, "''");
+  const safeBase = path.basename(sourceShortcutPath).replace(/\//g, '\\').replace(/'/g, "''");
 
   const code = [
     `$shell = New-Object -ComObject Shell.Application`,
-    `$folder = $shell.NameSpace('${dirName}')`,
-    `$item = $folder.ParseName('${baseName}')`,
+    `$folder = $shell.NameSpace('${safeDir}')`,
+    `$item = $folder.ParseName('${safeBase}')`,
     `$verbs = $item.Verbs()`,
     `$pinVerb = $verbs | Where-Object { $_.Name.replace('&','') -match 'Ghim vào thanh tác vụ|Pin to taskbar' }`,
     `if ($pinVerb) { $pinVerb.DoIt(); Write-Host 'Success' } else { Write-Host 'Verb not found' }`
   ].join('; ');
 
-  const cmd = `powershell -NoProfile -Command "${code}"`;
-  
   try {
-    const result = execSync(cmd).toString().trim();
+    const result = execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', code]).toString().trim();
     console.log('Pin to taskbar output:', result);
     return { success: result.includes('Success') };
   } catch (err) {
@@ -324,6 +323,36 @@ ipcMain.handle('install:pin-taskbar', async (event, { appPath }) => {
     }
   }
 });
+
+// Helper: Flatten extracted binaries from nested directories to root destPath
+function flattenExtractedBinaries(targetDir) {
+  function findFiles(dir, fileList = []) {
+    if (!fs.existsSync(dir)) return fileList;
+    const files = fs.readdirSync(dir, { withFileTypes: true });
+    for (const file of files) {
+      const resPath = path.join(dir, file.name);
+      if (file.isDirectory()) {
+        findFiles(resPath, fileList);
+      } else {
+        fileList.push(resPath);
+      }
+    }
+    return fileList;
+  }
+
+  const allFiles = findFiles(targetDir);
+  for (const filePath of allFiles) {
+    const fileName = path.basename(filePath);
+    const destination = path.join(targetDir, fileName);
+    if (filePath !== destination && (fileName.endsWith('.exe') || fileName.endsWith('.dll'))) {
+      try {
+        fs.copyFileSync(filePath, destination);
+      } catch (e) {
+        console.error(`Failed to copy ${fileName} to ${destination}:`, e);
+      }
+    }
+  }
+}
 
 // IPC Handler: Launch application
 ipcMain.handle('install:launch-app', async (event, { appPath }) => {
@@ -351,14 +380,22 @@ ipcMain.handle('install:unzip-file', async (event, { zipPath, destPath }) => {
     }
 
     return new Promise((resolve) => {
-      const cmd = `powershell -NoProfile -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${destPath}' -Force"`;
-      exec(cmd, (err, stdout, stderr) => {
+      const safeZipPath = zipPath.replace(/'/g, "''");
+      const safeDestPath = destPath.replace(/'/g, "''");
+      const psCommand = `Expand-Archive -LiteralPath '${safeZipPath}' -DestinationPath '${safeDestPath}' -Force`;
+
+      execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand], (err, stdout, stderr) => {
         // Delete zip file after extract
         try { fs.unlinkSync(zipPath); } catch (e) {}
 
         if (err) {
           resolve({ success: false, error: stderr || err.message });
         } else {
+          try {
+            flattenExtractedBinaries(destPath);
+          } catch (e) {
+            console.error('Error flattening binaries:', e);
+          }
           resolve({ success: true });
         }
       });
@@ -446,5 +483,19 @@ ipcMain.handle('install:create-portable-tag', async (event, { targetPath }) => {
     console.error('Error creating portable.tag:', err);
     return { success: false, error: err.message };
   }
+});
+
+// IPC Handler: Install package via Winget
+ipcMain.handle('install:winget-package', async (event, { packageId }) => {
+  return new Promise((resolve) => {
+    execFile('winget', ['install', '--id', packageId, '--accept-source-agreements', '--accept-package-agreements', '--silent'], { timeout: 180000 }, (err, stdout, stderr) => {
+      if (err) {
+        console.error(`Winget install failed for ${packageId}:`, stderr || err.message);
+        resolve({ success: false, error: stderr || err.message });
+      } else {
+        resolve({ success: true, output: stdout });
+      }
+    });
+  });
 });
 

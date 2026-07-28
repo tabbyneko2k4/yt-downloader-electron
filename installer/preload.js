@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('api', {
   checkDependencies: (options) => ipcRenderer.invoke('install:check-dependencies', options),
   copyExtension: (options) => ipcRenderer.invoke('install:copy-extension', options),
   createPortableTag: (options) => ipcRenderer.invoke('install:create-portable-tag', options),
+  installWingetPackage: (options) => ipcRenderer.invoke('install:winget-package', options),
   
   onDownloadProgress: (callback) => {
     const subscription = (event, data) => callback(data);

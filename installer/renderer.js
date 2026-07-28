@@ -25,6 +25,11 @@ const translations = {
     modePortableDesc: "Giải nén toàn bộ phần mềm & dependency vào 1 thư mục riêng (dễ dàng chép vào USB).",
     installPathLabel: "Đường dẫn thư mục cài đặt:",
     browseBtn: "Duyệt...",
+    depSourceTitle: "Nguồn phân phối Dependency (yt-dlp & FFmpeg):",
+    sourceBinTitle: "Tải trực tiếp vào bin/",
+    sourceBinDesc: "Nhanh, độc lập, không cần Admin",
+    sourceWingetTitle: "Cài qua Winget (System)",
+    sourceWingetDesc: "Quản lý gói Windows Package Manager",
     optionsBack: "Quay lại",
     optionsInstall: "Bắt đầu Cài đặt",
 
@@ -88,6 +93,11 @@ const translations = {
     modePortableDesc: "Extracts all binaries & dependencies into a self-contained folder (perfect for USB).",
     installPathLabel: "Destination Folder Path:",
     browseBtn: "Browse...",
+    depSourceTitle: "Dependency Distribution Channel (yt-dlp & FFmpeg):",
+    sourceBinTitle: "Direct Download to bin/",
+    sourceBinDesc: "Fast, standalone, no admin required",
+    sourceWingetTitle: "Install via Winget (System)",
+    sourceWingetDesc: "Windows Package Manager CLI",
     optionsBack: "Back",
     optionsInstall: "Start Installation",
 
@@ -151,6 +161,11 @@ const translations = {
     modePortableDesc: "解压所有主程序及依赖到独立文件夹（方便拷贝至 U盘）。",
     installPathLabel: "安装目标文件夹路径：",
     browseBtn: "浏览...",
+    depSourceTitle: "依赖项分发渠道 (yt-dlp 与 FFmpeg)：",
+    sourceBinTitle: "直接下载至 bin/",
+    sourceBinDesc: "快速、独立、无需管理员权限",
+    sourceWingetTitle: "通过 Winget 安装 (系统)",
+    sourceWingetDesc: "使用 Windows 包管理器 CLI",
     optionsBack: "返回",
     optionsInstall: "开始安装",
 
@@ -214,6 +229,11 @@ const translations = {
     modePortableDesc: "解壓縮所有主程式及依賴到獨立資料夾（方便複製至隨身碟）。",
     installPathLabel: "安裝目標資料夾路徑：",
     browseBtn: "瀏覽...",
+    depSourceTitle: "相依性分發管道 (yt-dlp 與 FFmpeg)：",
+    sourceBinTitle: "直接下載至 bin/",
+    sourceBinDesc: "快速、獨立、無需管理員權限",
+    sourceWingetTitle: "透過 Winget 安裝 (系統)",
+    sourceWingetDesc: "使用 Windows 套件管理器 CLI",
     optionsBack: "返回",
     optionsInstall: "開始安裝",
 
@@ -277,6 +297,11 @@ const translations = {
     modePortableDesc: "すべての本体と依存ファイルを単一フォルダに展開します（USBへの持ち運びに最適）。",
     installPathLabel: "インストール先フォルダのパス:",
     browseBtn: "参照...",
+    depSourceTitle: "依存関係の配信チャネル (yt-dlp & FFmpeg):",
+    sourceBinTitle: "bin/ に直接ダウンロード",
+    sourceBinDesc: "高速、独立、管理者権限不要",
+    sourceWingetTitle: "Winget 経由でインストール (システム)",
+    sourceWingetDesc: "Windows パッケージマネージャー CLI を使用",
     optionsBack: "戻る",
     optionsInstall: "インストール開始",
 
@@ -401,6 +426,13 @@ function applyTranslations(lang) {
   document.getElementById('lbl-mode-portable-desc').textContent = t.modePortableDesc;
   document.getElementById('lbl-install-path').textContent = t.installPathLabel;
   document.getElementById('btn-browse-path').textContent = t.browseBtn;
+  if (document.getElementById('lbl-dep-source-title')) {
+    document.getElementById('lbl-dep-source-title').textContent = t.depSourceTitle || "Nguồn phân phối Dependency:";
+    document.getElementById('lbl-source-bin-title').textContent = t.sourceBinTitle || "Tải trực tiếp vào bin/";
+    document.getElementById('lbl-source-bin-desc').textContent = t.sourceBinDesc || "Nhanh, độc lập, không cần Admin";
+    document.getElementById('lbl-source-winget-title').textContent = t.sourceWingetTitle || "Cài qua Winget (System)";
+    document.getElementById('lbl-source-winget-desc').textContent = t.sourceWingetDesc || "Quản lý gói Windows Package Manager";
+  }
   document.getElementById('lbl-options-back').textContent = t.optionsBack;
   document.getElementById('lbl-options-install').textContent = t.optionsInstall;
 
@@ -450,6 +482,8 @@ langOptionBtns.forEach(btn => {
     btn.classList.add('border-pink-500', 'bg-slate-800');
     const lang = btn.dataset.lang;
     applyTranslations(lang);
+    // Auto proceed to Screen 1 (Welcome) upon language selection
+    switchStep(stepLang, stepWelcome);
   });
 });
 
@@ -514,6 +548,22 @@ modeCards.forEach(card => {
     const radio = card.querySelector('input[type="radio"]');
     radio.checked = true;
     handleModeChange(radio.value);
+  });
+});
+
+const channelCards = document.querySelectorAll('.channel-card');
+channelCards.forEach(card => {
+  card.addEventListener('click', () => {
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio) {
+      radio.checked = true;
+      channelCards.forEach(c => {
+        c.classList.remove('border-pink-500/80', 'bg-pink-500/5');
+        c.classList.add('border-slate-800');
+      });
+      card.classList.remove('border-slate-800');
+      card.classList.add('border-pink-500/80', 'bg-pink-500/5');
+    }
   });
 });
 
@@ -627,39 +677,142 @@ btnOptionsInstall.addEventListener('click', async () => {
       }
     });
 
-    // 2. YT-DLP
-    await processDependency(
-      'ytdlp',
-      'yt-dlp.exe',
-      'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
-      'yt-dlp.exe',
-      55
-    );
-
-    // 3. FFMPEG
-    await processDependency(
-      'ffmpeg',
-      'ffmpeg.exe',
-      'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.0-latest-win64-gpl-7.0.zip',
-      'ffmpeg.zip',
-      75
-    );
-
-    // If ffmpeg was downloaded as zip, extract it
+    // 2. DEPENDENCY RESOLUTION (WINGET VS DIRECT BIN DOWNLOAD)
+    const selectedSource = document.querySelector('input[name="dep-source"]:checked')?.value || 'bin';
+    const ffmpegUrl = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip';
+    const ffmpegFallbackUrl = 'https://github.com/GyanD/codexffmpeg/releases/download/7.0.2/ffmpeg-7.0.2-full_build.zip';
     const ffmpegZipPath = `${binDir}\\ffmpeg.zip`;
-    if (!depCheck.ffmpeg) {
-      updateMajorProgress('Giải nén FFMPEG...', 80);
-      await window.api.unzipFile({ zipPath: ffmpegZipPath, destPath: binDir });
+
+    if (selectedSource === 'winget') {
+      // 2. YT-DLP via Winget
+      if (!depCheck.ytdlp) {
+        updateMajorProgress('Cài đặt yt-dlp qua Winget...', 45);
+        const statusEl = document.getElementById('status-ytdlp');
+        const detailEl = document.getElementById('ytdlp-detail');
+        const iconEl = statusEl ? statusEl.querySelector('.status-icon') : null;
+        if (iconEl) iconEl.innerHTML = `<svg class="animate-spin w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`;
+        if (detailEl) detailEl.textContent = 'Winget...';
+
+        const wingetRes = await window.api.installWingetPackage({ packageId: 'yt-dlp.yt-dlp' });
+        if (wingetRes.success) {
+          if (detailEl) {
+            detailEl.textContent = 'Winget OK';
+            detailEl.className = "text-[11px] text-emerald-400 font-semibold";
+          }
+          if (iconEl) iconEl.innerHTML = `<span class="text-emerald-400 font-bold">✓</span>`;
+          if (statusEl) statusEl.classList.add('border-emerald-500/30', 'bg-emerald-500/5');
+        } else {
+          console.warn('Winget yt-dlp failed, falling back to bin download:', wingetRes.error);
+          await processDependency(
+            'ytdlp',
+            'yt-dlp.exe',
+            'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
+            'yt-dlp.exe',
+            55
+          );
+        }
+      } else {
+        const statusEl = document.getElementById('status-ytdlp');
+        const detailEl = document.getElementById('ytdlp-detail');
+        if (detailEl) {
+          detailEl.textContent = t.ready;
+          detailEl.className = "text-[11px] text-emerald-400 font-semibold";
+        }
+        if (statusEl) {
+          const iconEl = statusEl.querySelector('.status-icon');
+          if (iconEl) iconEl.innerHTML = `<span class="text-emerald-400 font-bold">✓</span>`;
+          statusEl.classList.add('border-emerald-500/30', 'bg-emerald-500/5');
+        }
+      }
+
+      // 3. FFMPEG & FFPROBE via Winget
+      if (!depCheck.ffmpeg || !depCheck.ffprobe) {
+        updateMajorProgress('Cài đặt FFmpeg qua Winget...', 75);
+        const statusEl = document.getElementById('status-ffmpeg');
+        const detailEl = document.getElementById('ffmpeg-detail');
+        const iconEl = statusEl ? statusEl.querySelector('.status-icon') : null;
+        if (iconEl) iconEl.innerHTML = `<svg class="animate-spin w-4 h-4 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`;
+        if (detailEl) detailEl.textContent = 'Winget...';
+
+        const wingetFFmpeg = await window.api.installWingetPackage({ packageId: 'Gyan.FFmpeg' });
+        if (wingetFFmpeg.success) {
+          if (detailEl) {
+            detailEl.textContent = 'Winget OK';
+            detailEl.className = "text-[11px] text-emerald-400 font-semibold";
+          }
+          if (iconEl) iconEl.innerHTML = `<span class="text-emerald-400 font-bold">✓</span>`;
+          if (statusEl) statusEl.classList.add('border-emerald-500/30', 'bg-emerald-500/5');
+        } else {
+          console.warn('Winget FFmpeg failed, falling back to bin download:', wingetFFmpeg.error);
+          let downloadSuccess = false;
+          try {
+            await processDependency('ffmpeg', 'ffmpeg.exe', ffmpegUrl, 'ffmpeg.zip', 75);
+            downloadSuccess = true;
+          } catch (err) {
+            await processDependency('ffmpeg', 'ffmpeg.exe', ffmpegFallbackUrl, 'ffmpeg.zip', 75);
+            downloadSuccess = true;
+          }
+          if (downloadSuccess) {
+            updateMajorProgress('Giải nén FFMPEG & FFPROBE...', 80);
+            await window.api.unzipFile({ zipPath: ffmpegZipPath, destPath: binDir });
+          }
+        }
+      }
+    } else {
+      // Direct BIN Download Flow (Default)
+      await processDependency(
+        'ytdlp',
+        'yt-dlp.exe',
+        'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
+        'yt-dlp.exe',
+        55
+      );
+
+      if (!depCheck.ffmpeg || !depCheck.ffprobe) {
+        let downloadSuccess = false;
+        try {
+          await processDependency(
+            'ffmpeg',
+            'ffmpeg.exe',
+            ffmpegUrl,
+            'ffmpeg.zip',
+            75
+          );
+          downloadSuccess = true;
+        } catch (err) {
+          console.warn('Primary FFmpeg download failed, trying fallback URL...', err);
+          await processDependency(
+            'ffmpeg',
+            'ffmpeg.exe',
+            ffmpegFallbackUrl,
+            'ffmpeg.zip',
+            75
+          );
+          downloadSuccess = true;
+        }
+
+        if (downloadSuccess) {
+          updateMajorProgress('Giải nén FFMPEG & FFPROBE...', 80);
+          await window.api.unzipFile({ zipPath: ffmpegZipPath, destPath: binDir });
+        }
+      } else {
+        updateMajorProgress('FFMPEG: ' + t.ready, 75);
+      }
     }
 
-    // 4. FFPROBE
-    await processDependency(
-      'ffprobe',
-      'ffprobe.exe',
-      'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe',
-      'ffprobe.exe',
-      95
-    );
+    // Update UI status for FFMPEG & FFPROBE after extraction or winget
+    const postCheck = await window.api.checkDependencies({ targetPath: currentTargetPath });
+    ['ffmpeg', 'ffprobe'].forEach((depKey) => {
+      const statusEl = document.getElementById(`status-${depKey}`);
+      const detailEl = document.getElementById(`${depKey}-detail`);
+      if (statusEl && detailEl && postCheck[depKey]) {
+        detailEl.textContent = t.ready;
+        detailEl.className = "text-[11px] text-emerald-400 font-semibold";
+        const iconEl = statusEl.querySelector('.status-icon');
+        if (iconEl) iconEl.innerHTML = `<span class="text-emerald-400 font-bold">✓</span>`;
+        statusEl.classList.add('border-emerald-500/30', 'bg-emerald-500/5');
+      }
+    });
 
     removeProgressListener();
 
